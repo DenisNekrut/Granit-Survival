@@ -103,11 +103,16 @@ class PixelRenderer {
         rect(px - 0.30f, py + 0.42f, 0.22f, 0.22f, 0.12f, 0.14f, 0.14f)
         rect(px + 0.08f, py + 0.42f, 0.22f, 0.22f, 0.12f, 0.14f, 0.14f)
 
-        // Screen-space HUD is independent from camera movement.
-        screenRect(0.55f, 0.48f, 5.2f, 0.42f, 0.07f, 0.08f, 0.08f)
-        screenRect(0.72f, 0.60f, 1.35f, 0.16f, 0.56f, 0.24f, 0.19f)
-        screenRect(2.20f, 0.60f, 1.05f, 0.16f, 0.25f, 0.43f, 0.49f)
-        screenRect(3.38f, 0.60f, 1.05f, 0.16f, 0.69f, 0.57f, 0.28f)
+        // Screen-space HUD reads the live simulation values.
+        screenRect(0.42f, 0.28f, 4.75f, 2.72f, 0.055f, 0.067f, 0.066f)
+        drawText(
+            "D${engine.worldClock.day} ${engine.worldClock.hour.toString().padStart(2, '0')}:${engine.worldClock.minute.toString().padStart(2, '0')}",
+            0.68f, 0.43f, 0.075f, 0.78f, 0.76f, 0.65f
+        )
+        drawNeedBar("HP", engine.needs.health, 1.05f, 0.68f, 0.24f, 0.20f)
+        drawNeedBar("FO", engine.needs.hunger, 1.52f, 0.64f, 0.43f, 0.22f)
+        drawNeedBar("WT", engine.needs.thirst, 1.99f, 0.25f, 0.48f, 0.66f)
+        drawNeedBar("EN", engine.needs.energy, 2.46f, 0.34f, 0.55f, 0.38f)
         drawInventory(engine.inventory)
 
         // Virtual joystick and interaction button.
@@ -132,6 +137,66 @@ class PixelRenderer {
 
 
         GLES20.glDisableVertexAttribArray(positionLocation)
+    }
+
+    private fun drawNeedBar(label: String, value: Float, y: Float, r: Float, g: Float, b: Float) {
+        drawText(label, 0.68f, y, 0.055f, 0.72f, 0.72f, 0.65f)
+        screenRect(1.42f, y + 0.10f, 3.25f, 0.13f, 0.15f, 0.17f, 0.16f)
+        val fill = 3.21f * (value.coerceIn(0f, 100f) / 100f)
+        if (fill > 0f) screenRect(1.44f, y + 0.12f, fill, 0.09f, r, g, b)
+    }
+
+    /** Tiny 3x5 pixel font used by the HUD; keeps text crisp at the virtual resolution. */
+    private fun drawText(
+        text: String,
+        x: Float,
+        y: Float,
+        pixel: Float,
+        r: Float,
+        g: Float,
+        b: Float
+    ) {
+        val glyphs = mapOf(
+            '0' to listOf("111", "101", "101", "101", "111"),
+            '1' to listOf("010", "110", "010", "010", "111"),
+            '2' to listOf("111", "001", "111", "100", "111"),
+            '3' to listOf("111", "001", "111", "001", "111"),
+            '4' to listOf("101", "101", "111", "001", "001"),
+            '5' to listOf("111", "100", "111", "001", "111"),
+            '6' to listOf("111", "100", "111", "101", "111"),
+            '7' to listOf("111", "001", "010", "010", "010"),
+            '8' to listOf("111", "101", "111", "101", "111"),
+            '9' to listOf("111", "101", "111", "001", "111"),
+            'D' to listOf("110", "101", "101", "101", "110"),
+            'H' to listOf("101", "101", "111", "101", "101"),
+            'P' to listOf("110", "101", "110", "100", "100"),
+            'F' to listOf("111", "100", "110", "100", "100"),
+            'O' to listOf("111", "101", "101", "101", "111"),
+            'W' to listOf("101", "101", "101", "111", "101"),
+            'T' to listOf("111", "010", "010", "010", "010"),
+            'E' to listOf("111", "100", "110", "100", "111"),
+            'N' to listOf("101", "111", "111", "111", "101"),
+            ':' to listOf("000", "010", "000", "010", "000"),
+            ' ' to listOf("000", "000", "000", "000", "000")
+        )
+        var cursorX = x
+        text.forEach { character ->
+            val glyph = glyphs[character] ?: glyphs[' ']!!
+            for (row in glyph.indices) {
+                for (column in glyph[row].indices) {
+                    if (glyph[row][column] == '1') {
+                        screenRect(
+                            cursorX + column * pixel,
+                            y + row * pixel,
+                            pixel * 0.82f,
+                            pixel * 0.82f,
+                            r, g, b
+                        )
+                    }
+                }
+            }
+            cursorX += pixel * 4f
+        }
     }
 
     private fun drawResource(x: Int, y: Int, r: Float, g: Float, b: Float) {
