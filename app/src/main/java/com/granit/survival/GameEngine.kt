@@ -37,6 +37,9 @@ class GameEngine {
     val bookLibrary = BookLibrary()
     val radioSystem = BunkerRadioSystem()
     val worldClock = WorldClock()
+    val weather: WeatherType get() = WeatherSystem.forDay(worldClock.day)
+    val weatherMovementMultiplier: Float get() =
+        if (zone == WorldZone.BUNKER) 1f else weather.outdoorMovementMultiplier
     val checkpointSystem = CheckpointSystem()
 
     private var accumulator = 0f
@@ -124,7 +127,9 @@ class GameEngine {
         if (!advanceGameMinutes(event.broadcastMinutes)) return null
         radioSystem.markListened(listeningDay)
         psychology.applyReading(event.moraleGain, event.stressRelief)
-        return event
+        return if (event.id == "weather") {
+            event.copy(description = "Прогноз на завтра: " + WeatherSystem.forDay(listeningDay + 1).forecastText)
+        } else event
     }
 
     fun readBook(bookId: String): Boolean {
@@ -274,7 +279,8 @@ class GameEngine {
     private fun fixedUpdate(delta: Float, input: EngineInput) {
         val length = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
         val scale = if (length > 1f) 1f / length else 1f
-        val effectiveSpeed = player.speed * needs.movementSpeedMultiplier * psychology.movementSpeedMultiplier
+        val effectiveSpeed = player.speed * needs.movementSpeedMultiplier *
+            psychology.movementSpeedMultiplier * weatherMovementMultiplier
         val stepX = input.moveX * scale * effectiveSpeed * delta
         val stepY = input.moveY * scale * effectiveSpeed * delta
         isMoving = kotlin.math.abs(stepX) > 0.0001f || kotlin.math.abs(stepY) > 0.0001f
