@@ -54,6 +54,23 @@ class TileMap(
         }
     }
 
+    fun nearestInteractable(worldX: Float, worldY: Float, maxDistance: Float): TileType? {
+        var nearest: TileType? = null
+        var nearestDistanceSquared = maxDistance * maxDistance
+        forEachTile { x, y, type ->
+            if (type == TileType.BED || type == TileType.WORKBENCH || type == TileType.STORAGE || type == TileType.EXIT) {
+                val dx = x + 0.5f - worldX
+                val dy = y + 0.5f - worldY
+                val distanceSquared = dx * dx + dy * dy
+                if (distanceSquared < nearestDistanceSquared) {
+                    nearestDistanceSquared = distanceSquared
+                    nearest = type
+                }
+            }
+        }
+        return nearest
+    }
+
     fun forEachTile(action: (x: Int, y: Int, type: TileType) -> Unit) {
         for (y in 0 until height) {
             for (x in 0 until width) action(x, y, tiles[y][x])
