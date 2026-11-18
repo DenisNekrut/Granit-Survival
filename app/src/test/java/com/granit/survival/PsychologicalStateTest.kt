@@ -15,6 +15,7 @@ class PsychologicalStateTest {
         assertTrue(state.loneliness > initial.loneliness)
         assertTrue(state.fatigue > initial.fatigue)
         assertTrue(state.morale < initial.morale)
+        assertTrue(state.movementSpeedMultiplier < 1f)
     }
 
     @Test
