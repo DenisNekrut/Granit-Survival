@@ -15,7 +15,8 @@ import kotlin.math.sqrt
 class EngineRenderThread(
     private val surfaceHolder: SurfaceHolder,
     initialWidth: Int,
-    initialHeight: Int
+    initialHeight: Int,
+    private val session: GameSession
 ) : Thread("Granit-RenderThread") {
     private val running = AtomicBoolean(true)
     @Volatile private var viewportWidth = initialWidth.coerceAtLeast(1)
@@ -83,7 +84,7 @@ class EngineRenderThread(
             val renderer = PixelRenderer()
             renderer.create()
             renderer.resize(viewportWidth, viewportHeight)
-            val engine = GameEngine()
+            val engine = session.engine
             val fixedFrameDelayNanos = 16_000_000L
             var previousFrame = System.nanoTime()
 
