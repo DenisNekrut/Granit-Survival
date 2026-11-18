@@ -9,12 +9,12 @@ class WorldZoneTest {
     fun playerCanTravelFromBunkerToForestAndBack() {
         val engine = GameEngine()
         engine.player.x = 20.5f
-        engine.player.y = 0.8f
+        engine.player.y = 1.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(WorldZone.FOREST, engine.zone)
 
         engine.player.x = 20.5f
-        engine.player.y = 22.2f
+        engine.player.y = 22.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = false))
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(WorldZone.BUNKER, engine.zone)
@@ -25,12 +25,12 @@ class WorldZoneTest {
         val engine = GameEngine()
         engine.changeZone(WorldZone.FOREST)
 
-        engine.player.x = 0.8f
+        engine.player.x = 1.5f
         engine.player.y = 12.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(WorldZone.RUINS, engine.zone)
 
-        engine.player.x = 38.2f
+        engine.player.x = 38.5f
         engine.player.y = 12.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = false))
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
