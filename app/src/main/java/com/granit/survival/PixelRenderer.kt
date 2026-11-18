@@ -310,6 +310,7 @@ class PixelRenderer {
                 ItemType.FABRIC -> floatArrayOf(0.38f, 0.55f, 0.50f)
                 ItemType.CANNED_FOOD -> floatArrayOf(0.73f, 0.53f, 0.24f)
                 ItemType.WATER -> floatArrayOf(0.26f, 0.55f, 0.74f)
+                ItemType.MEDICAL_KIT -> floatArrayOf(0.72f, 0.30f, 0.28f)
             }
             screenRect(x + 0.14f, y + 0.14f, 0.44f, 0.44f, color[0], color[1], color[2])
             val quantityWidth = 0.12f + 0.42f * (stack.quantity / 20f)
