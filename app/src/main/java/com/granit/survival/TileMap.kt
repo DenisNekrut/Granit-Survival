@@ -6,10 +6,17 @@ enum class TileType {
     BED,
     WORKBENCH,
     STORAGE,
-    EXIT
+    EXIT,
+    RESOURCE_WOOD,
+    RESOURCE_METAL,
+    RESOURCE_FABRIC,
+    RESOURCE_FOOD,
+    RESOURCE_WATER
 }
 
-/** Small grid world. Coordinates are measured in world tiles. */
+data class ResourceLocation(val x: Int, val y: Int, val type: ItemType)
+
+/** Grid world shared by rendering, collision and interaction systems. */
 class TileMap(
     val width: Int = 40,
     val height: Int = 24
@@ -32,6 +39,13 @@ class TileMap(
         fill(16, 2, 2, 2, TileType.STORAGE)
         fill(9, 1, 2, 1, TileType.WORKBENCH)
         set(width / 2, 0, TileType.EXIT)
+
+        // Test supplies placed within walking distance of the starting area.
+        set(7, 8, TileType.RESOURCE_WOOD)
+        set(12, 8, TileType.RESOURCE_METAL)
+        set(10, 11, TileType.RESOURCE_FABRIC)
+        set(14, 10, TileType.RESOURCE_FOOD)
+        set(5, 10, TileType.RESOURCE_WATER)
     }
 
     operator fun get(x: Int, y: Int): TileType {
@@ -48,10 +62,47 @@ class TileMap(
         )
         return points.all { (x, y) ->
             when (get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())) {
-                TileType.FLOOR, TileType.EXIT -> true
-                else -> false
+                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE -> false
+                else -> true
             }
         }
+    }
+
+    fun nearestResource(worldX: Float, worldY: Float, maxDistance: Float): ResourceLocation? {
+        var nearest: ResourceLocation? = null
+        var nearestDistanceSquared = maxDistance * maxDistance
+        forEachTile { x, y, type ->
+            val itemType = when (type) {
+                TileType.RESOURCE_WOOD -> ItemType.WOOD
+                TileType.RESOURCE_METAL -> ItemType.METAL
+                TileType.RESOURCE_FABRIC -> ItemType.FABRIC
+                TileType.RESOURCE_FOOD -> ItemType.CANNED_FOOD
+                TileType.RESOURCE_WATER -> ItemType.WATER
+                else -> null
+            } ?: return@forEachTile
+
+            val dx = x + 0.5f - worldX
+            val dy = y + 0.5f - worldY
+            val distanceSquared = dx * dx + dy * dy
+            if (distanceSquared < nearestDistanceSquared) {
+                nearestDistanceSquared = distanceSquared
+                nearest = ResourceLocation(x, y, itemType)
+            }
+        }
+        return nearest
+    }
+
+    fun collectResource(location: ResourceLocation): Boolean {
+        val expected = when (location.type) {
+            ItemType.WOOD -> TileType.RESOURCE_WOOD
+            ItemType.METAL -> TileType.RESOURCE_METAL
+            ItemType.FABRIC -> TileType.RESOURCE_FABRIC
+            ItemType.CANNED_FOOD -> TileType.RESOURCE_FOOD
+            ItemType.WATER -> TileType.RESOURCE_WATER
+        }
+        if (get(location.x, location.y) != expected) return false
+        set(location.x, location.y, TileType.FLOOR)
+        return true
     }
 
     fun nearestInteractable(worldX: Float, worldY: Float, maxDistance: Float): TileType? {
