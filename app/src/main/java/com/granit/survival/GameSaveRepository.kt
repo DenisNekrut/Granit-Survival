@@ -40,7 +40,8 @@ class GameSaveRepository(context: Context) {
         val file = saveFile(slot)
         if (!file.exists()) return@map SaveSlotInfo(slot = slot, exists = false)
         try {
-            val root = JSONObject(file.readText(Charsets.UTF_8))
+            val root = JSONObject(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() })
+            require(root.getInt("saveVersion") == SAVE_VERSION)
             val clock = root.getJSONObject("state").getJSONObject("clock")
             SaveSlotInfo(
                 slot = slot,
@@ -81,7 +82,7 @@ class GameSaveRepository(context: Context) {
     fun load(slot: Int, engine: GameEngine): Boolean {
         val target = saveFile(slot)
         if (!target.exists()) return false
-        val root = JSONObject(target.readText(Charsets.UTF_8))
+        val root = JSONObject(AtomicFile(target).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() })
         require(root.getInt("saveVersion") == SAVE_VERSION) {
             "Unsupported save version: ${root.optInt("saveVersion", -1)}"
         }
