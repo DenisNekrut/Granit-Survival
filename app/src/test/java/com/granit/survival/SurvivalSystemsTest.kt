@@ -49,6 +49,15 @@ class SurvivalSystemsTest {
     }
 
     @Test
+    fun lowEnergyGraduallyReducesMovementSpeed() {
+        val needs = SurvivalNeeds()
+        assertEquals(1f, needs.movementSpeedMultiplier, 0.001f)
+        needs.advanceAwake(1_000)
+        assertTrue(needs.movementSpeedMultiplier < 1f)
+        assertTrue(needs.movementSpeedMultiplier >= 0.55f)
+    }
+
+    @Test
     fun needsNeverFallBelowZero() {
         val needs = SurvivalNeeds()
         needs.advanceAwake(10_000)
