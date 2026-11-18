@@ -168,8 +168,7 @@ class GameEngine {
     fun drinkWater(): Boolean {
         if (!inventory.remove(ItemType.WATER, 1)) return false
         needs.drinkWater()
-        advanceGameMinutes(5)
-        return true
+        return advanceGameMinutes(5)
     }
 
     /** Apply the cost of a discrete action using the same clock/needs rules as real time. */
