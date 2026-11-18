@@ -33,6 +33,22 @@ class SurvivalSystemsTest {
     }
 
     @Test
+    fun foodAndWaterRestoreTheirNeeds() {
+        val needs = SurvivalNeeds()
+        needs.advanceAwake(500)
+        val hungerBefore = needs.hunger
+        val thirstBefore = needs.thirst
+
+        needs.consumeFood()
+        needs.drinkWater()
+
+        assertTrue(needs.hunger > hungerBefore)
+        assertTrue(needs.thirst > thirstBefore)
+        assertTrue(needs.hunger <= 100f)
+        assertTrue(needs.thirst <= 100f)
+    }
+
+    @Test
     fun needsNeverFallBelowZero() {
         val needs = SurvivalNeeds()
         needs.advanceAwake(10_000)
