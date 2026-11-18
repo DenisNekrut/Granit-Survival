@@ -113,6 +113,13 @@ class MainActivity : Activity() {
         gameSurface.visibility = View.GONE
         val panel = createPanel("ПАУЗА", "Состояние игры сохранено в памяти")
         panel.addView(menuButton("ПРОДОЛЖИТЬ") { enterGame() })
+        panel.addView(menuButton("ЕСТЬ КОНСЕРВЫ", enabled = session.engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
+            if (session.consumeFood()) { Toast.makeText(this, "Консервы использованы", Toast.LENGTH_SHORT).show(); showPauseMenu() }
+        })
+        panel.addView(menuButton("ПИТЬ ВОДУ", enabled = session.engine.inventory.count(ItemType.WATER) > 0) {
+            if (session.drinkWater()) { Toast.makeText(this, "Вода использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
+        })
+        panel.addView(menuButton("ХРАНИЛИЩЕ", enabled = session.engine.canAccessStorage()) { showStorage() })
         panel.addView(menuButton("СОН ДО 07:00", enabled = session.engine.canSleep()) {
             runCatching { session.sleepAndAutosave() }
                 .onSuccess { slept ->
@@ -134,6 +141,27 @@ class MainActivity : Activity() {
                 .setPositiveButton("В МЕНЮ") { _, _ -> showMainMenu() }
                 .show()
         })
+        showOverlay(panel)
+    }
+
+    private fun showStorage() {
+        val panel = createPanel("ХРАНИЛИЩЕ УБЕЖИЩА", "Перенос ресурсов между рюкзаком и контейнером")
+        ItemType.values().forEach { type ->
+            val backpack = session.engine.inventory.count(type)
+            val stored = session.engine.bunkerStorage.count(type)
+            panel.addView(label("${type.displayName}:  рюкзак $backpack  ·  хранилище $stored", 14f, Color.WHITE))
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            row.addView(menuButton("ПОЛОЖИТЬ ВСЁ", enabled = backpack > 0) {
+                if (session.transferToStorage(type)) showStorage()
+                else Toast.makeText(this, "Не удалось переместить предметы", Toast.LENGTH_SHORT).show()
+            }, weightedParams())
+            row.addView(menuButton("ЗАБРАТЬ ВСЁ", enabled = stored > 0) {
+                if (session.transferFromStorage(type)) showStorage()
+                else Toast.makeText(this, "В рюкзаке недостаточно места", Toast.LENGTH_SHORT).show()
+            }, weightedParams())
+            panel.addView(row)
+        }
+        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
         showOverlay(panel)
     }
 
