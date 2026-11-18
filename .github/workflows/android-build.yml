@@ -20,4 +20,16 @@ jobs:
         with:
           gradle-version: "8.13"
       - name: Build debug APK
-        run: gradle --no-daemon :app:assembleDebug
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            echo "Android build attempt ${attempt}/3"
+            if gradle --no-daemon :app:assembleDebug; then
+              exit 0
+            fi
+            if [ "${attempt}" -lt 3 ]; then
+              echo "Build failed; waiting before retry..."
+              sleep $((attempt * 20))
+            fi
+          done
+          exit 1
