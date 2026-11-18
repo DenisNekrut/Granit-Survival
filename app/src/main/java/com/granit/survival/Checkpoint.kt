@@ -9,7 +9,8 @@ data class WakeCheckpoint(
     val needs: SurvivalNeedsSnapshot,
     val clock: WorldClockSnapshot,
     val remainingResources: List<ResourceLocation>,
-    val zone: WorldZone
+    val zone: WorldZone,
+    val zoneResources: List<ZoneResourceSnapshot> = emptyList()
 )
 
 /** Captures the complete reversible run state at wake-up. */
@@ -24,7 +25,8 @@ class CheckpointSystem {
             needs = engine.needs.snapshot(),
             clock = engine.worldClock.snapshot(),
             remainingResources = engine.tileMap.resourceSnapshot(),
-            zone = engine.zone
+            zone = engine.zone,
+            zoneResources = engine.zoneResourceSnapshot()
         )
     }
 
@@ -38,7 +40,9 @@ class CheckpointSystem {
 
     fun restore(engine: GameEngine): Boolean {
         val saved = checkpoint?.deepCopy() ?: return false
+        engine.restoreZoneResources(saved.zoneResources)
         engine.changeZone(saved.zone)
+        if (saved.zoneResources.isEmpty()) engine.tileMap.restoreResources(saved.remainingResources)
         engine.player.x = saved.player.x
         engine.player.y = saved.player.y
         engine.player.speed = saved.player.speed
