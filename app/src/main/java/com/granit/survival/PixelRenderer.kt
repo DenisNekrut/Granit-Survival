@@ -142,6 +142,19 @@ class PixelRenderer {
             }
         }
 
+        // Furniture sprites use the shared pixel atlas for a consistent art style.
+        engine.tileMap.forEachTile { tileX, tileY, type ->
+            val spriteId = when (type) {
+                TileType.BED -> "bed"
+                TileType.WORKBENCH -> "workbench"
+                TileType.STORAGE -> "storage"
+                TileType.BOOKSHELF -> "bookshelf"
+                TileType.RADIO -> "radio"
+                else -> null
+            }
+            if (spriteId != null) drawAtlasSprite(spriteId, tileX + 0.5f, tileY + 0.12f, 0.052f)
+        }
+
         // Animated pixel-art character sprite selected from the logical atlas.
         val px = engine.player.x
         val py = engine.player.y

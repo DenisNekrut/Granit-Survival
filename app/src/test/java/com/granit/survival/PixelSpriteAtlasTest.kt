@@ -8,7 +8,7 @@ class PixelSpriteAtlasTest {
     fun allSpritesHaveConsistentFramesAndDefinedPaletteSymbols() {
         assertTrue(PixelSpriteAtlas.validate().joinToString(), PixelSpriteAtlas.validate().isEmpty())
         assertTrue(PixelSpriteAtlas.allIds().containsAll(
-            setOf("player", "wood", "metal", "fabric", "food", "water", "bandage")
+            setOf("player", "wood", "metal", "fabric", "food", "water", "bandage", "bed", "workbench", "storage", "bookshelf", "radio")
         ))
     }
 }
