@@ -39,6 +39,8 @@ class GameEngine {
         private set
     var lastCollectedItem: ItemType? = null
         private set
+    var isMoving: Boolean = false
+        private set
     private var wasInteracting = false
 
     init {
@@ -121,6 +123,7 @@ class GameEngine {
         accumulator = 0f
         gameMinuteAccumulator = 0f
         wasInteracting = false
+        isMoving = false
     }
 
     private fun fixedUpdate(delta: Float, input: EngineInput) {
@@ -128,6 +131,7 @@ class GameEngine {
         val scale = if (length > 1f) 1f / length else 1f
         val stepX = input.moveX * scale * player.speed * delta
         val stepY = input.moveY * scale * player.speed * delta
+        isMoving = kotlin.math.abs(stepX) > 0.0001f || kotlin.math.abs(stepY) > 0.0001f
 
         val nextX = (player.x + stepX).coerceIn(0.65f, WORLD_WIDTH - 0.65f)
         if (tileMap.isWalkable(nextX, player.y)) player.x = nextX
