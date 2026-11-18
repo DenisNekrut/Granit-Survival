@@ -308,7 +308,7 @@ class GameEngine {
                 travelToZone(if (zone == WorldZone.BUNKER) WorldZone.FOREST else WorldZone.BUNKER)
                 interactionCount++
             }
-            TileType.BED, TileType.WORKBENCH, TileType.BOOKSHELF -> interactionCount++
+            TileType.BED, TileType.WORKBENCH, TileType.BOOKSHELF, TileType.RADIO -> interactionCount++
             else -> Unit
         }
     }
