@@ -31,7 +31,8 @@ The current prototype contains:
 - in-memory wake-up checkpoints that restore player, inventory, bunker storage, needs, clock and collected world resources;
 - versioned JSON save snapshots for player state, inventory, bunker storage, survival needs, world clock, resource nodes and wake-up checkpoint, written through Android AtomicFile;
 - HUD bars connected to live health, hunger, thirst, energy and day/time values;
-- first detailed pixel-art player sprite and additional wall/furniture tile details.
+- first detailed pixel-art player sprite and additional wall/furniture tile details;
+- persistent settings model and SharedPreferences repository for audio, controls, graphics quality and vibration.
 
 This is an early technical prototype, not yet a complete game. The JSON repository and snapshot serialization are implemented but still need integration with the menu/session lifecycle and device verification. The HUD is functional but still uses simple pixel bars; the art pass has started and the remaining world objects still need replacement sprites and animation.
 
