@@ -58,12 +58,30 @@ class GameSaveRepository(context: Context) {
 
     @Throws(IOException::class)
     fun save(slot: Int, engine: GameEngine): SaveSlotInfo {
-        val target = saveFile(slot)
+        writeSnapshot(saveFile(slot), engine)
+        return listSlots().first { it.slot == slot }
+    }
+
+    /** Dedicated checkpoint file; it never consumes or overwrites a manual slot. */
+    @Throws(IOException::class)
+    fun saveAuto(engine: GameEngine) = writeSnapshot(autoSaveFile(), engine)
+
+    fun autoSaveTimestamp(): Long? = runCatching {
+        val file = autoSaveFile()
+        if (!file.exists()) null else JSONObject(
+            AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
+        ).getLong("savedAtMillis")
+    }.getOrNull()
+
+    fun loadAuto(engine: GameEngine): Boolean = loadFromFile(autoSaveFile(), engine)
+
+    fun load(slot: Int, engine: GameEngine): Boolean = loadFromFile(saveFile(slot), engine)
+
+    private fun writeSnapshot(target: File, engine: GameEngine) {
         val root = JSONObject()
             .put("saveVersion", SAVE_VERSION)
             .put("savedAtMillis", System.currentTimeMillis())
             .put("state", engine.createSaveSnapshot().toJson())
-
         val atomicFile = AtomicFile(target)
         var stream: java.io.FileOutputStream? = null
         try {
@@ -73,21 +91,17 @@ class GameSaveRepository(context: Context) {
             stream = null
         } catch (failure: Exception) {
             if (stream != null) atomicFile.failWrite(stream)
-            throw IOException("Unable to write save slot $slot", failure)
+            throw IOException("Unable to write save file", failure)
         }
-
-        return listSlots().first { it.slot == slot }
     }
 
-    fun load(slot: Int, engine: GameEngine): Boolean {
-        val target = saveFile(slot)
+    private fun loadFromFile(target: File, engine: GameEngine): Boolean {
         if (!target.exists()) return false
         val root = JSONObject(AtomicFile(target).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() })
         require(root.getInt("saveVersion") == SAVE_VERSION) {
             "Unsupported save version: ${root.optInt("saveVersion", -1)}"
         }
-        val snapshot = EngineSaveSnapshot.fromJson(root.getJSONObject("state"))
-        engine.restoreSaveSnapshot(snapshot)
+        engine.restoreSaveSnapshot(EngineSaveSnapshot.fromJson(root.getJSONObject("state")))
         return true
     }
 
@@ -101,6 +115,8 @@ class GameSaveRepository(context: Context) {
         require(slot in 1..MAX_SLOTS) { "Save slot must be between 1 and $MAX_SLOTS" }
         return File(saveDirectory, "slot_$slot.json")
     }
+
+    private fun autoSaveFile() = File(saveDirectory, "autosave.json")
 
     companion object {
         const val MAX_SLOTS = 3
