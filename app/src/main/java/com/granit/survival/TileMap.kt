@@ -105,6 +105,19 @@ class TileMap(
         return true
     }
 
+    fun isNearTile(target: TileType, worldX: Float, worldY: Float, maxDistance: Float): Boolean {
+        val limit = maxDistance * maxDistance
+        var found = false
+        forEachTile { x, y, type ->
+            if (type == target) {
+                val dx = x + 0.5f - worldX
+                val dy = y + 0.5f - worldY
+                if (dx * dx + dy * dy <= limit) found = true
+            }
+        }
+        return found
+    }
+
     fun nearestInteractable(worldX: Float, worldY: Float, maxDistance: Float): TileType? {
         var nearest: TileType? = null
         var nearestDistanceSquared = maxDistance * maxDistance
