@@ -21,6 +21,13 @@ data class CraftingRecipe(
     companion object {
         val all = listOf(
             CraftingRecipe(
+                id = "bandage",
+                title = "Перевязочный бинт",
+                ingredients = mapOf(ItemType.FABRIC to 1),
+                output = ItemType.BANDAGE,
+                craftMinutes = 3
+            ),
+            CraftingRecipe(
                 id = "medical_kit",
                 title = "Полевая аптечка",
                 ingredients = mapOf(ItemType.FABRIC to 2, ItemType.METAL to 1),
