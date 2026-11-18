@@ -6,13 +6,16 @@ data class CraftingRecipe(
     val ingredients: Map<ItemType, Int>,
     val output: ItemType,
     val outputAmount: Int = 1,
-    val craftMinutes: Int
+    val craftMinutes: Int,
+    val requiredBookId: String? = null
 ) {
     init {
         require(id.isNotBlank())
         require(ingredients.isNotEmpty() && ingredients.values.all { it > 0 })
         require(outputAmount > 0 && craftMinutes >= 0)
     }
+
+    fun isUnlocked(library: BookLibrary): Boolean = requiredBookId == null || library.hasRead(requiredBookId)
 
     fun canCraft(inventory: Inventory): Boolean =
         ingredients.all { (type, amount) -> inventory.count(type) >= amount } &&
@@ -32,7 +35,8 @@ data class CraftingRecipe(
                 title = "Полевая аптечка",
                 ingredients = mapOf(ItemType.FABRIC to 2, ItemType.METAL to 1),
                 output = ItemType.MEDICAL_KIT,
-                craftMinutes = 15
+                craftMinutes = 15,
+                requiredBookId = "field_first_aid"
             )
         )
 
