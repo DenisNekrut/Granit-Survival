@@ -7,6 +7,14 @@ import org.junit.Test
 
 class PointOfInterestTest {
     @Test
+    fun everyLandmarkIsPlacedOnWalkableGround() {
+        PointOfInterestCatalog.all().forEach { poi ->
+            assertTrue("${poi.id} must be reachable on its zone map",
+                TileMap(zone = poi.zone).isWalkable(poi.x, poi.y))
+        }
+    }
+
+    @Test
     fun nearbyLandmarkIsDiscoveredOnlyOnce() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.FOREST).first()
@@ -16,6 +24,7 @@ class PointOfInterestTest {
 
         assertEquals(listOf(poi), engine.scanNearbyPointsOfInterest())
         assertTrue(engine.isPoiDiscovered(poi.id))
+        assertEquals(poi.hudLabel, engine.lastDiscoveryHudLabel)
         assertTrue(engine.scanNearbyPointsOfInterest().isEmpty())
     }
 

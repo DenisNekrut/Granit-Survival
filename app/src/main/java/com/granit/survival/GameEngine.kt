@@ -58,14 +58,18 @@ class GameEngine {
     private val discoveredPoiIds = linkedSetOf<String>()
     var lastDiscoveryTitle: String? = null
         private set
+    var lastDiscoveryHudLabel: String? = null
+        private set
 
     fun isPoiDiscovered(id: String): Boolean = id in discoveredPoiIds
     fun discoveredPointsOfInterest(): Set<String> = discoveredPoiIds.toSet()
+    fun discoveredPointDetails(): List<PointOfInterest> = discoveredPoiIds.mapNotNull(PointOfInterestCatalog::byId)
 
     fun restoreDiscoveredPointsOfInterest(ids: Set<String>) {
         discoveredPoiIds.clear()
         discoveredPoiIds.addAll(ids.filter { PointOfInterestCatalog.byId(it) != null })
         lastDiscoveryTitle = null
+        lastDiscoveryHudLabel = null
     }
 
     fun scanNearbyPointsOfInterest(): List<PointOfInterest> {
@@ -75,7 +79,10 @@ class GameEngine {
             dx * dx + dy * dy <= poi.discoveryRadius * poi.discoveryRadius &&
                 discoveredPoiIds.add(poi.id)
         }
-        found.lastOrNull()?.let { lastDiscoveryTitle = it.title }
+        found.lastOrNull()?.let {
+            lastDiscoveryTitle = it.title
+            lastDiscoveryHudLabel = it.hudLabel
+        }
         return found
     }
 
@@ -172,6 +179,8 @@ class GameEngine {
     fun changeZone(target: WorldZone) {
         if (target != zone) psychology.onZoneChange(zone, target)
         tileMap = zoneMaps.getOrPut(target) { TileMap(zone = target) }
+        lastDiscoveryTitle = null
+        lastDiscoveryHudLabel = null
         player.x = target.spawnX
         player.y = target.spawnY
         camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
