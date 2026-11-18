@@ -132,8 +132,12 @@ class TileMap(
         var nearest: TileType? = null
         var best = maxDistance * maxDistance
         forEachTile { x, y, type ->
-            val valid = type in setOf(TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.EXIT,
-                TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD)
+            val valid = when (type) {
+                TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.EXIT,
+                TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS,
+                TileType.EXIT_TO_ROAD -> true
+                else -> false
+            }
             if (valid) {
                 val dx = x + 0.5f - worldX; val dy = y + 0.5f - worldY
                 val distance = dx * dx + dy * dy
