@@ -105,7 +105,7 @@ class PixelRenderer {
         screenRect(3.38f, 0.60f, 1.05f, 0.16f, 0.69f, 0.57f, 0.28f)
 
         // Virtual joystick and interaction button.
-        screenRect(1.0f, 9.4f, 2.4f, 2.4f, 0.22f, 0.25f, 0.24f)
+        screenRect(2.0f, 8.2f, 2.4f, 2.4f, 0.22f, 0.25f, 0.24f)
         if (touching) {
             val radiusPx = (screenHeight * 0.19f).coerceAtLeast(72f)
             val thumbX = (joystickX - worldOffsetX) / worldScale
