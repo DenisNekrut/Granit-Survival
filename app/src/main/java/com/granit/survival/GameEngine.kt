@@ -34,6 +34,7 @@ class GameEngine {
     val bunkerStorage = BunkerStorage()
     val needs = SurvivalNeeds()
     val psychology = PsychologicalState()
+    val bookLibrary = BookLibrary()
     val worldClock = WorldClock()
     val checkpointSystem = CheckpointSystem()
 
@@ -86,10 +87,27 @@ class GameEngine {
     fun canUseWorkbench(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.WORKBENCH, player.x, player.y, 1.5f)
 
+    fun canAccessBookshelf(): Boolean = zone == WorldZone.BUNKER &&
+        tileMap.isNearTile(TileType.BOOKSHELF, player.x, player.y, 1.5f)
+
+    fun readBook(bookId: String): Boolean {
+        if (!canAccessBookshelf()) return false
+        val book = BookCatalog.byId(bookId) ?: return false
+        if (!bookLibrary.markRead(book.id)) return false
+        if (!advanceGameMinutes(book.readMinutes)) return false
+        psychology.applyReading(book.moraleGain, book.stressRelief)
+        return true
+    }
+
+    fun canCraft(recipeId: String): Boolean {
+        val recipe = CraftingRecipe.byId(recipeId) ?: return false
+        return recipe.isUnlocked(bookLibrary) && recipe.canCraft(inventory)
+    }
+
     fun craft(recipeId: String): Boolean {
         if (!canUseWorkbench()) return false
         val recipe = CraftingRecipe.byId(recipeId) ?: return false
-        if (!recipe.canCraft(inventory)) return false
+        if (!recipe.isUnlocked(bookLibrary) || !recipe.canCraft(inventory)) return false
         recipe.ingredients.forEach { (type, amount) -> inventory.remove(type, amount) }
         check(inventory.add(recipe.output, recipe.outputAmount) == 0) {
             "Crafting output did not fit after ingredient validation"
@@ -159,15 +177,17 @@ class GameEngine {
     }
 
     /** Apply the cost of a discrete action using the same clock/needs rules as real time. */
-    private fun advanceGameMinutes(minutes: Int) {
-        if (minutes <= 0) return
+    private fun advanceGameMinutes(minutes: Int): Boolean {
+        if (minutes <= 0) return true
         worldClock.advanceMinutes(minutes)
         needs.advanceAwake(minutes)
         psychology.advanceAwake(minutes, isMoving, zone)
         if (needs.health <= 0f) {
             checkpointSystem.restore(this)
             gameMinuteAccumulator = 0f
+            return false
         }
+        return true
     }
 
     private fun travelToZone(target: WorldZone) {
@@ -189,6 +209,7 @@ class GameEngine {
         remainingResources = tileMap.resourceSnapshot(),
         zone = zone,
         zoneResources = zoneResourceSnapshot(),
+        bookLibrary = bookLibrary.snapshot(),
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
@@ -203,6 +224,7 @@ class GameEngine {
         bunkerStorage.restore(snapshot.bunkerStorage)
         needs.restore(snapshot.needs)
         psychology.restore(snapshot.psychology)
+        bookLibrary.restore(snapshot.bookLibrary)
         worldClock.restore(snapshot.clock)
         tileMap.restoreResources(snapshot.remainingResources)
         checkpointSystem.restoreSnapshot(snapshot.wakeCheckpoint)
