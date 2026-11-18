@@ -63,6 +63,9 @@ class GameEngine {
         return sleptMinutes
     }
 
+    /** Sleep is only available beside a bed in the bunker. */
+    fun canSleep(): Boolean = tileMap.isNearTile(TileType.BED, player.x, player.y, 1.5f)
+
     /** Restore the complete wake-up state after a failed expedition. */
     fun respawnAtWakeCheckpoint(): Boolean = checkpointSystem.restore(this)
 
