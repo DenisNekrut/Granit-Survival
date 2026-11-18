@@ -14,6 +14,7 @@ data class EngineSaveSnapshot(
     val needs: SurvivalNeedsSnapshot,
     val clock: WorldClockSnapshot,
     val remainingResources: List<ResourceLocation>,
+    val zone: WorldZone = WorldZone.BUNKER,
     val wakeCheckpoint: WakeCheckpoint?
 ) {
     companion object
@@ -41,7 +42,7 @@ class GameSaveRepository(context: Context) {
         if (!file.exists()) return@map SaveSlotInfo(slot = slot, exists = false)
         try {
             val root = JSONObject(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() })
-            require(root.getInt("saveVersion") == SAVE_VERSION)
+            require(root.getInt("saveVersion") in 1..SAVE_VERSION)
             val clock = root.getJSONObject("state").getJSONObject("clock")
             SaveSlotInfo(
                 slot = slot,
@@ -120,7 +121,7 @@ class GameSaveRepository(context: Context) {
 
     companion object {
         const val MAX_SLOTS = 3
-        const val SAVE_VERSION = 1
+        const val SAVE_VERSION = 2
     }
 }
 
@@ -131,6 +132,7 @@ private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("needs", needs.toJson())
     .put("clock", clock.toJson())
     .put("remainingResources", remainingResources.toResourcesJson())
+    .put("zone", zone.name)
     .put("wakeCheckpoint", wakeCheckpoint?.toJson() ?: JSONObject.NULL)
 
 private fun PlayerSnapshot.toJson() = JSONObject()
@@ -169,6 +171,7 @@ private fun WakeCheckpoint.toJson() = JSONObject()
     .put("needs", needs.toJson())
     .put("clock", clock.toJson())
     .put("remainingResources", remainingResources.toResourcesJson())
+    .put("zone", zone.name)
 
 private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveSnapshot {
     val checkpointJson = json.optJSONObject("wakeCheckpoint")
@@ -179,6 +182,7 @@ private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveS
         needs = json.getJSONObject("needs").toNeedsSnapshot(),
         clock = json.getJSONObject("clock").toClockSnapshot(),
         remainingResources = json.getJSONArray("remainingResources").toResources(),
+        zone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
         wakeCheckpoint = checkpointJson?.toWakeCheckpoint()
     )
 }
@@ -224,5 +228,6 @@ private fun JSONObject.toWakeCheckpoint() = WakeCheckpoint(
     bunkerStorage = getJSONArray("bunkerStorage").toItemStacks(),
     needs = getJSONObject("needs").toNeedsSnapshot(),
     clock = getJSONObject("clock").toClockSnapshot(),
-    remainingResources = getJSONArray("remainingResources").toResources()
+    remainingResources = getJSONArray("remainingResources").toResources(),
+    zone = runCatching { WorldZone.valueOf(optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER)
 )
