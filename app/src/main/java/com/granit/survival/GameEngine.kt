@@ -66,6 +66,32 @@ class GameEngine {
     /** Restore the complete wake-up state after a failed expedition. */
     fun respawnAtWakeCheckpoint(): Boolean = checkpointSystem.restore(this)
 
+    fun createSaveSnapshot(): EngineSaveSnapshot = EngineSaveSnapshot(
+        player = PlayerSnapshot(player.x, player.y, player.speed),
+        inventory = inventory.snapshot(),
+        bunkerStorage = bunkerStorage.snapshot(),
+        needs = needs.snapshot(),
+        clock = worldClock.snapshot(),
+        remainingResources = tileMap.resourceSnapshot(),
+        wakeCheckpoint = checkpointSystem.snapshot()
+    )
+
+    fun restoreSaveSnapshot(snapshot: EngineSaveSnapshot) {
+        player.x = snapshot.player.x
+        player.y = snapshot.player.y
+        player.speed = snapshot.player.speed
+        inventory.restore(snapshot.inventory)
+        bunkerStorage.restore(snapshot.bunkerStorage)
+        needs.restore(snapshot.needs)
+        worldClock.restore(snapshot.clock)
+        tileMap.restoreResources(snapshot.remainingResources)
+        checkpointSystem.restoreSnapshot(snapshot.wakeCheckpoint)
+        camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
+        accumulator = 0f
+        gameMinuteAccumulator = 0f
+        wasInteracting = false
+    }
+
     private fun fixedUpdate(delta: Float, input: EngineInput) {
         val length = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
         val scale = if (length > 1f) 1f / length else 1f
