@@ -13,13 +13,17 @@ data class ItemStack(
     var quantity: Int
 )
 
-/** Fixed 4x4 inventory. Stack size is intentionally small for the first prototype. */
+/** Fixed-size item container. Stack size is intentionally small for the first prototype. */
 class Inventory(
     val columns: Int = 4,
     val rows: Int = 4,
     private val stackLimit: Int = 20
 ) {
     private val slots = MutableList<ItemStack?>(columns * rows) { null }
+
+    init {
+        require(columns > 0 && rows > 0 && stackLimit > 0)
+    }
 
     fun slot(index: Int): ItemStack? = slots.getOrNull(index)?.copy()
 
@@ -67,4 +71,14 @@ class Inventory(
     }
 
     fun snapshot(): List<ItemStack?> = slots.map { it?.copy() }
+
+    fun restore(snapshot: List<ItemStack?>) {
+        require(snapshot.size == slots.size) { "Inventory snapshot has an unexpected slot count" }
+        snapshot.forEach { stack ->
+            require(stack == null || stack.quantity in 1..stackLimit) {
+                "Inventory snapshot contains an invalid stack"
+            }
+        }
+        for (index in slots.indices) slots[index] = snapshot[index]?.copy()
+    }
 }
