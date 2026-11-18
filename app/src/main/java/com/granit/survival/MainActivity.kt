@@ -82,7 +82,8 @@ class MainActivity : Activity() {
                     .show()
             } else startNewGame()
         })
-        val hasSave = session.saves.listSlots().any { it.exists && !it.corrupted }
+        val hasSave = session.saves.autoSaveTimestamp() != null ||
+            session.saves.listSlots().any { it.exists && !it.corrupted }
         panel.addView(menuButton("ПРОДОЛЖИТЬ", enabled = hasSave) {
             if (session.loadMostRecent()) enterGame()
             else Toast.makeText(this, "Нет доступного сохранения", Toast.LENGTH_SHORT).show()
