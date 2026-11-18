@@ -15,6 +15,8 @@ class PixelRenderer {
     private var worldScale = 1f
     private var worldOffsetX = 0f
     private var worldOffsetY = 0f
+    private val vertexBuffer: FloatBuffer = ByteBuffer.allocateDirect(8 * 4)
+        .order(ByteOrder.nativeOrder()).asFloatBuffer()
 
     fun create() {
         val vertexShader = compileShader(
@@ -56,27 +58,41 @@ class PixelRenderer {
         GLES20.glUseProgram(program)
         GLES20.glEnableVertexAttribArray(positionLocation)
 
-        // Bunker floor and walls.
-        rect(0f, 0f, 20f, 12f, 0.12f, 0.15f, 0.16f)
-        rect(0.35f, 0.35f, 19.3f, 11.3f, 0.22f, 0.24f, 0.23f)
-        rect(0.7f, 0.7f, 18.6f, 10.6f, 0.29f, 0.30f, 0.27f)
-
-        // Floor panels.
-        for (x in 1..18) {
-            rect(x.toFloat(), 1f, 0.035f, 10f, 0.23f, 0.24f, 0.21f)
+        // Base floor and subtle tile grid.
+        rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT, 0.12f, 0.15f, 0.16f)
+        for (x in 1..19) {
+            rect(x.toFloat(), 0f, 0.025f, GameEngine.WORLD_HEIGHT, 0.16f, 0.18f, 0.17f)
         }
-        for (y in 1..10) {
-            rect(1f, y.toFloat(), 18f, 0.035f, 0.23f, 0.24f, 0.21f)
+        for (y in 1..11) {
+            rect(0f, y.toFloat(), GameEngine.WORLD_WIDTH, 0.025f, 0.16f, 0.18f, 0.17f)
         }
 
-        // Furniture, storage and exit.
-        rect(1.4f, 1.4f, 4.2f, 1.5f, 0.31f, 0.25f, 0.18f)
-        rect(1.65f, 1.65f, 3.7f, 0.18f, 0.43f, 0.35f, 0.23f)
-        rect(1.7f, 3.5f, 2.2f, 1.15f, 0.25f, 0.29f, 0.27f)
-        rect(15.5f, 1.35f, 2.8f, 1.7f, 0.34f, 0.27f, 0.17f)
-        rect(15.8f, 1.65f, 2.2f, 1.1f, 0.18f, 0.20f, 0.19f)
-        rect(8.5f, 0.72f, 3f, 0.18f, 0.48f, 0.35f, 0.20f)
-        rect(9.2f, 0.72f, 1.6f, 0.5f, 0.20f, 0.35f, 0.26f)
+        // Draw only non-floor tiles; the tile map is also used by movement collision.
+        engine.tileMap.forEachTile { tileX, tileY, type ->
+            when (type) {
+                TileType.FLOOR -> Unit
+                TileType.WALL -> rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.29f, 0.30f, 0.27f)
+                TileType.BED -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.31f, 0.25f, 0.18f)
+                    rect(tileX + 0.08f, tileY + 0.12f, 0.84f, 0.18f, 0.43f, 0.35f, 0.23f)
+                }
+                TileType.WORKBENCH -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.26f)
+                    rect(tileX + 0.12f, tileY + 0.18f, 0.76f, 0.18f, 0.48f, 0.35f, 0.20f)
+                }
+                TileType.STORAGE -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.34f, 0.27f, 0.17f)
+                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.18f, 0.20f, 0.19f)
+                }
+                TileType.EXIT -> rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.39f)
+            }
+        }
+
+        // Simple top status strip placeholder.
+        rect(0.55f, 0.48f, 5.2f, 0.42f, 0.07f, 0.08f, 0.08f)
+        rect(0.72f, 0.60f, 1.35f, 0.16f, 0.56f, 0.24f, 0.19f)
+        rect(2.20f, 0.60f, 1.05f, 0.16f, 0.25f, 0.43f, 0.49f)
+        rect(3.38f, 0.60f, 1.05f, 0.16f, 0.69f, 0.57f, 0.28f)
 
         // Character: compact blocks keep the prototype's pixel-art look.
         val px = engine.player.x
@@ -114,10 +130,9 @@ class PixelRenderer {
             toNdcX(right), toNdcY(top),
             toNdcX(right), toNdcY(bottom)
         )
-        val buffer: FloatBuffer = ByteBuffer.allocateDirect(vertices.size * 4)
-            .order(ByteOrder.nativeOrder()).asFloatBuffer()
-        buffer.put(vertices).position(0)
-        GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, buffer)
+        vertexBuffer.clear()
+        vertexBuffer.put(vertices).position(0)
+        GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
         GLES20.glUniform4f(colorLocation, r, g, b, 1f)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
     }
