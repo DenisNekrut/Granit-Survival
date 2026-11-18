@@ -5,7 +5,8 @@ enum class ItemType(val displayName: String, val color: Int) {
     METAL("Металл", 0xFF8A969A.toInt()),
     FABRIC("Ткань", 0xFF718B86.toInt()),
     CANNED_FOOD("Консервы", 0xFFB28A43.toInt()),
-    WATER("Вода", 0xFF4E91B5.toInt())
+    WATER("Вода", 0xFF4E91B5.toInt()),
+    MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt())
 }
 
 data class ItemStack(
@@ -53,6 +54,17 @@ class Inventory(
             }
         }
         return remaining
+    }
+
+    fun canAdd(type: ItemType, amount: Int = 1): Boolean {
+        if (amount <= 0) return false
+        var remaining = amount
+        slots.forEach { stack ->
+            if (stack?.type == type) remaining -= (stackLimit - stack.quantity).coerceAtLeast(0)
+        }
+        val emptySlots = slots.count { it == null }
+        remaining -= emptySlots * stackLimit
+        return remaining <= 0
     }
 
     fun remove(type: ItemType, amount: Int = 1): Boolean {
