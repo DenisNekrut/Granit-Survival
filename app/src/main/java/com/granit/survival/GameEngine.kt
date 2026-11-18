@@ -87,6 +87,11 @@ class GameEngine {
     }
 
     fun restoreZoneResources(snapshots: List<ZoneResourceSnapshot>) {
+        if (snapshots.isEmpty()) {
+            zoneMaps.clear()
+            WorldZone.values().forEach { target -> zoneMaps[target] = TileMap(zone = target) }
+            return
+        }
         snapshots.forEach { snapshot ->
             zoneMaps.getOrPut(snapshot.zone) { TileMap(zone = snapshot.zone) }
                 .restoreResources(snapshot.resources)
