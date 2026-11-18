@@ -113,6 +113,9 @@ class MainActivity : Activity() {
         gameSurface.pauseEngine()
         gameSurface.visibility = View.GONE
         val panel = createPanel("ПАУЗА", "Состояние игры сохранено в памяти")
+        panel.addView(label("Психологическое состояние", 16f, Color.WHITE))
+        panel.addView(label("Стресс: " + session.engine.psychology.stress.toInt() + "  ·  Одиночество: " + session.engine.psychology.loneliness.toInt(), 13f, Color.LTGRAY))
+        panel.addView(label("Усталость: " + session.engine.psychology.fatigue.toInt() + "  ·  Мораль: " + session.engine.psychology.morale.toInt(), 13f, Color.LTGRAY))
         panel.addView(menuButton("ПРОДОЛЖИТЬ") { enterGame() })
         panel.addView(menuButton("ЕСТЬ КОНСЕРВЫ", enabled = session.engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
             if (session.consumeFood()) { Toast.makeText(this, "Консервы использованы", Toast.LENGTH_SHORT).show(); showPauseMenu() }
