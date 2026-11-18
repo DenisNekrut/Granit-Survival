@@ -45,6 +45,16 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun discoveryDetailsAreAvailableForJournalAndUnknownIdsAreIgnored() {
+        val engine = GameEngine()
+        val forestPoi = PointOfInterestCatalog.inZone(WorldZone.FOREST).first()
+        val roadPoi = PointOfInterestCatalog.inZone(WorldZone.ROAD).first()
+        engine.restoreDiscoveredPointsOfInterest(setOf(roadPoi.id, forestPoi.id, "unknown_id"))
+
+        assertEquals(listOf(forestPoi, roadPoi), engine.discoveredPointDetails())
+    }
+
+    @Test
     fun discoveriesSurviveSaveSnapshotRestore() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first()

@@ -134,6 +134,9 @@ class MainActivity : Activity() {
             } else Toast.makeText(this, "Сейчас эфир недоступен", Toast.LENGTH_SHORT).show()
         })
         panel.addView(menuButton("БИБЛИОТЕКА", enabled = session.engine.canAccessBookshelf()) { showBookLibrary() })
+        panel.addView(menuButton("ЖУРНАЛ НАХОДОК (" + session.engine.discoveredPointsOfInterest().size + "/" + PointOfInterestCatalog.all().size + ")") {
+            showDiscoveryJournal()
+        })
         panel.addView(menuButton("МАСТЕРСКАЯ", enabled = session.engine.canUseWorkbench()) { showCrafting() })
         panel.addView(menuButton("ПЕРЕВЯЗАТЬСЯ", enabled = session.engine.inventory.count(ItemType.BANDAGE) > 0 && session.engine.needs.health < 100f) {
             if (session.engine.useBandage()) { Toast.makeText(this, "Бинт использован", Toast.LENGTH_SHORT).show(); showPauseMenu() }
@@ -163,6 +166,24 @@ class MainActivity : Activity() {
                 .setPositiveButton("В МЕНЮ") { _, _ -> showMainMenu() }
                 .show()
         })
+        showOverlay(panel)
+    }
+
+    private fun showDiscoveryJournal() {
+        val panel = createPanel("ЖУРНАЛ ЭКСПЕДИЦИЙ", "Места, обнаруженные во время вылазок")
+        val discoveries = session.engine.discoveredPointDetails()
+        if (discoveries.isEmpty()) {
+            panel.addView(label("Пока ничего не найдено. Исследуйте лес, руины и дорогу.", 14f, Color.LTGRAY))
+        } else {
+            WorldZone.values().filter { zone -> discoveries.any { it.zone == zone } }.forEach { zone ->
+                panel.addView(label(zone.displayName.uppercase(), 17f, Color.rgb(207, 194, 155), true))
+                discoveries.filter { it.zone == zone }.forEach { poi ->
+                    panel.addView(label(poi.title, 15f, Color.WHITE))
+                    panel.addView(label(poi.description, 12f, Color.LTGRAY))
+                }
+            }
+        }
+        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
         showOverlay(panel)
     }
 
