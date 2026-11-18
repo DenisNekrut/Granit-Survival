@@ -17,12 +17,14 @@
 - Four connected areas: bunker, forest, ruins and road.
 - Separate resource layouts for each area; collected resources persist when travelling between zones.
 - 4×4 inventory, resource collection, bunker storage, item transfer, canned food and water consumption.
-- Survival clock, health, hunger, thirst, energy and sleep until 07:00.
-- Wake-up checkpoint with rollback of player, inventory, bunker storage, needs, time and resources in every zone.
-- Three manual save slots plus a separate atomic autosave file, versioned JSON format and backward reading of version 1 saves.
+- Survival clock, health, hunger, thirst, energy and sleep until 07:00; gathering and travel spend game time.
+- Psychological indicators: stress, loneliness, fatigue and morale; sleep/return aid recovery, while stress and fatigue gently affect movement speed.
+- Wake-up checkpoint with rollback of player, inventory, bunker storage, survival needs, psychology, time and resources in every zone.
+- Three manual save slots plus a separate atomic autosave file, versioned JSON format v3 and backward reading of older versions.
 - Main menu, pause screen, save-slot manager, storage screen and settings screen.
 - Settings persist through SharedPreferences. Joystick sensitivity and scale are applied; audio, vibration and graphics quality still need integration.
-- PixelSpriteAtlas with a shared palette, player idle/walk frames, resource sprites and atlas validation.
+- PixelSpriteAtlas with a shared palette, player idle/walk frames, resource and medical-item sprites, and atlas validation.
+- Basic workbench recipes: bandage and medical kit; healing items are consumed only when health can be restored.
 - HUD with live survival meters, day/time and current zone label.
 
 ## Documentation
@@ -34,7 +36,7 @@ The legacy Unity-based plan is retained for history only and is superseded by th
 
 ## Development status
 
-The prototype now has the first connected gameplay loop across four areas, but it is not yet a complete game. The maps and sprite art are early placeholders. There are no finished NPC/event systems, story content, book library, crafting progression or full audio layer. Physical Android device testing remains outstanding.
+The prototype now has the first connected gameplay loop across four areas, but it is not yet a complete game. The maps and sprite art are early placeholders. There are no finished NPC/event systems, story content or book library; crafting currently has only two medical recipes, and audio integration is incomplete. Physical Android device testing remains outstanding.
 
 ## Downloading a test APK
 
