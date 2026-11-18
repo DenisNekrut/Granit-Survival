@@ -32,6 +32,7 @@ class GameEngine {
     val inventory = Inventory()
     val bunkerStorage = BunkerStorage()
     val needs = SurvivalNeeds()
+    val psychology = PsychologicalState()
     val worldClock = WorldClock()
     val checkpointSystem = CheckpointSystem()
 
@@ -66,6 +67,7 @@ class GameEngine {
     fun sleepUntilMorning(): Int {
         val sleptMinutes = worldClock.sleepUntilMorning()
         needs.sleep(sleptMinutes)
+        psychology.sleep(sleptMinutes)
         gameMinuteAccumulator = 0f
         if (needs.health <= 0f) {
             checkpointSystem.restore(this)
@@ -103,6 +105,7 @@ class GameEngine {
     }
 
     fun changeZone(target: WorldZone) {
+        if (target != zone) psychology.onZoneChange(zone, target)
         tileMap = zoneMaps.getOrPut(target) { TileMap(zone = target) }
         player.x = target.spawnX
         player.y = target.spawnY
@@ -172,6 +175,7 @@ class GameEngine {
         inventory = inventory.snapshot(),
         bunkerStorage = bunkerStorage.snapshot(),
         needs = needs.snapshot(),
+        psychology = psychology.snapshot(),
         clock = worldClock.snapshot(),
         remainingResources = tileMap.resourceSnapshot(),
         zone = zone,
@@ -189,6 +193,7 @@ class GameEngine {
         inventory.restore(snapshot.inventory)
         bunkerStorage.restore(snapshot.bunkerStorage)
         needs.restore(snapshot.needs)
+        psychology.restore(snapshot.psychology)
         worldClock.restore(snapshot.clock)
         tileMap.restoreResources(snapshot.remainingResources)
         checkpointSystem.restoreSnapshot(snapshot.wakeCheckpoint)
@@ -220,6 +225,7 @@ class GameEngine {
         while (gameMinuteAccumulator >= GAME_MINUTE_REAL_SECONDS) {
             worldClock.advanceMinutes(1)
             needs.advanceAwake(1)
+            psychology.advanceAwake(1, isMoving, zone)
             gameMinuteAccumulator -= GAME_MINUTE_REAL_SECONDS
             if (needs.health <= 0f) {
                 checkpointSystem.restore(this)
