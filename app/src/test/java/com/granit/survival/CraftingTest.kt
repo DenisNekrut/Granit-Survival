@@ -51,6 +51,25 @@ class CraftingTest {
     }
 
     @Test
+    fun bandageCanBeCraftedAndUsedForSmallHealing() {
+        val engine = GameEngine()
+        engine.player.x = 9.5f
+        engine.player.y = 1.5f
+        engine.inventory.add(ItemType.FABRIC, 1)
+        val start = engine.worldClock.totalMinutes
+
+        assertTrue(engine.craft("bandage"))
+        assertEquals(0, engine.inventory.count(ItemType.FABRIC))
+        assertEquals(1, engine.inventory.count(ItemType.BANDAGE))
+        assertEquals(start + 3, engine.worldClock.totalMinutes)
+
+        engine.needs.restore(SurvivalNeedsSnapshot(health = 60f, hunger = 80f, thirst = 80f, energy = 80f))
+        assertTrue(engine.useBandage())
+        assertEquals(0, engine.inventory.count(ItemType.BANDAGE))
+        assertEquals(75f, engine.needs.health, 0.001f)
+    }
+
+    @Test
     fun unknownRecipeDoesNotChangeInventory() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.FABRIC, 3)
