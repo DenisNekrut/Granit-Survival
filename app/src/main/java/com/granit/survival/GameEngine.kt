@@ -22,10 +22,15 @@ class GameEngine {
     val player = PlayerState()
     val tileMap = TileMap()
     val camera = Camera2D()
+    val inventory = Inventory()
     private var accumulator = 0f
     var simulationTimeSeconds: Double = 0.0
         private set
     var interactionCount: Int = 0
+        private set
+    var collectedResourceCount: Int = 0
+        private set
+    var lastCollectedItem: ItemType? = null
         private set
     private var wasInteracting = false
 
@@ -49,13 +54,27 @@ class GameEngine {
         val nextY = (player.y + stepY).coerceIn(0.8f, WORLD_HEIGHT - 0.8f)
         if (tileMap.isWalkable(player.x, nextY)) player.y = nextY
 
-        if (input.interact && !wasInteracting) {
-            val nearby = tileMap.nearestInteractable(player.x, player.y, 1.35f)
-            if (nearby != null) interactionCount++
-        }
+        if (input.interact && !wasInteracting) interact()
         wasInteracting = input.interact
 
         camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
         simulationTimeSeconds += delta.toDouble()
+    }
+
+    private fun interact() {
+        val resource = tileMap.nearestResource(player.x, player.y, 1.35f)
+        if (resource != null) {
+            // Remove the world node only after the inventory accepted the item.
+            if (inventory.add(resource.type, 1) == 0 && tileMap.collectResource(resource)) {
+                collectedResourceCount++
+                lastCollectedItem = resource.type
+                interactionCount++
+            }
+            return
+        }
+
+        if (tileMap.nearestInteractable(player.x, player.y, 1.35f) != null) {
+            interactionCount++
+        }
     }
 }
