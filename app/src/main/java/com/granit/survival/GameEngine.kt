@@ -2,10 +2,7 @@ package com.granit.survival
 
 import kotlin.math.sqrt
 
-/**
- * Platform-independent simulation state for Granit Survival.
- * The render thread owns updates; UI input is sampled once per frame.
- */
+/** Platform-independent simulation state for Granit Survival. */
 data class EngineInput(val moveX: Float = 0f, val moveY: Float = 0f)
 
 data class PlayerState(
@@ -23,6 +20,7 @@ class GameEngine {
     }
 
     val player = PlayerState()
+    val tileMap = TileMap()
     private var accumulator = 0f
     var simulationTimeSeconds: Double = 0.0
         private set
@@ -38,10 +36,16 @@ class GameEngine {
     private fun fixedUpdate(delta: Float, input: EngineInput) {
         val length = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
         val scale = if (length > 1f) 1f / length else 1f
-        player.x = (player.x + input.moveX * scale * player.speed * delta)
-            .coerceIn(0.65f, WORLD_WIDTH - 0.65f)
-        player.y = (player.y + input.moveY * scale * player.speed * delta)
-            .coerceIn(0.8f, WORLD_HEIGHT - 0.8f)
+        val stepX = input.moveX * scale * player.speed * delta
+        val stepY = input.moveY * scale * player.speed * delta
+
+        // Resolve each axis independently so the character can slide along walls.
+        val nextX = (player.x + stepX).coerceIn(0.65f, WORLD_WIDTH - 0.65f)
+        if (tileMap.isWalkable(nextX, player.y)) player.x = nextX
+
+        val nextY = (player.y + stepY).coerceIn(0.8f, WORLD_HEIGHT - 0.8f)
+        if (tileMap.isWalkable(player.x, nextY)) player.y = nextY
+
         simulationTimeSeconds += delta.toDouble()
     }
 }
