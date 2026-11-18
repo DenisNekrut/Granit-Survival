@@ -58,6 +58,7 @@ class CheckpointSystem {
     private fun WakeCheckpoint.deepCopy() = copy(
         inventory = inventory.map { it?.copy() },
         bunkerStorage = bunkerStorage.map { it?.copy() },
-        remainingResources = remainingResources.toList()
+        remainingResources = remainingResources.toList(),
+        zoneResources = zoneResources.map { it.copy(resources = it.resources.toList()) }
     )
 }
