@@ -11,8 +11,8 @@ enum class TileType {
 
 /** Small grid world. Coordinates are measured in world tiles. */
 class TileMap(
-    val width: Int = 20,
-    val height: Int = 12
+    val width: Int = 40,
+    val height: Int = 24
 ) {
     private val tiles = Array(height) { Array(width) { TileType.FLOOR } }
 
