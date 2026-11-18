@@ -36,13 +36,13 @@ class WorldZoneTest {
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(WorldZone.FOREST, engine.zone)
 
-        engine.player.x = 38.2f
+        engine.player.x = 38.5f
         engine.player.y = 12.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = false))
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(WorldZone.ROAD, engine.zone)
 
-        engine.player.x = 0.8f
+        engine.player.x = 1.5f
         engine.player.y = 12.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = false))
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
