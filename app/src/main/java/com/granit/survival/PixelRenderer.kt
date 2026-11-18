@@ -95,13 +95,32 @@ class PixelRenderer {
             }
         }
 
-        // Character: compact blocks keep the prototype's pixel-art look.
+        // Character sprite: layered pixel-art silhouette instead of placeholder blocks.
         val px = engine.player.x
         val py = engine.player.y
-        rect(px - 0.28f, py - 0.12f, 0.56f, 0.62f, 0.16f, 0.25f, 0.24f)
-        rect(px - 0.22f, py - 0.48f, 0.44f, 0.38f, 0.68f, 0.55f, 0.39f)
-        rect(px - 0.30f, py + 0.42f, 0.22f, 0.22f, 0.12f, 0.14f, 0.14f)
-        rect(px + 0.08f, py + 0.42f, 0.22f, 0.22f, 0.12f, 0.14f, 0.14f)
+        drawPixelSprite(
+            rows = listOf(
+                "....HHHH....",
+                "...HHHHHH...",
+                "...SSSSSS...",
+                "..SSSSSSSS..",
+                "..SSSSSSSS..",
+                "..SSSSSSSS..",
+                "..CCAAAAAC..",
+                ".PCCCCCCCC..",
+                ".PCCCCCCCC..",
+                ".PCCCCCCCC..",
+                "..CCCCCCCC..",
+                "..BBBBBBBB..",
+                "..BB..BB....",
+                "..BB..BB....",
+                "DD....DD....",
+                "DD....DD...."
+            ),
+            centerX = px,
+            topY = py - 0.48f,
+            pixelSize = 0.06f
+        )
 
         // Screen-space HUD reads the live simulation values.
         screenRect(0.42f, 0.28f, 4.75f, 2.72f, 0.055f, 0.067f, 0.066f)
@@ -137,6 +156,41 @@ class PixelRenderer {
 
 
         GLES20.glDisableVertexAttribArray(positionLocation)
+    }
+
+    private fun drawPixelSprite(rows: List<String>, centerX: Float, topY: Float, pixelSize: Float) {
+        val spriteWidth = rows.maxOf { it.length }
+        val left = centerX - spriteWidth * pixelSize * 0.5f
+        val palette = mapOf(
+            'H' to floatArrayOf(0.13f, 0.12f, 0.11f),
+            'S' to floatArrayOf(0.68f, 0.51f, 0.37f),
+            'C' to floatArrayOf(0.25f, 0.34f, 0.30f),
+            'A' to floatArrayOf(0.64f, 0.48f, 0.25f),
+            'P' to floatArrayOf(0.15f, 0.20f, 0.18f),
+            'B' to floatArrayOf(0.28f, 0.31f, 0.29f),
+            'D' to floatArrayOf(0.10f, 0.11f, 0.10f)
+        )
+        rows.forEachIndexed { rowIndex, row ->
+            var column = 0
+            while (column < row.length) {
+                val symbol = row[column]
+                if (symbol == '.') {
+                    column++
+                    continue
+                }
+                var runEnd = column + 1
+                while (runEnd < row.length && row[runEnd] == symbol) runEnd++
+                val color = palette[symbol] ?: floatArrayOf(0.4f, 0.4f, 0.4f)
+                rect(
+                    left + column * pixelSize,
+                    topY + rowIndex * pixelSize,
+                    (runEnd - column) * pixelSize,
+                    pixelSize,
+                    color[0], color[1], color[2]
+                )
+                column = runEnd
+            }
+        }
     }
 
     private fun drawNeedBar(label: String, value: Float, y: Float, r: Float, g: Float, b: Float) {
