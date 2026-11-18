@@ -123,6 +123,16 @@ class MainActivity : Activity() {
         panel.addView(menuButton("ПИТЬ ВОДУ", enabled = session.engine.inventory.count(ItemType.WATER) > 0) {
             if (session.drinkWater()) { Toast.makeText(this, "Вода использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
         })
+        panel.addView(menuButton("РАДИОПРИЁМНИК", enabled = session.engine.canUseRadio()) {
+            val event = session.engine.listenToRadio()
+            if (event != null) {
+                AlertDialog.Builder(this)
+                    .setTitle(event.title)
+                    .setMessage(event.description)
+                    .setPositiveButton("ПОНЯТНО") { _, _ -> showPauseMenu() }
+                    .show()
+            } else Toast.makeText(this, "Сейчас эфир недоступен", Toast.LENGTH_SHORT).show()
+        })
         panel.addView(menuButton("БИБЛИОТЕКА", enabled = session.engine.canAccessBookshelf()) { showBookLibrary() })
         panel.addView(menuButton("МАСТЕРСКАЯ", enabled = session.engine.canUseWorkbench()) { showCrafting() })
         panel.addView(menuButton("ПЕРЕВЯЗАТЬСЯ", enabled = session.engine.inventory.count(ItemType.BANDAGE) > 0 && session.engine.needs.health < 100f) {
