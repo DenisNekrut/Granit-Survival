@@ -32,15 +32,17 @@ class CraftingTest {
         assertFalse(engine.craft("medical_kit"))
 
         val recipe = CraftingRecipe.byId("medical_kit")!!
-        val full = Inventory(columns = 1, rows = 1)
-        full.add(ItemType.MEDICAL_KIT, 1)
+        val full = Inventory(columns = 3, rows = 1)
+        full.add(ItemType.FABRIC, 2)
+        full.add(ItemType.METAL, 1)
+        full.add(ItemType.WOOD, 20)
         assertFalse(recipe.canCraft(full))
     }
 
     @Test
     fun medicalKitRestoresHealthAndIsConsumed() {
         val engine = GameEngine()
-        engine.needs.advanceAwake(600)
+        engine.needs.restore(SurvivalNeedsSnapshot(health = 50f, hunger = 80f, thirst = 80f, energy = 50f))
         val before = engine.needs.health
         engine.inventory.add(ItemType.MEDICAL_KIT, 1)
         assertTrue(engine.useMedicalKit())
