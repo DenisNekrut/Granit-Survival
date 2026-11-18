@@ -216,7 +216,7 @@ class GameEngine {
     private fun fixedUpdate(delta: Float, input: EngineInput) {
         val length = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
         val scale = if (length > 1f) 1f / length else 1f
-        val effectiveSpeed = player.speed * needs.movementSpeedMultiplier
+        val effectiveSpeed = player.speed * needs.movementSpeedMultiplier * psychology.movementSpeedMultiplier
         val stepX = input.moveX * scale * effectiveSpeed * delta
         val stepY = input.moveY * scale * effectiveSpeed * delta
         isMoving = kotlin.math.abs(stepX) > 0.0001f || kotlin.math.abs(stepY) > 0.0001f
