@@ -18,11 +18,19 @@ The legacy Unity-based plan is retained for history only and is superseded by th
 
 ## Development status
 
-The first engine prototype now contains:
-- Android application shell and SurfaceView lifecycle;
-- EGL14 context and a dedicated OpenGL ES 2.0 render thread;
-- fixed-step simulation loop;
-- a first block-based bunker scene;
-- a controllable player state and touch joystick input.
+The current prototype contains:
+- Android application shell, SurfaceView lifecycle and EGL14 render thread;
+- fixed-step simulation loop and OpenGL ES 2.0 renderer;
+- 40×24 tile map with bunker furniture, resource nodes and collision;
+- Camera2D follow behavior;
+- touch joystick and independent action pointer;
+- 4×4 inventory with stack merging, capacity checks and item removal;
+- resource pickup for wood, metal, fabric, canned food and water.
 
-This is an early technical prototype, not yet a complete game. The next work is to validate the build, improve input/rendering, and add world collision and tile-map support. Device testing is still required.
+This is an early technical prototype, not yet a complete game. Android device testing is still required.
+
+## Downloading a test APK
+
+Every successful GitHub Actions build uploads an artifact named **GranitSurvival-debug-apk**. Open the latest successful [Android Debug Build](https://github.com/DenisNekrut/Granit-Survival/actions), find the **Artifacts** section at the bottom of the run page, and download the ZIP. It contains `app-debug.apk`.
+
+The APK is a debug build for testing, not a signed production release.
