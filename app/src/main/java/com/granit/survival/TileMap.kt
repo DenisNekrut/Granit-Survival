@@ -122,6 +122,43 @@ class TileMap(
         return nearest
     }
 
+    fun resourceSnapshot(): List<ResourceLocation> {
+        val resources = mutableListOf<ResourceLocation>()
+        forEachTile { x, y, type ->
+            val item = when (type) {
+                TileType.RESOURCE_WOOD -> ItemType.WOOD
+                TileType.RESOURCE_METAL -> ItemType.METAL
+                TileType.RESOURCE_FABRIC -> ItemType.FABRIC
+                TileType.RESOURCE_FOOD -> ItemType.CANNED_FOOD
+                TileType.RESOURCE_WATER -> ItemType.WATER
+                else -> null
+            }
+            if (item != null) resources += ResourceLocation(x, y, item)
+        }
+        return resources
+    }
+
+    fun restoreResources(resources: List<ResourceLocation>) {
+        forEachTile { x, y, type ->
+            if (type == TileType.RESOURCE_WOOD ||
+                type == TileType.RESOURCE_METAL ||
+                type == TileType.RESOURCE_FABRIC ||
+                type == TileType.RESOURCE_FOOD ||
+                type == TileType.RESOURCE_WATER
+            ) set(x, y, TileType.FLOOR)
+        }
+        resources.forEach { resource ->
+            val type = when (resource.type) {
+                ItemType.WOOD -> TileType.RESOURCE_WOOD
+                ItemType.METAL -> TileType.RESOURCE_METAL
+                ItemType.FABRIC -> TileType.RESOURCE_FABRIC
+                ItemType.CANNED_FOOD -> TileType.RESOURCE_FOOD
+                ItemType.WATER -> TileType.RESOURCE_WATER
+            }
+            set(resource.x, resource.y, type)
+        }
+    }
+
     fun forEachTile(action: (x: Int, y: Int, type: TileType) -> Unit) {
         for (y in 0 until height) {
             for (x in 0 until width) action(x, y, tiles[y][x])
