@@ -15,7 +15,7 @@ class PixelRenderer {
     private var worldScale = 1f
     private var worldOffsetX = 0f
     private var worldOffsetY = 0f
-    private val vertexBuffer: FloatBuffer = ByteBuffer.allocateDirect(8 * 4)
+    private var currentCamera: Camera2D? = null\n    private val vertexBuffer: FloatBuffer = ByteBuffer.allocateDirect(8 * 4)
         .order(ByteOrder.nativeOrder()).asFloatBuffer()
 
     fun create() {
@@ -45,13 +45,13 @@ class PixelRenderer {
     fun resize(width: Int, height: Int) {
         screenWidth = width.coerceAtLeast(1)
         screenHeight = height.coerceAtLeast(1)
-        worldScale = minOf(screenWidth / GameEngine.WORLD_WIDTH, screenHeight / GameEngine.WORLD_HEIGHT)
+        worldScale = minOf(screenWidth / 20f, screenHeight / 12f)
         worldOffsetX = (screenWidth - GameEngine.WORLD_WIDTH * worldScale) * 0.5f
         worldOffsetY = (screenHeight - GameEngine.WORLD_HEIGHT * worldScale) * 0.5f
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
     }
 
-    fun render(engine: GameEngine, touchX: Float, touchY: Float, touching: Boolean) {
+    fun render(engine: GameEngine, joystickX: Float, joystickY: Float, touching: Boolean, interacting: Boolean) {
         GLES20.glClearColor(0.035f, 0.047f, 0.055f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (program == 0) return
@@ -88,12 +88,6 @@ class PixelRenderer {
             }
         }
 
-        // Simple top status strip placeholder.
-        rect(0.55f, 0.48f, 5.2f, 0.42f, 0.07f, 0.08f, 0.08f)
-        rect(0.72f, 0.60f, 1.35f, 0.16f, 0.56f, 0.24f, 0.19f)
-        rect(2.20f, 0.60f, 1.05f, 0.16f, 0.25f, 0.43f, 0.49f)
-        rect(3.38f, 0.60f, 1.05f, 0.16f, 0.69f, 0.57f, 0.28f)
-
         // Character: compact blocks keep the prototype's pixel-art look.
         val px = engine.player.x
         val py = engine.player.y
@@ -108,18 +102,54 @@ class PixelRenderer {
         rect(2.20f, 0.60f, 1.05f, 0.16f, 0.25f, 0.43f, 0.49f)
         rect(3.38f, 0.60f, 1.05f, 0.16f, 0.69f, 0.57f, 0.28f)
 
-        if (touching && touchX < screenWidth * 0.55f) {
-            val radius = 0.72f
-            val centerX = ((touchX - worldOffsetX) / worldScale).coerceIn(0.9f, 4f)
-            val centerY = ((touchY - worldOffsetY) / worldScale).coerceIn(7.5f, 10.8f)
-            rect(centerX - radius, centerY - radius, radius * 2f, radius * 2f, 0.35f, 0.39f, 0.36f)
-            rect(centerX - 0.22f, centerY - 0.22f, 0.44f, 0.44f, 0.67f, 0.65f, 0.55f)
+        // Screen-space HUD is independent from camera movement.
+        screenRect(0.55f, 0.48f, 5.2f, 0.42f, 0.07f, 0.08f, 0.08f)
+        screenRect(0.72f, 0.60f, 1.35f, 0.16f, 0.56f, 0.24f, 0.19f)
+        screenRect(2.20f, 0.60f, 1.05f, 0.16f, 0.25f, 0.43f, 0.49f)
+        screenRect(3.38f, 0.60f, 1.05f, 0.16f, 0.69f, 0.57f, 0.28f)
+
+        // Virtual joystick and interaction button.
+        screenRect(1.0f, 9.4f, 2.4f, 2.4f, 0.22f, 0.25f, 0.24f)
+        if (touching) {
+            val radiusPx = (screenHeight * 0.19f).coerceAtLeast(72f)
+            screenRect(
+                (joystickX - radiusPx * 0.18f) / worldScale,
+                (joystickY - radiusPx * 0.18f) / worldScale,
+                (radiusPx * 0.36f) / worldScale,
+                (radiusPx * 0.36f) / worldScale,
+                0.67f, 0.65f, 0.55f
+            )
         }
+        screenRect(16.8f, 9.2f, 2.2f, 2.2f,
+            if (interacting) 0.48f else 0.28f,
+            if (interacting) 0.55f else 0.32f,
+            if (interacting) 0.42f else 0.30f)
+
 
         GLES20.glDisableVertexAttribArray(positionLocation)
     }
 
     private fun rect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float) {
+        val viewX = currentCamera?.worldToViewX(x) ?: x
+        val viewY = currentCamera?.worldToViewY(y) ?: y
+        val left = worldOffsetX + viewX * worldScale
+        val top = worldOffsetY + viewY * worldScale
+        val right = worldOffsetX + (viewX + width) * worldScale
+        val bottom = worldOffsetY + (viewY + height) * worldScale
+        val vertices = floatArrayOf(
+            toNdcX(left), toNdcY(top),
+            toNdcX(left), toNdcY(bottom),
+            toNdcX(right), toNdcY(top),
+            toNdcX(right), toNdcY(bottom)
+        )
+        vertexBuffer.clear()
+        vertexBuffer.put(vertices).position(0)
+        GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
+        GLES20.glUniform4f(colorLocation, r, g, b, 1f)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+    }
+
+    private fun screenRect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float) {
         val left = worldOffsetX + x * worldScale
         val top = worldOffsetY + y * worldScale
         val right = worldOffsetX + (x + width) * worldScale
