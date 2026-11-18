@@ -1,65 +1,81 @@
 package com.granit.survival
 
 enum class TileType {
-    FLOOR,
-    WALL,
-    BED,
-    WORKBENCH,
-    STORAGE,
-    EXIT,
-    RESOURCE_WOOD,
-    RESOURCE_METAL,
-    RESOURCE_FABRIC,
-    RESOURCE_FOOD,
-    RESOURCE_WATER
+    FLOOR, WALL, BED, WORKBENCH, STORAGE, EXIT,
+    EXIT_TO_BUNKER, EXIT_TO_FOREST, EXIT_TO_RUINS, EXIT_TO_ROAD,
+    RESOURCE_WOOD, RESOURCE_METAL, RESOURCE_FABRIC, RESOURCE_FOOD, RESOURCE_WATER
 }
 
 data class ResourceLocation(val x: Int, val y: Int, val type: ItemType)
 
-/** Grid world shared by rendering, collision and interaction systems. */
 class TileMap(
     val width: Int = 40,
-    val height: Int = 24
+    val height: Int = 24,
+    val zone: WorldZone = WorldZone.BUNKER
 ) {
     private val tiles = Array(height) { Array(width) { TileType.FLOOR } }
 
     init {
-        for (x in 0 until width) {
-            set(x, 0, TileType.WALL)
-            set(x, height - 1, TileType.WALL)
+        for (x in 0 until width) { set(x, 0, TileType.WALL); set(x, height - 1, TileType.WALL) }
+        for (y in 0 until height) { set(0, y, TileType.WALL); set(width - 1, y, TileType.WALL) }
+        when (zone) {
+            WorldZone.BUNKER -> buildBunker()
+            WorldZone.FOREST -> buildForest()
+            WorldZone.RUINS -> buildRuins()
+            WorldZone.ROAD -> buildRoad()
         }
-        for (y in 0 until height) {
-            set(0, y, TileType.WALL)
-            set(width - 1, y, TileType.WALL)
-        }
+    }
 
-        // Bunker furniture and equipment.
+    private fun buildBunker() {
         fill(2, 2, 5, 1, TileType.BED)
         fill(2, 4, 3, 1, TileType.STORAGE)
         fill(16, 2, 2, 2, TileType.STORAGE)
         fill(9, 1, 2, 1, TileType.WORKBENCH)
-        set(width / 2, 0, TileType.EXIT)
-
-        // Test supplies placed within walking distance of the starting area.
-        set(7, 8, TileType.RESOURCE_WOOD)
-        set(12, 8, TileType.RESOURCE_METAL)
-        set(10, 11, TileType.RESOURCE_FABRIC)
-        set(14, 10, TileType.RESOURCE_FOOD)
+        set(width / 2, 0, TileType.EXIT_TO_FOREST)
+        set(7, 8, TileType.RESOURCE_WOOD); set(12, 8, TileType.RESOURCE_METAL)
+        set(10, 11, TileType.RESOURCE_FABRIC); set(14, 10, TileType.RESOURCE_FOOD)
         set(5, 10, TileType.RESOURCE_WATER)
     }
 
-    operator fun get(x: Int, y: Int): TileType {
-        if (x !in 0 until width || y !in 0 until height) return TileType.WALL
-        return tiles[y][x]
+    private fun buildForest() {
+        set(width / 2, height - 1, TileType.EXIT_TO_BUNKER)
+        set(0, height / 2, TileType.EXIT_TO_RUINS)
+        set(width - 1, height / 2, TileType.EXIT_TO_ROAD)
+        fill(4, 3, 2, 3, TileType.WALL); fill(9, 7, 2, 4, TileType.WALL)
+        fill(15, 2, 3, 2, TileType.WALL); fill(25, 5, 2, 4, TileType.WALL)
+        fill(31, 14, 3, 3, TileType.WALL)
+        set(7, 5, TileType.RESOURCE_WOOD); set(12, 4, TileType.RESOURCE_WOOD)
+        set(19, 6, TileType.RESOURCE_WOOD); set(23, 15, TileType.RESOURCE_WOOD)
+        set(29, 10, TileType.RESOURCE_FABRIC); set(14, 17, TileType.RESOURCE_WATER)
+        set(34, 6, TileType.RESOURCE_FOOD); set(6, 17, TileType.RESOURCE_METAL)
     }
 
+    private fun buildRuins() {
+        set(width - 1, height / 2, TileType.EXIT_TO_FOREST)
+        fill(7, 3, 5, 1, TileType.WALL); fill(7, 3, 1, 7, TileType.WALL)
+        fill(17, 8, 7, 2, TileType.WALL); fill(28, 3, 2, 6, TileType.WALL)
+        fill(11, 16, 4, 2, TileType.WALL)
+        set(5, 5, TileType.RESOURCE_METAL); set(14, 5, TileType.RESOURCE_METAL)
+        set(25, 13, TileType.RESOURCE_METAL); set(33, 17, TileType.RESOURCE_FABRIC)
+        set(20, 4, TileType.RESOURCE_FOOD); set(5, 19, TileType.RESOURCE_WATER)
+        set(31, 11, TileType.RESOURCE_WOOD)
+    }
+
+    private fun buildRoad() {
+        set(0, height / 2, TileType.EXIT_TO_FOREST)
+        fill(8, 5, 1, 5, TileType.WALL); fill(18, 13, 5, 1, TileType.WALL)
+        fill(29, 3, 2, 5, TileType.WALL); fill(33, 17, 3, 1, TileType.WALL)
+        set(6, 7, TileType.RESOURCE_METAL); set(13, 17, TileType.RESOURCE_METAL)
+        set(24, 5, TileType.RESOURCE_FABRIC); set(27, 16, TileType.RESOURCE_FOOD)
+        set(34, 11, TileType.RESOURCE_WATER); set(15, 4, TileType.RESOURCE_WOOD)
+    }
+
+    operator fun get(x: Int, y: Int): TileType =
+        if (x !in 0 until width || y !in 0 until height) TileType.WALL else tiles[y][x]
+
     fun isWalkable(worldX: Float, worldY: Float, radius: Float = 0.22f): Boolean {
-        val points = arrayOf(
-            worldX - radius to worldY - radius,
-            worldX + radius to worldY - radius,
-            worldX - radius to worldY + radius,
-            worldX + radius to worldY + radius
-        )
+        val points = arrayOf(worldX - radius to worldY - radius, worldX + radius to worldY - radius,
+            worldX - radius to worldY + radius, worldX + radius to worldY + radius)
         return points.all { (x, y) ->
             when (get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())) {
                 TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE -> false
@@ -72,7 +88,7 @@ class TileMap(
         var nearest: ResourceLocation? = null
         var nearestDistanceSquared = maxDistance * maxDistance
         forEachTile { x, y, type ->
-            val itemType = when (type) {
+            val item = when (type) {
                 TileType.RESOURCE_WOOD -> ItemType.WOOD
                 TileType.RESOURCE_METAL -> ItemType.METAL
                 TileType.RESOURCE_FABRIC -> ItemType.FABRIC
@@ -80,14 +96,9 @@ class TileMap(
                 TileType.RESOURCE_WATER -> ItemType.WATER
                 else -> null
             } ?: return@forEachTile
-
-            val dx = x + 0.5f - worldX
-            val dy = y + 0.5f - worldY
-            val distanceSquared = dx * dx + dy * dy
-            if (distanceSquared < nearestDistanceSquared) {
-                nearestDistanceSquared = distanceSquared
-                nearest = ResourceLocation(x, y, itemType)
-            }
+            val dx = x + 0.5f - worldX; val dy = y + 0.5f - worldY
+            val distance = dx * dx + dy * dy
+            if (distance < nearestDistanceSquared) { nearestDistanceSquared = distance; nearest = ResourceLocation(x, y, item) }
         }
         return nearest
     }
@@ -110,8 +121,7 @@ class TileMap(
         var found = false
         forEachTile { x, y, type ->
             if (type == target) {
-                val dx = x + 0.5f - worldX
-                val dy = y + 0.5f - worldY
+                val dx = x + 0.5f - worldX; val dy = y + 0.5f - worldY
                 if (dx * dx + dy * dy <= limit) found = true
             }
         }
@@ -120,23 +130,21 @@ class TileMap(
 
     fun nearestInteractable(worldX: Float, worldY: Float, maxDistance: Float): TileType? {
         var nearest: TileType? = null
-        var nearestDistanceSquared = maxDistance * maxDistance
+        var best = maxDistance * maxDistance
         forEachTile { x, y, type ->
-            if (type == TileType.BED || type == TileType.WORKBENCH || type == TileType.STORAGE || type == TileType.EXIT) {
-                val dx = x + 0.5f - worldX
-                val dy = y + 0.5f - worldY
-                val distanceSquared = dx * dx + dy * dy
-                if (distanceSquared < nearestDistanceSquared) {
-                    nearestDistanceSquared = distanceSquared
-                    nearest = type
-                }
+            val valid = type in setOf(TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.EXIT,
+                TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD)
+            if (valid) {
+                val dx = x + 0.5f - worldX; val dy = y + 0.5f - worldY
+                val distance = dx * dx + dy * dy
+                if (distance < best) { best = distance; nearest = type }
             }
         }
         return nearest
     }
 
     fun resourceSnapshot(): List<ResourceLocation> {
-        val resources = mutableListOf<ResourceLocation>()
+        val result = mutableListOf<ResourceLocation>()
         forEachTile { x, y, type ->
             val item = when (type) {
                 TileType.RESOURCE_WOOD -> ItemType.WOOD
@@ -146,19 +154,15 @@ class TileMap(
                 TileType.RESOURCE_WATER -> ItemType.WATER
                 else -> null
             }
-            if (item != null) resources += ResourceLocation(x, y, item)
+            if (item != null) result += ResourceLocation(x, y, item)
         }
-        return resources
+        return result
     }
 
     fun restoreResources(resources: List<ResourceLocation>) {
         forEachTile { x, y, type ->
-            if (type == TileType.RESOURCE_WOOD ||
-                type == TileType.RESOURCE_METAL ||
-                type == TileType.RESOURCE_FABRIC ||
-                type == TileType.RESOURCE_FOOD ||
-                type == TileType.RESOURCE_WATER
-            ) set(x, y, TileType.FLOOR)
+            if (type in setOf(TileType.RESOURCE_WOOD, TileType.RESOURCE_METAL, TileType.RESOURCE_FABRIC,
+                    TileType.RESOURCE_FOOD, TileType.RESOURCE_WATER)) set(x, y, TileType.FLOOR)
         }
         resources.forEach { resource ->
             val type = when (resource.type) {
@@ -173,9 +177,7 @@ class TileMap(
     }
 
     fun forEachTile(action: (x: Int, y: Int, type: TileType) -> Unit) {
-        for (y in 0 until height) {
-            for (x in 0 until width) action(x, y, tiles[y][x])
-        }
+        for (y in 0 until height) for (x in 0 until width) action(x, y, tiles[y][x])
     }
 
     private fun set(x: Int, y: Int, type: TileType) {
@@ -183,8 +185,6 @@ class TileMap(
     }
 
     private fun fill(x: Int, y: Int, w: Int, h: Int, type: TileType) {
-        for (tileY in y until y + h) {
-            for (tileX in x until x + w) set(tileX, tileY, type)
-        }
+        for (tileY in y until y + h) for (tileX in x until x + w) set(tileX, tileY, type)
     }
 }
