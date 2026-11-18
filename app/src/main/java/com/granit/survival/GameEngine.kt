@@ -112,22 +112,19 @@ class GameEngine {
         check(inventory.add(recipe.output, recipe.outputAmount) == 0) {
             "Crafting output did not fit after ingredient validation"
         }
-        advanceGameMinutes(recipe.craftMinutes)
-        return true
+        return advanceGameMinutes(recipe.craftMinutes)
     }
 
     fun useBandage(): Boolean {
         if (needs.health >= 100f || !inventory.remove(ItemType.BANDAGE, 1)) return false
         needs.restoreHealth(BANDAGE_HEALING)
-        advanceGameMinutes(3)
-        return true
+        return advanceGameMinutes(3)
     }
 
     fun useMedicalKit(): Boolean {
         if (needs.health >= 100f || !inventory.remove(ItemType.MEDICAL_KIT, 1)) return false
         needs.restoreHealth(MEDICAL_KIT_HEALING)
-        advanceGameMinutes(5)
-        return true
+        return advanceGameMinutes(5)
     }
 
     fun changeZone(target: WorldZone) {
@@ -165,8 +162,7 @@ class GameEngine {
     fun consumeFood(): Boolean {
         if (!inventory.remove(ItemType.CANNED_FOOD, 1)) return false
         needs.consumeFood()
-        advanceGameMinutes(5)
-        return true
+        return advanceGameMinutes(5)
     }
 
     fun drinkWater(): Boolean {
