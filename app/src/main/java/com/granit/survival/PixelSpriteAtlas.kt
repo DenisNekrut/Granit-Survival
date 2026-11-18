@@ -51,6 +51,10 @@ object PixelSpriteAtlas {
             "........", "..CCCC..", ".CCCCCC.", ".C....C.",
             ".C....C.", ".CCCCCC.", "..CCCC..", "........"
         )), mapOf('C' to floatArrayOf(0.77f, 0.57f, 0.26f))),
+        "bandage" to PixelSprite(listOf(listOf(
+            "........", "..BBBB..", ".BBBBBB.", "BB....BB",
+            "BB....BB", ".BBBBBB.", "..BBBB..", "........"
+        )), mapOf('B' to floatArrayOf(0.82f, 0.78f, 0.66f))),
         "water" to PixelSprite(listOf(listOf(
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
