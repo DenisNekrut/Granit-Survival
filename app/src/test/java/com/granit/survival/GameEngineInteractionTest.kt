@@ -54,6 +54,14 @@ class GameEngineInteractionTest {
     }
 
     @Test
+    fun craftedItemsCannotBeCollectedAsWorldResourceNodes() {
+        val map = TileMap()
+        assertFalse(map.collectResource(ResourceLocation(7, 8, ItemType.MEDICAL_KIT)))
+        assertFalse(map.collectResource(ResourceLocation(7, 8, ItemType.BANDAGE)))
+        assertEquals(TileType.RESOURCE_WOOD, map[7, 8])
+    }
+
+    @Test
     fun consumingFoodAndWaterUsesOneItemAndAdvancesTime() {
         val engine = GameEngine()
         engine.needs.advanceAwake(500)
