@@ -52,6 +52,29 @@ class GameEngine {
     var isMoving: Boolean = false
         private set
     private var wasInteracting = false
+    private val discoveredPoiIds = linkedSetOf<String>()
+    var lastDiscoveryTitle: String? = null
+        private set
+
+    fun isPoiDiscovered(id: String): Boolean = id in discoveredPoiIds
+    fun discoveredPointsOfInterest(): Set<String> = discoveredPoiIds.toSet()
+
+    fun restoreDiscoveredPointsOfInterest(ids: Set<String>) {
+        discoveredPoiIds.clear()
+        discoveredPoiIds.addAll(ids.filter { PointOfInterestCatalog.byId(it) != null })
+        lastDiscoveryTitle = null
+    }
+
+    fun scanNearbyPointsOfInterest(): List<PointOfInterest> {
+        val found = PointOfInterestCatalog.inZone(zone).filter { poi ->
+            val dx = player.x - poi.x
+            val dy = player.y - poi.y
+            dx * dx + dy * dy <= poi.discoveryRadius * poi.discoveryRadius &&
+                discoveredPoiIds.add(poi.id)
+        }
+        found.lastOrNull()?.let { lastDiscoveryTitle = it.title }
+        return found
+    }
 
     init {
         // The initial safe state acts as the first wake-up checkpoint.
@@ -220,12 +243,14 @@ class GameEngine {
         zoneResources = zoneResourceSnapshot(),
         bookLibrary = bookLibrary.snapshot(),
         radio = radioSystem.snapshot(),
+        discoveredPoiIds = discoveredPoiIds.toSet(),
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
     fun restoreSaveSnapshot(snapshot: EngineSaveSnapshot) {
         restoreZoneResources(snapshot.zoneResources)
         changeZone(snapshot.zone)
+        restoreDiscoveredPointsOfInterest(snapshot.discoveredPoiIds)
         if (snapshot.zoneResources.isEmpty()) tileMap.restoreResources(snapshot.remainingResources)
         player.x = snapshot.player.x
         player.y = snapshot.player.y
@@ -259,6 +284,8 @@ class GameEngine {
 
         val nextY = (player.y + stepY).coerceIn(0.8f, WORLD_HEIGHT - 0.8f)
         if (tileMap.isWalkable(player.x, nextY)) player.y = nextY
+
+        scanNearbyPointsOfInterest()
 
         if (input.interact && !wasInteracting) interact()
         wasInteracting = input.interact

@@ -19,6 +19,7 @@ data class EngineSaveSnapshot(
     val remainingResources: List<ResourceLocation>,
     val zone: WorldZone = WorldZone.BUNKER,
     val zoneResources: List<ZoneResourceSnapshot> = emptyList(),
+    val discoveredPoiIds: Set<String> = emptySet(),
     val wakeCheckpoint: WakeCheckpoint?
 ) {
     companion object
@@ -125,7 +126,7 @@ class GameSaveRepository(context: Context) {
 
     companion object {
         const val MAX_SLOTS = 3
-        const val SAVE_VERSION = 5
+        const val SAVE_VERSION = 6
     }
 }
 
@@ -141,6 +142,7 @@ private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("remainingResources", remainingResources.toResourcesJson())
     .put("zone", zone.name)
     .put("zoneResources", zoneResources.toZoneResourcesJson())
+    .put("discoveredPoiIds", JSONArray(discoveredPoiIds.toList()))
     .put("wakeCheckpoint", wakeCheckpoint?.toJson() ?: JSONObject.NULL)
 
 private fun PlayerSnapshot.toJson() = JSONObject()
@@ -202,6 +204,7 @@ private fun WakeCheckpoint.toJson() = JSONObject()
     .put("remainingResources", remainingResources.toResourcesJson())
     .put("zone", zone.name)
     .put("zoneResources", zoneResources.toZoneResourcesJson())
+    .put("discoveredPoiIds", JSONArray(discoveredPoiIds.toList()))
 
 private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveSnapshot {
     val checkpointJson = json.optJSONObject("wakeCheckpoint")
@@ -217,6 +220,7 @@ private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveS
         remainingResources = json.getJSONArray("remainingResources").toResources(),
         zone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
         zoneResources = json.optJSONArray("zoneResources")?.toZoneResources() ?: emptyList(),
+        discoveredPoiIds = json.optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet(),
         wakeCheckpoint = checkpointJson?.toWakeCheckpoint()
     )
 }
@@ -257,6 +261,9 @@ private fun JSONObject.toClockSnapshot() = WorldClockSnapshot(
     totalMinutes = getLong("totalMinutes")
 )
 
+private fun JSONArray.toStringSet(): Set<String> =
+    (0 until length()).mapNotNull { index -> optString(index).takeIf { it.isNotBlank() } }.toSet()
+
 private fun JSONArray.toItemStacks(): List<ItemStack?> = List(length()) { index ->
     if (isNull(index)) null else getJSONObject(index).let { stack ->
         ItemStack(ItemType.valueOf(stack.getString("type")), stack.getInt("quantity"))
@@ -293,5 +300,6 @@ private fun JSONObject.toWakeCheckpoint() = WakeCheckpoint(
     clock = getJSONObject("clock").toClockSnapshot(),
     remainingResources = getJSONArray("remainingResources").toResources(),
     zone = runCatching { WorldZone.valueOf(optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
-    zoneResources = optJSONArray("zoneResources")?.toZoneResources() ?: emptyList()
+    zoneResources = optJSONArray("zoneResources")?.toZoneResources() ?: emptyList(),
+    discoveredPoiIds = optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet()
 )

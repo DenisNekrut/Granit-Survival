@@ -13,7 +13,8 @@ data class WakeCheckpoint(
     val clock: WorldClockSnapshot,
     val remainingResources: List<ResourceLocation>,
     val zone: WorldZone,
-    val zoneResources: List<ZoneResourceSnapshot> = emptyList()
+    val zoneResources: List<ZoneResourceSnapshot> = emptyList(),
+    val discoveredPoiIds: Set<String> = emptySet()
 )
 
 /** Captures the complete reversible run state at wake-up. */
@@ -32,7 +33,8 @@ class CheckpointSystem {
             clock = engine.worldClock.snapshot(),
             remainingResources = engine.tileMap.resourceSnapshot(),
             zone = engine.zone,
-            zoneResources = engine.zoneResourceSnapshot()
+            zoneResources = engine.zoneResourceSnapshot(),
+            discoveredPoiIds = engine.discoveredPointsOfInterest()
         )
     }
 
@@ -58,6 +60,7 @@ class CheckpointSystem {
         engine.psychology.restore(saved.psychology)
         engine.bookLibrary.restore(saved.bookLibrary)
         engine.radioSystem.restore(saved.radio)
+        engine.restoreDiscoveredPointsOfInterest(saved.discoveredPoiIds)
         engine.worldClock.restore(saved.clock)
         engine.tileMap.restoreResources(saved.remainingResources)
         engine.camera.follow(engine.player.x, engine.player.y, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT)
@@ -69,6 +72,7 @@ class CheckpointSystem {
         bunkerStorage = bunkerStorage.map { it?.copy() },
         remainingResources = remainingResources.toList(),
         zoneResources = zoneResources.map { it.copy(resources = it.resources.toList()) },
-        bookLibrary = bookLibrary.copy(readBookIds = bookLibrary.readBookIds.toSet())
+        bookLibrary = bookLibrary.copy(readBookIds = bookLibrary.readBookIds.toSet()),
+        discoveredPoiIds = discoveredPoiIds.toSet()
     )
 }

@@ -179,6 +179,10 @@ class PixelRenderer {
         drawNeedBar("WT", engine.needs.thirst, 1.99f, 0.25f, 0.48f, 0.66f)
         drawNeedBar("EN", engine.needs.energy, 2.46f, 0.34f, 0.55f, 0.38f)
         drawInventory(engine.inventory)
+        engine.lastDiscoveryTitle?.let { title ->
+            screenRect(5.7f, 0.42f, 8.6f, 0.72f, 0.08f, 0.12f, 0.10f, 0.94f)
+            drawText("FOUND: $title", 5.95f, 0.68f, 0.075f, 0.78f, 0.76f, 0.62f)
+        }
 
         // Virtual joystick and interaction button.
         val joystickVisualSize = 2.4f * joystickScale
