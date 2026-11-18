@@ -14,6 +14,7 @@ data class EngineSaveSnapshot(
     val needs: SurvivalNeedsSnapshot,
     val psychology: PsychologicalStateSnapshot = PsychologicalStateSnapshot(),
     val bookLibrary: BookLibrarySnapshot = BookLibrarySnapshot(),
+    val radio: BunkerRadioSnapshot = BunkerRadioSnapshot(),
     val clock: WorldClockSnapshot,
     val remainingResources: List<ResourceLocation>,
     val zone: WorldZone = WorldZone.BUNKER,
@@ -124,7 +125,7 @@ class GameSaveRepository(context: Context) {
 
     companion object {
         const val MAX_SLOTS = 3
-        const val SAVE_VERSION = 4
+        const val SAVE_VERSION = 5
     }
 }
 
@@ -135,6 +136,7 @@ private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("needs", needs.toJson())
     .put("psychology", psychology.toJson())
     .put("bookLibrary", bookLibrary.toJson())
+    .put("radio", radio.toJson())
     .put("clock", clock.toJson())
     .put("remainingResources", remainingResources.toResourcesJson())
     .put("zone", zone.name)
@@ -151,6 +153,8 @@ private fun SurvivalNeedsSnapshot.toJson() = JSONObject()
     .put("energy", energy.toDouble())
 
 private fun BookLibrarySnapshot.toJson() = JSONObject().put("readBookIds", JSONArray(readBookIds.toList()))
+
+private fun BunkerRadioSnapshot.toJson() = JSONObject().put("lastListenedDay", lastListenedDay)
 
 private fun PsychologicalStateSnapshot.toJson() = JSONObject()
     .put("stress", stress.toDouble())
@@ -193,6 +197,7 @@ private fun WakeCheckpoint.toJson() = JSONObject()
     .put("needs", needs.toJson())
     .put("psychology", psychology.toJson())
     .put("bookLibrary", bookLibrary.toJson())
+    .put("radio", radio.toJson())
     .put("clock", clock.toJson())
     .put("remainingResources", remainingResources.toResourcesJson())
     .put("zone", zone.name)
@@ -207,6 +212,7 @@ private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveS
         needs = json.getJSONObject("needs").toNeedsSnapshot(),
         psychology = json.optJSONObject("psychology")?.toPsychologySnapshot() ?: PsychologicalStateSnapshot(),
         bookLibrary = json.optJSONObject("bookLibrary")?.toBookLibrarySnapshot() ?: BookLibrarySnapshot(),
+        radio = json.optJSONObject("radio")?.toBunkerRadioSnapshot() ?: BunkerRadioSnapshot(),
         clock = json.getJSONObject("clock").toClockSnapshot(),
         remainingResources = json.getJSONArray("remainingResources").toResources(),
         zone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
@@ -226,6 +232,10 @@ private fun JSONObject.toNeedsSnapshot() = SurvivalNeedsSnapshot(
     hunger = getDouble("hunger").toFloat(),
     thirst = getDouble("thirst").toFloat(),
     energy = getDouble("energy").toFloat()
+)
+
+private fun JSONObject.toBunkerRadioSnapshot() = BunkerRadioSnapshot(
+    lastListenedDay = optInt("lastListenedDay", 0).coerceAtLeast(0)
 )
 
 private fun JSONObject.toBookLibrarySnapshot() = BookLibrarySnapshot(
@@ -279,6 +289,7 @@ private fun JSONObject.toWakeCheckpoint() = WakeCheckpoint(
     needs = getJSONObject("needs").toNeedsSnapshot(),
     psychology = optJSONObject("psychology")?.toPsychologySnapshot() ?: PsychologicalStateSnapshot(),
     bookLibrary = optJSONObject("bookLibrary")?.toBookLibrarySnapshot() ?: BookLibrarySnapshot(),
+    radio = optJSONObject("radio")?.toBunkerRadioSnapshot() ?: BunkerRadioSnapshot(),
     clock = getJSONObject("clock").toClockSnapshot(),
     remainingResources = getJSONArray("remainingResources").toResources(),
     zone = runCatching { WorldZone.valueOf(optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
