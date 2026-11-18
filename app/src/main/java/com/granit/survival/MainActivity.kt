@@ -123,6 +123,7 @@ class MainActivity : Activity() {
         panel.addView(menuButton("ПИТЬ ВОДУ", enabled = session.engine.inventory.count(ItemType.WATER) > 0) {
             if (session.drinkWater()) { Toast.makeText(this, "Вода использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
         })
+        panel.addView(menuButton("БИБЛИОТЕКА", enabled = session.engine.canAccessBookshelf()) { showBookLibrary() })
         panel.addView(menuButton("МАСТЕРСКАЯ", enabled = session.engine.canUseWorkbench()) { showCrafting() })
         panel.addView(menuButton("ПЕРЕВЯЗАТЬСЯ", enabled = session.engine.inventory.count(ItemType.BANDAGE) > 0 && session.engine.needs.health < 100f) {
             if (session.engine.useBandage()) { Toast.makeText(this, "Бинт использован", Toast.LENGTH_SHORT).show(); showPauseMenu() }
@@ -155,13 +156,30 @@ class MainActivity : Activity() {
         showOverlay(panel)
     }
 
+    private fun showBookLibrary() {
+        val panel = createPanel("БИБЛИОТЕКА УБЕЖИЩА", "Чтение занимает игровое время. Новые знания закрепляются при следующем пробуждении.")
+        BookCatalog.all.forEach { book ->
+            val read = session.engine.bookLibrary.hasRead(book.id)
+            panel.addView(label(book.title + " · " + book.category.displayName, 15f, Color.WHITE))
+            panel.addView(label(book.description + " · " + book.readMinutes + " мин.", 12f, Color.LTGRAY))
+            panel.addView(menuButton(if (read) "ПРОЧИТАНО" else "ЧИТАТЬ", enabled = !read) {
+                if (session.engine.readBook(book.id)) {
+                    Toast.makeText(this, "Книга прочитана", Toast.LENGTH_SHORT).show()
+                    showBookLibrary()
+                } else Toast.makeText(this, "Не удалось прочитать книгу", Toast.LENGTH_SHORT).show()
+            })
+        }
+        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        showOverlay(panel)
+    }
+
     private fun showCrafting() {
         val panel = createPanel("МАСТЕРСКАЯ", "Рецепты доступны рядом с верстаком")
         CraftingRecipe.all.forEach { recipe ->
             val costs = recipe.ingredients.entries.joinToString(" · ") { entry -> entry.key.displayName + ": " + entry.value }
             panel.addView(label(recipe.title + " — " + recipe.output.displayName, 16f, Color.WHITE))
             panel.addView(label("Материалы: " + costs + " · Время: " + recipe.craftMinutes + " мин.", 13f, Color.LTGRAY))
-            panel.addView(menuButton("СОЗДАТЬ", enabled = recipe.canCraft(session.engine.inventory)) {
+            panel.addView(menuButton("СОЗДАТЬ", enabled = session.engine.canCraft(recipe.id)) {
                 if (session.engine.craft(recipe.id)) {
                     Toast.makeText(this, recipe.title + ": готово", Toast.LENGTH_SHORT).show()
                     showCrafting()
