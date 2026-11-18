@@ -32,16 +32,16 @@ class TileMap(
         fill(16, 2, 2, 2, TileType.STORAGE)
         fill(9, 1, 2, 1, TileType.WORKBENCH)
         fill(20, 2, 1, 2, TileType.BOOKSHELF)
-        set(width / 2, 0, TileType.EXIT_TO_FOREST)
+        set(width / 2, 1, TileType.EXIT_TO_FOREST)
         set(7, 8, TileType.RESOURCE_WOOD); set(12, 8, TileType.RESOURCE_METAL)
         set(10, 11, TileType.RESOURCE_FABRIC); set(14, 10, TileType.RESOURCE_FOOD)
         set(5, 10, TileType.RESOURCE_WATER)
     }
 
     private fun buildForest() {
-        set(width / 2, height - 1, TileType.EXIT_TO_BUNKER)
-        set(0, height / 2, TileType.EXIT_TO_RUINS)
-        set(width - 1, height / 2, TileType.EXIT_TO_ROAD)
+        set(width / 2, height - 2, TileType.EXIT_TO_BUNKER)
+        set(1, height / 2, TileType.EXIT_TO_RUINS)
+        set(width - 2, height / 2, TileType.EXIT_TO_ROAD)
         fill(4, 3, 2, 3, TileType.WALL); fill(9, 7, 2, 4, TileType.WALL)
         fill(15, 2, 3, 2, TileType.WALL); fill(25, 5, 2, 4, TileType.WALL)
         fill(31, 14, 3, 3, TileType.WALL)
@@ -52,7 +52,7 @@ class TileMap(
     }
 
     private fun buildRuins() {
-        set(width - 1, height / 2, TileType.EXIT_TO_FOREST)
+        set(width - 2, height / 2, TileType.EXIT_TO_FOREST)
         fill(7, 3, 5, 1, TileType.WALL); fill(7, 3, 1, 7, TileType.WALL)
         fill(17, 8, 7, 2, TileType.WALL); fill(28, 3, 2, 6, TileType.WALL)
         fill(11, 16, 4, 2, TileType.WALL)
@@ -63,7 +63,7 @@ class TileMap(
     }
 
     private fun buildRoad() {
-        set(0, height / 2, TileType.EXIT_TO_FOREST)
+        set(1, height / 2, TileType.EXIT_TO_FOREST)
         fill(8, 5, 1, 5, TileType.WALL); fill(18, 13, 5, 1, TileType.WALL)
         fill(29, 3, 2, 5, TileType.WALL); fill(33, 17, 3, 1, TileType.WALL)
         set(6, 7, TileType.RESOURCE_METAL); set(13, 17, TileType.RESOURCE_METAL)
