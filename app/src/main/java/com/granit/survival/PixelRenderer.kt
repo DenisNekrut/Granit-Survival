@@ -87,6 +87,11 @@ class PixelRenderer {
                     rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.18f, 0.20f, 0.19f)
                 }
                 TileType.EXIT -> rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.39f)
+                TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, 0.55f, 0.35f, 0.20f)
+                TileType.RESOURCE_METAL -> drawResource(tileX, tileY, 0.55f, 0.60f, 0.62f)
+                TileType.RESOURCE_FABRIC -> drawResource(tileX, tileY, 0.35f, 0.49f, 0.46f)
+                TileType.RESOURCE_FOOD -> drawResource(tileX, tileY, 0.68f, 0.48f, 0.20f)
+                TileType.RESOURCE_WATER -> drawResource(tileX, tileY, 0.22f, 0.48f, 0.68f)
             }
         }
 
@@ -103,6 +108,7 @@ class PixelRenderer {
         screenRect(0.72f, 0.60f, 1.35f, 0.16f, 0.56f, 0.24f, 0.19f)
         screenRect(2.20f, 0.60f, 1.05f, 0.16f, 0.25f, 0.43f, 0.49f)
         screenRect(3.38f, 0.60f, 1.05f, 0.16f, 0.69f, 0.57f, 0.28f)
+        drawInventory(engine.inventory)
 
         // Virtual joystick and interaction button.
         screenRect(2.0f, 8.2f, 2.4f, 2.4f, 0.22f, 0.25f, 0.24f)
@@ -126,6 +132,38 @@ class PixelRenderer {
 
 
         GLES20.glDisableVertexAttribArray(positionLocation)
+    }
+
+    private fun drawResource(x: Int, y: Int, r: Float, g: Float, b: Float) {
+        rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.16f, 0.18f, 0.17f)
+        rect(x + 0.18f, y + 0.22f, 0.64f, 0.56f, r, g, b)
+        rect(x + 0.28f, y + 0.12f, 0.44f, 0.12f, r * 0.75f, g * 0.75f, b * 0.75f)
+    }
+
+    private fun drawInventory(inventory: Inventory) {
+        val panelX = 15.45f
+        val panelY = 0.45f
+        val slotSize = 0.72f
+        val gap = 0.08f
+        screenRect(panelX - 0.12f, panelY - 0.12f, 3.32f, 3.32f, 0.055f, 0.065f, 0.068f)
+        for (index in 0 until inventory.columns * inventory.rows) {
+            val column = index % inventory.columns
+            val row = index / inventory.columns
+            val x = panelX + column * (slotSize + gap)
+            val y = panelY + row * (slotSize + gap)
+            screenRect(x, y, slotSize, slotSize, 0.15f, 0.17f, 0.17f)
+            val stack = inventory.slot(index) ?: continue
+            val color = when (stack.type) {
+                ItemType.WOOD -> floatArrayOf(0.60f, 0.39f, 0.22f)
+                ItemType.METAL -> floatArrayOf(0.56f, 0.62f, 0.64f)
+                ItemType.FABRIC -> floatArrayOf(0.38f, 0.55f, 0.50f)
+                ItemType.CANNED_FOOD -> floatArrayOf(0.73f, 0.53f, 0.24f)
+                ItemType.WATER -> floatArrayOf(0.26f, 0.55f, 0.74f)
+            }
+            screenRect(x + 0.14f, y + 0.14f, 0.44f, 0.44f, color[0], color[1], color[2])
+            val quantityWidth = 0.12f + 0.42f * (stack.quantity / 20f)
+            screenRect(x + 0.14f, y + 0.62f, quantityWidth, 0.045f, 0.78f, 0.75f, 0.62f)
+        }
     }
 
     private fun rect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float) {
