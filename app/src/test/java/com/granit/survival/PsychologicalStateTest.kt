@@ -32,6 +32,18 @@ class PsychologicalStateTest {
     }
 
     @Test
+    fun checkpointRollsBackPsychologicalStateAfterAnExpedition() {
+        val engine = GameEngine()
+        engine.sleepUntilMorning()
+        val checkpoint = engine.psychology.snapshot()
+        engine.changeZone(WorldZone.FOREST)
+        engine.psychology.advanceAwake(90, moving = true, zone = WorldZone.FOREST)
+        assertTrue(engine.psychology.stress > checkpoint.stress)
+        assertTrue(engine.respawnAtWakeCheckpoint())
+        assertEquals(checkpoint, engine.psychology.snapshot())
+    }
+
+    @Test
     fun snapshotRestoresAllFourValuesWithinBounds() {
         val state = PsychologicalState()
         state.restore(PsychologicalStateSnapshot(120f, -10f, 40f, 50f))
