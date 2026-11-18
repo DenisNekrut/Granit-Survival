@@ -10,6 +10,8 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
     @Volatile private var resumed = false
     @Volatile private var surfaceWidth = 1
     @Volatile private var surfaceHeight = 1
+    private var joystickPointerId: Int = MotionEvent.INVALID_POINTER_ID
+    private var actionPointerId: Int = MotionEvent.INVALID_POINTER_ID
 
     init {
         holder.addCallback(this)
@@ -52,11 +54,41 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 val index = event.actionIndex
-                thread.setTouch(event.getX(index), event.getY(index), true)
+                val pointerId = event.getPointerId(index)
+                if (event.getX(index) < surfaceWidth * 0.55f && joystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    joystickPointerId = pointerId
+                    thread.setJoystick(event.getX(index), event.getY(index), true)
+                } else if (actionPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    actionPointerId = pointerId
+                    thread.setInteracting(true)
+                }
             }
-            MotionEvent.ACTION_MOVE -> thread.setTouch(event.getX(0), event.getY(0), true)
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL ->
-                thread.setTouch(0f, 0f, false)
+
+            MotionEvent.ACTION_MOVE -> {
+                val joystickIndex = event.findPointerIndex(joystickPointerId)
+                if (joystickIndex >= 0) {
+                    thread.setJoystick(event.getX(joystickIndex), event.getY(joystickIndex), true)
+                }
+            }
+
+            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP -> {
+                val pointerId = event.getPointerId(event.actionIndex)
+                if (pointerId == joystickPointerId) {
+                    joystickPointerId = MotionEvent.INVALID_POINTER_ID
+                    thread.setJoystick(0f, 0f, false)
+                }
+                if (pointerId == actionPointerId) {
+                    actionPointerId = MotionEvent.INVALID_POINTER_ID
+                    thread.setInteracting(false)
+                }
+            }
+
+            MotionEvent.ACTION_CANCEL -> {
+                joystickPointerId = MotionEvent.INVALID_POINTER_ID
+                actionPointerId = MotionEvent.INVALID_POINTER_ID
+                thread.setJoystick(0f, 0f, false)
+                thread.setInteracting(false)
+            }
         }
         return true
     }
@@ -79,5 +111,7 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
             Thread.currentThread().interrupt()
         }
         renderThread = null
+        joystickPointerId = MotionEvent.INVALID_POINTER_ID
+        actionPointerId = MotionEvent.INVALID_POINTER_ID
     }
 }
