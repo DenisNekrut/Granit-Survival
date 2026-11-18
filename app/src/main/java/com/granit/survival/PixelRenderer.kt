@@ -311,8 +311,14 @@ class PixelRenderer {
                 ItemType.CANNED_FOOD -> floatArrayOf(0.73f, 0.53f, 0.24f)
                 ItemType.WATER -> floatArrayOf(0.26f, 0.55f, 0.74f)
                 ItemType.MEDICAL_KIT -> floatArrayOf(0.72f, 0.30f, 0.28f)
+                ItemType.BANDAGE -> floatArrayOf(0.82f, 0.78f, 0.66f)
             }
-            screenRect(x + 0.14f, y + 0.14f, 0.44f, 0.44f, color[0], color[1], color[2])
+            if (stack.type == ItemType.MEDICAL_KIT || stack.type == ItemType.BANDAGE) {
+                screenRect(x + 0.30f, y + 0.16f, 0.12f, 0.40f, color[0], color[1], color[2])
+                screenRect(x + 0.16f, y + 0.30f, 0.40f, 0.12f, color[0], color[1], color[2])
+            } else {
+                screenRect(x + 0.14f, y + 0.14f, 0.44f, 0.44f, color[0], color[1], color[2])
+            }
             val quantityWidth = 0.12f + 0.42f * (stack.quantity / 20f)
             screenRect(x + 0.14f, y + 0.62f, quantityWidth, 0.045f, 0.78f, 0.75f, 0.62f)
         }
