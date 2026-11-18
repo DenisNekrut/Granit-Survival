@@ -89,6 +89,11 @@ class SurvivalNeeds {
         }
     }
 
+    fun restoreHealth(amount: Float) {
+        require(amount >= 0f)
+        health = (health + amount).coerceAtMost(100f)
+    }
+
     fun consumeFood() {
         hunger = (hunger + FOOD_HUNGER_RESTORE).coerceAtMost(100f)
     }
