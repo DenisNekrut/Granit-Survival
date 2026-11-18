@@ -25,9 +25,12 @@ The current prototype contains:
 - Camera2D follow behavior;
 - touch joystick and independent action pointer;
 - 4×4 inventory with stack merging, capacity checks and item removal;
-- resource pickup for wood, metal, fabric, canned food and water.
+- resource pickup for wood, metal, fabric, canned food and water;
+- a separate bunker storage container with atomic deposit/withdraw operations;
+- an in-game clock, hunger/thirst/energy/health simulation and sleep-to-morning cycle;
+- in-memory wake-up checkpoints that restore player, inventory, bunker storage, needs, clock and collected world resources.
 
-This is an early technical prototype, not yet a complete game. Android device testing is still required.
+This is an early technical prototype, not yet a complete game. Checkpoints are currently in-memory; versioned JSON persistence and Android device testing are still required.
 
 ## Downloading a test APK
 
