@@ -62,6 +62,17 @@ class GameEngineInteractionTest {
     }
 
     @Test
+    fun fatalFoodActionRollsBackAndReportsFailure() {
+        val engine = GameEngine()
+        engine.inventory.add(ItemType.CANNED_FOOD, 1)
+        engine.sleepUntilMorning()
+        engine.needs.restore(SurvivalNeedsSnapshot(0.1f, 0f, 0f, 80f))
+
+        assertFalse(engine.consumeFood())
+        assertEquals(1, engine.inventory.count(ItemType.CANNED_FOOD))
+    }
+
+    @Test
     fun consumingFoodAndWaterUsesOneItemAndAdvancesTime() {
         val engine = GameEngine()
         engine.needs.advanceAwake(500)
