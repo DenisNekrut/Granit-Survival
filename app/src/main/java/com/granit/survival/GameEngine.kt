@@ -21,7 +21,9 @@ class GameEngine {
     }
 
     val player = PlayerState()
-    val tileMap = TileMap()
+    var tileMap = TileMap()
+        private set
+    val zone: WorldZone get() = tileMap.zone
     val camera = Camera2D()
     val inventory = Inventory()
     val bunkerStorage = BunkerStorage()
@@ -66,9 +68,18 @@ class GameEngine {
     }
 
     /** Sleep is only available beside a bed in the bunker. */
-    fun canSleep(): Boolean = tileMap.isNearTile(TileType.BED, player.x, player.y, 1.5f)
+    fun canSleep(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.BED, player.x, player.y, 1.5f)
 
-    fun canAccessStorage(): Boolean = tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 1.5f)
+    fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 1.5f)
+
+    fun changeZone(target: WorldZone) {
+        tileMap = TileMap(zone = target)
+        player.x = target.spawnX
+        player.y = target.spawnY
+        camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
+        wasInteracting = false
+        isMoving = false
+    }
 
     fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean =
         canAccessStorage() && bunkerStorage.deposit(inventory, type, amount)
@@ -106,10 +117,12 @@ class GameEngine {
         needs = needs.snapshot(),
         clock = worldClock.snapshot(),
         remainingResources = tileMap.resourceSnapshot(),
+        zone = zone,
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
     fun restoreSaveSnapshot(snapshot: EngineSaveSnapshot) {
+        changeZone(snapshot.zone)
         player.x = snapshot.player.x
         player.y = snapshot.player.y
         player.speed = snapshot.player.speed
@@ -178,7 +191,12 @@ class GameEngine {
                 }
                 interactionCount++
             }
-            TileType.BED, TileType.WORKBENCH, TileType.EXIT -> interactionCount++
+            TileType.EXIT_TO_BUNKER -> { changeZone(WorldZone.BUNKER); interactionCount++ }
+            TileType.EXIT_TO_FOREST -> { changeZone(WorldZone.FOREST); interactionCount++ }
+            TileType.EXIT_TO_RUINS -> { changeZone(WorldZone.RUINS); interactionCount++ }
+            TileType.EXIT_TO_ROAD -> { changeZone(WorldZone.ROAD); interactionCount++ }
+            TileType.EXIT -> { changeZone(if (zone == WorldZone.BUNKER) WorldZone.FOREST else WorldZone.BUNKER); interactionCount++ }
+            TileType.BED, TileType.WORKBENCH -> interactionCount++
             else -> Unit
         }
     }
