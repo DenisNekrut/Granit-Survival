@@ -46,8 +46,8 @@ class PixelRenderer {
         screenWidth = width.coerceAtLeast(1)
         screenHeight = height.coerceAtLeast(1)
         worldScale = minOf(screenWidth / 20f, screenHeight / 12f)
-        worldOffsetX = (screenWidth - GameEngine.WORLD_WIDTH * worldScale) * 0.5f
-        worldOffsetY = (screenHeight - GameEngine.WORLD_HEIGHT * worldScale) * 0.5f
+        worldOffsetX = (screenWidth - 20f * worldScale) * 0.5f
+        worldOffsetY = (screenHeight - 12f * worldScale) * 0.5f
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
     }
 
@@ -56,14 +56,15 @@ class PixelRenderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (program == 0) return
         GLES20.glUseProgram(program)
+        currentCamera = engine.camera
         GLES20.glEnableVertexAttribArray(positionLocation)
 
         // Base floor and subtle tile grid.
         rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT, 0.12f, 0.15f, 0.16f)
-        for (x in 1..19) {
+        for (x in 1 until GameEngine.WORLD_WIDTH.toInt()) {
             rect(x.toFloat(), 0f, 0.025f, GameEngine.WORLD_HEIGHT, 0.16f, 0.18f, 0.17f)
         }
-        for (y in 1..11) {
+        for (y in 1 until GameEngine.WORLD_HEIGHT.toInt()) {
             rect(0f, y.toFloat(), GameEngine.WORLD_WIDTH, 0.025f, 0.16f, 0.18f, 0.17f)
         }
 
@@ -96,12 +97,6 @@ class PixelRenderer {
         rect(px - 0.30f, py + 0.42f, 0.22f, 0.22f, 0.12f, 0.14f, 0.14f)
         rect(px + 0.08f, py + 0.42f, 0.22f, 0.22f, 0.12f, 0.14f, 0.14f)
 
-        // Minimal status panel and touch joystick indicator.
-        rect(0.55f, 0.48f, 5.2f, 0.42f, 0.07f, 0.08f, 0.08f)
-        rect(0.72f, 0.60f, 1.35f, 0.16f, 0.56f, 0.24f, 0.19f)
-        rect(2.20f, 0.60f, 1.05f, 0.16f, 0.25f, 0.43f, 0.49f)
-        rect(3.38f, 0.60f, 1.05f, 0.16f, 0.69f, 0.57f, 0.28f)
-
         // Screen-space HUD is independent from camera movement.
         screenRect(0.55f, 0.48f, 5.2f, 0.42f, 0.07f, 0.08f, 0.08f)
         screenRect(0.72f, 0.60f, 1.35f, 0.16f, 0.56f, 0.24f, 0.19f)
@@ -112,11 +107,14 @@ class PixelRenderer {
         screenRect(1.0f, 9.4f, 2.4f, 2.4f, 0.22f, 0.25f, 0.24f)
         if (touching) {
             val radiusPx = (screenHeight * 0.19f).coerceAtLeast(72f)
+            val thumbX = (joystickX - worldOffsetX) / worldScale
+            val thumbY = (joystickY - worldOffsetY) / worldScale
+            val thumbSize = (radiusPx * 0.36f) / worldScale
             screenRect(
-                (joystickX - radiusPx * 0.18f) / worldScale,
-                (joystickY - radiusPx * 0.18f) / worldScale,
-                (radiusPx * 0.36f) / worldScale,
-                (radiusPx * 0.36f) / worldScale,
+                thumbX - thumbSize * 0.5f,
+                thumbY - thumbSize * 0.5f,
+                thumbSize,
+                thumbSize,
                 0.67f, 0.65f, 0.55f
             )
         }
