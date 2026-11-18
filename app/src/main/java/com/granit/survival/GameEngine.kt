@@ -16,6 +16,7 @@ class GameEngine {
         const val WORLD_WIDTH = 40f
         const val WORLD_HEIGHT = 24f
         const val MEDICAL_KIT_HEALING = 35f
+        const val BANDAGE_HEALING = 15f
         const val RESOURCE_GATHER_MINUTES = 2
         const val ZONE_TRAVEL_MINUTES = 8
         private const val FIXED_STEP_SECONDS = 1f / 60f
@@ -94,6 +95,13 @@ class GameEngine {
             "Crafting output did not fit after ingredient validation"
         }
         advanceGameMinutes(recipe.craftMinutes)
+        return true
+    }
+
+    fun useBandage(): Boolean {
+        if (!inventory.remove(ItemType.BANDAGE, 1) || needs.health >= 100f) return false
+        needs.restoreHealth(BANDAGE_HEALING)
+        advanceGameMinutes(3)
         return true
     }
 
