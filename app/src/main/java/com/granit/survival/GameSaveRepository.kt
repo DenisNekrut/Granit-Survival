@@ -15,7 +15,9 @@ data class EngineSaveSnapshot(
     val clock: WorldClockSnapshot,
     val remainingResources: List<ResourceLocation>,
     val wakeCheckpoint: WakeCheckpoint?
-)
+) {
+    companion object
+}
 
 data class SaveSlotInfo(
     val slot: Int,
@@ -45,8 +47,7 @@ class GameSaveRepository(context: Context) {
                 exists = true,
                 savedAtMillis = root.getLong("savedAtMillis"),
                 day = clock.getInt("day"),
-                hour = clock.getInt("minuteOfDay") / WorldClock.MINUTES_PER_DAY * 0 +
-                    clock.getInt("minuteOfDay") / 60,
+                hour = clock.getInt("minuteOfDay") / 60,
                 minute = clock.getInt("minuteOfDay") % 60
             )
         } catch (_: Exception) {
