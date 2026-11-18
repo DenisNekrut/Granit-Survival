@@ -6,7 +6,8 @@ enum class ItemType(val displayName: String, val color: Int) {
     FABRIC("Ткань", 0xFF718B86.toInt()),
     CANNED_FOOD("Консервы", 0xFFB28A43.toInt()),
     WATER("Вода", 0xFF4E91B5.toInt()),
-    MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt())
+    MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt()),
+    BANDAGE("Бинт", 0xFFD8D0B5.toInt())
 }
 
 data class ItemStack(
