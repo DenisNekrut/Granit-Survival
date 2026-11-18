@@ -35,7 +35,7 @@ class BunkerRadioTest {
     @Test
     fun broadcastNearMidnightDoesNotConsumeTheNextDaysTransmission() {
         val engine = GameEngine()
-        engine.worldClock.advanceMinutes(17 * 60 + 55 - 7 * 60)
+        engine.worldClock.advanceMinutes(23 * 60 + 55 - 7 * 60)
         engine.player.x = 24.5f
         engine.player.y = 2.5f
         assertNotNull(engine.listenToRadio())
