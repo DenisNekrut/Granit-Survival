@@ -35,6 +35,7 @@ class GameEngine {
     val needs = SurvivalNeeds()
     val psychology = PsychologicalState()
     val bookLibrary = BookLibrary()
+    val radioSystem = BunkerRadioSystem()
     val worldClock = WorldClock()
     val checkpointSystem = CheckpointSystem()
 
@@ -89,6 +90,18 @@ class GameEngine {
 
     fun canAccessBookshelf(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.BOOKSHELF, player.x, player.y, 1.5f)
+
+    fun canUseRadio(): Boolean = zone == WorldZone.BUNKER &&
+        tileMap.isNearTile(TileType.RADIO, player.x, player.y, 1.5f) && radioSystem.canListen(worldClock.day)
+
+    fun listenToRadio(): RadioEvent? {
+        if (!canUseRadio()) return null
+        val event = radioSystem.eventForDay(worldClock.day) ?: return null
+        if (!advanceGameMinutes(event.broadcastMinutes)) return null
+        radioSystem.markListened(worldClock.day)
+        psychology.applyReading(event.moraleGain, event.stressRelief)
+        return event
+    }
 
     fun readBook(bookId: String): Boolean {
         if (!canAccessBookshelf()) return false
@@ -205,6 +218,7 @@ class GameEngine {
         zone = zone,
         zoneResources = zoneResourceSnapshot(),
         bookLibrary = bookLibrary.snapshot(),
+        radio = radioSystem.snapshot(),
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
@@ -220,6 +234,7 @@ class GameEngine {
         needs.restore(snapshot.needs)
         psychology.restore(snapshot.psychology)
         bookLibrary.restore(snapshot.bookLibrary)
+        radioSystem.restore(snapshot.radio)
         worldClock.restore(snapshot.clock)
         tileMap.restoreResources(snapshot.remainingResources)
         checkpointSystem.restoreSnapshot(snapshot.wakeCheckpoint)
