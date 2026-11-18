@@ -101,7 +101,9 @@ class PixelRenderer {
                     rect(tileX + 0.46f, tileY + 0.32f, 0.08f, 0.46f, 0.40f, 0.34f, 0.22f)
                     rect(tileX + 0.40f, tileY + 0.46f, 0.20f, 0.10f, 0.58f, 0.50f, 0.30f)
                 }
-                TileType.EXIT -> rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.39f)
+                TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
+                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD ->
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.39f)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
                 TileType.RESOURCE_METAL -> drawResource(tileX, tileY, "metal")
                 TileType.RESOURCE_FABRIC -> drawResource(tileX, tileY, "fabric")
