@@ -27,6 +27,7 @@ class BunkerRadioTest {
         val start = engine.worldClock.totalMinutes
         val event = engine.listenToRadio()
         assertNotNull(event)
+        assertTrue(event!!.description.contains("туман")) // day 1 radio previews day 2 weather
         assertEquals(start + 10, engine.worldClock.totalMinutes)
         assertNull(engine.listenToRadio())
         assertFalse(engine.canUseRadio())
