@@ -15,7 +15,8 @@ class PixelRenderer {
     private var worldScale = 1f
     private var worldOffsetX = 0f
     private var worldOffsetY = 0f
-    private var currentCamera: Camera2D? = null\n    private val vertexBuffer: FloatBuffer = ByteBuffer.allocateDirect(8 * 4)
+    private var currentCamera: Camera2D? = null
+    private val vertexBuffer: FloatBuffer = ByteBuffer.allocateDirect(8 * 4)
         .order(ByteOrder.nativeOrder()).asFloatBuffer()
 
     fun create() {
