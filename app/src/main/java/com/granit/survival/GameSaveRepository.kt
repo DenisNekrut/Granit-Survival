@@ -12,6 +12,7 @@ data class EngineSaveSnapshot(
     val inventory: List<ItemStack?>,
     val bunkerStorage: List<ItemStack?>,
     val needs: SurvivalNeedsSnapshot,
+    val psychology: PsychologicalStateSnapshot = PsychologicalStateSnapshot(),
     val clock: WorldClockSnapshot,
     val remainingResources: List<ResourceLocation>,
     val zone: WorldZone = WorldZone.BUNKER,
@@ -122,7 +123,7 @@ class GameSaveRepository(context: Context) {
 
     companion object {
         const val MAX_SLOTS = 3
-        const val SAVE_VERSION = 2
+        const val SAVE_VERSION = 3
     }
 }
 
@@ -131,6 +132,7 @@ private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("inventory", inventory.toItemStacksJson())
     .put("bunkerStorage", bunkerStorage.toItemStacksJson())
     .put("needs", needs.toJson())
+    .put("psychology", psychology.toJson())
     .put("clock", clock.toJson())
     .put("remainingResources", remainingResources.toResourcesJson())
     .put("zone", zone.name)
@@ -145,6 +147,12 @@ private fun SurvivalNeedsSnapshot.toJson() = JSONObject()
     .put("hunger", hunger.toDouble())
     .put("thirst", thirst.toDouble())
     .put("energy", energy.toDouble())
+
+private fun PsychologicalStateSnapshot.toJson() = JSONObject()
+    .put("stress", stress.toDouble())
+    .put("loneliness", loneliness.toDouble())
+    .put("fatigue", fatigue.toDouble())
+    .put("morale", morale.toDouble())
 
 private fun WorldClockSnapshot.toJson() = JSONObject()
     .put("day", day).put("minuteOfDay", minuteOfDay).put("totalMinutes", totalMinutes)
@@ -179,6 +187,7 @@ private fun WakeCheckpoint.toJson() = JSONObject()
     .put("inventory", inventory.toItemStacksJson())
     .put("bunkerStorage", bunkerStorage.toItemStacksJson())
     .put("needs", needs.toJson())
+    .put("psychology", psychology.toJson())
     .put("clock", clock.toJson())
     .put("remainingResources", remainingResources.toResourcesJson())
     .put("zone", zone.name)
@@ -191,6 +200,7 @@ private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveS
         inventory = json.getJSONArray("inventory").toItemStacks(),
         bunkerStorage = json.getJSONArray("bunkerStorage").toItemStacks(),
         needs = json.getJSONObject("needs").toNeedsSnapshot(),
+        psychology = json.optJSONObject("psychology")?.toPsychologySnapshot() ?: PsychologicalStateSnapshot(),
         clock = json.getJSONObject("clock").toClockSnapshot(),
         remainingResources = json.getJSONArray("remainingResources").toResources(),
         zone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
@@ -210,6 +220,13 @@ private fun JSONObject.toNeedsSnapshot() = SurvivalNeedsSnapshot(
     hunger = getDouble("hunger").toFloat(),
     thirst = getDouble("thirst").toFloat(),
     energy = getDouble("energy").toFloat()
+)
+
+private fun JSONObject.toPsychologySnapshot() = PsychologicalStateSnapshot(
+    stress = optDouble("stress", 10.0).toFloat(),
+    loneliness = optDouble("loneliness", 0.0).toFloat(),
+    fatigue = optDouble("fatigue", 0.0).toFloat(),
+    morale = optDouble("morale", 70.0).toFloat()
 )
 
 private fun JSONObject.toClockSnapshot() = WorldClockSnapshot(
@@ -248,6 +265,7 @@ private fun JSONObject.toWakeCheckpoint() = WakeCheckpoint(
     inventory = getJSONArray("inventory").toItemStacks(),
     bunkerStorage = getJSONArray("bunkerStorage").toItemStacks(),
     needs = getJSONObject("needs").toNeedsSnapshot(),
+    psychology = optJSONObject("psychology")?.toPsychologySnapshot() ?: PsychologicalStateSnapshot(),
     clock = getJSONObject("clock").toClockSnapshot(),
     remainingResources = getJSONArray("remainingResources").toResources(),
     zone = runCatching { WorldZone.valueOf(optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
