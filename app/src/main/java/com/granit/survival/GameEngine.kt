@@ -163,6 +163,7 @@ class GameEngine {
         if (minutes <= 0) return
         worldClock.advanceMinutes(minutes)
         needs.advanceAwake(minutes)
+        psychology.advanceAwake(minutes, isMoving, zone)
         if (needs.health <= 0f) {
             checkpointSystem.restore(this)
             gameMinuteAccumulator = 0f
