@@ -21,21 +21,23 @@
 - 4×4 inventory, resource collection, bunker storage and item transfer.
 - Health, hunger, thirst, energy, food and water.
 - Sleep until 07:00, wake-up checkpoint and rollback of the reversible run state.
+- Deterministic five-state weather cycle; outdoor conditions gently affect movement, and radio forecasts the next day.
 
 ### Bunker, knowledge and events
-- Main menu, pause menu, save-slot manager, settings, storage and workbench screens.
-- Three manual save slots and a separate atomic autosave; JSON schema v5 reads older versions 1–4.
+- Main menu, pause menu, expedition journal, save-slot manager, settings, storage and workbench screens.
+- Three manual save slots and a separate atomic autosave; JSON schema v6 reads older versions 1–5.
 - Workbench recipes for bandage and medical kit; medical kit recipe unlocks after reading a technical manual.
 - Bunker library with fiction, science, technical manuals, diaries and magazines. Reading consumes game time and may affect morale/stress.
 - Bunker radio with one daily broadcast: weather, maintenance notes, archival broadcast or weak signal. Listening consumes 10 in-game minutes.
-- Read books, unlocked knowledge and radio state are included in save/checkpoint rollback.
+- Six discoverable landmarks in forest, ruins and road. Full Russian descriptions are recorded in the expedition journal.
+- Read books, discovered landmarks, radio state and psychological indicators are included in save/checkpoint rollback.
 - Psychological indicators: stress, loneliness, fatigue and morale. Sleep/return aid recovery; fatigue and stress gently reduce movement speed.
 
 ### Graphics and settings
 - PixelSpriteAtlas with player idle/walk frames, resource and medical-item sprites.
 - Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
 - Pixel-art bed, storage, workbench, bookshelf and radio.
-- HUD displays live survival meters, day/time and current zone.
+- HUD displays live survival meters, day/time, current zone and weather.
 - Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored but still need integration.
 
 ## Documentation
