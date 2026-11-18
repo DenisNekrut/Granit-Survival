@@ -62,8 +62,15 @@ class PixelRenderer {
         currentCamera = engine.camera
         GLES20.glEnableVertexAttribArray(positionLocation)
 
-        // Base floor and subtle tile grid.
-        rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT, 0.12f, 0.15f, 0.16f)
+        // Each zone has its own floor tone to make transitions immediately readable.
+        val floorTone = when (engine.zone) {
+            WorldZone.BUNKER -> floatArrayOf(0.12f, 0.15f, 0.16f)
+            WorldZone.FOREST -> floatArrayOf(0.15f, 0.19f, 0.14f)
+            WorldZone.RUINS -> floatArrayOf(0.17f, 0.16f, 0.15f)
+            WorldZone.ROAD -> floatArrayOf(0.13f, 0.15f, 0.18f)
+        }
+        rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
+            floorTone[0], floorTone[1], floorTone[2])
         for (x in 1 until GameEngine.WORLD_WIDTH.toInt()) {
             rect(x.toFloat(), 0f, 0.025f, GameEngine.WORLD_HEIGHT, 0.16f, 0.18f, 0.17f)
         }
@@ -124,6 +131,13 @@ class PixelRenderer {
             "D${engine.worldClock.day} ${engine.worldClock.hour.toString().padStart(2, '0')}:${engine.worldClock.minute.toString().padStart(2, '0')}",
             0.68f, 0.43f, 0.075f, 0.78f, 0.76f, 0.65f
         )
+        val zoneLabel = when (engine.zone) {
+            WorldZone.BUNKER -> "BUNKER"
+            WorldZone.FOREST -> "FOREST"
+            WorldZone.RUINS -> "RUINS"
+            WorldZone.ROAD -> "ROAD"
+        }
+        drawText(zoneLabel, 0.68f, 0.80f, 0.055f, 0.57f, 0.68f, 0.60f)
         drawNeedBar("HP", engine.needs.health, 1.05f, 0.68f, 0.24f, 0.20f)
         drawNeedBar("FO", engine.needs.hunger, 1.52f, 0.64f, 0.43f, 0.22f)
         drawNeedBar("WT", engine.needs.thirst, 1.99f, 0.25f, 0.48f, 0.66f)
@@ -221,6 +235,14 @@ class PixelRenderer {
             '8' to listOf("111", "101", "111", "101", "111"),
             '9' to listOf("111", "101", "111", "001", "111"),
             'D' to listOf("110", "101", "101", "101", "110"),
+            'A' to listOf("010", "101", "111", "101", "101"),
+            'B' to listOf("110", "101", "110", "101", "110"),
+            'I' to listOf("111", "010", "010", "010", "111"),
+            'K' to listOf("101", "101", "110", "101", "101"),
+            'R' to listOf("110", "101", "110", "101", "101"),
+            'S' to listOf("011", "100", "010", "001", "110"),
+            'U' to listOf("101", "101", "101", "101", "111"),
+            'Z' to listOf("111", "001", "010", "100", "111"),
             'H' to listOf("101", "101", "111", "101", "101"),
             'P' to listOf("110", "101", "110", "100", "100"),
             'F' to listOf("111", "100", "110", "100", "100"),
