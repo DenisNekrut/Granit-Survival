@@ -5,7 +5,7 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 
-class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callback {
+class GameSurface(context: Context, private val session: GameSession) : SurfaceView(context), SurfaceHolder.Callback {
     @Volatile private var renderThread: EngineRenderThread? = null
     @Volatile private var resumed = false
     @Volatile private var surfaceWidth = 1
@@ -63,14 +63,10 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
                     thread.setInteracting(true)
                 }
             }
-
             MotionEvent.ACTION_MOVE -> {
                 val joystickIndex = event.findPointerIndex(joystickPointerId)
-                if (joystickIndex >= 0) {
-                    thread.setJoystick(event.getX(joystickIndex), event.getY(joystickIndex), true)
-                }
+                if (joystickIndex >= 0) thread.setJoystick(event.getX(joystickIndex), event.getY(joystickIndex), true)
             }
-
             MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP -> {
                 val pointerId = event.getPointerId(event.actionIndex)
                 if (pointerId == joystickPointerId) {
@@ -82,7 +78,6 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
                     thread.setInteracting(false)
                 }
             }
-
             MotionEvent.ACTION_CANCEL -> {
                 joystickPointerId = MotionEvent.INVALID_POINTER_ID
                 actionPointerId = MotionEvent.INVALID_POINTER_ID
@@ -96,7 +91,7 @@ class GameSurface(context: Context) : SurfaceView(context), SurfaceHolder.Callba
     @Synchronized
     private fun startIfReady() {
         if (!resumed || !holder.surface.isValid || renderThread?.isAlive == true) return
-        val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight)
+        val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight, session)
         renderThread = thread
         thread.start()
     }
