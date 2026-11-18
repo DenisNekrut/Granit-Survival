@@ -15,8 +15,15 @@ class CraftingTest {
 
         engine.player.x = 9.5f
         engine.player.y = 1.5f
-        val startTime = engine.worldClock.totalMinutes
         assertTrue(engine.canUseWorkbench())
+        assertFalse(engine.craft("medical_kit"))
+
+        engine.player.x = 20.5f
+        engine.player.y = 2.5f
+        assertTrue(engine.readBook("field_first_aid"))
+        engine.player.x = 9.5f
+        engine.player.y = 1.5f
+        val startTime = engine.worldClock.totalMinutes
         assertTrue(engine.craft("medical_kit"))
         assertEquals(0, engine.inventory.count(ItemType.FABRIC))
         assertEquals(0, engine.inventory.count(ItemType.METAL))
