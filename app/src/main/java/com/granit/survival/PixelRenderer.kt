@@ -111,6 +111,17 @@ class PixelRenderer {
                     rect(tileX + 0.72f, tileY + 0.38f, 0.10f, 0.48f, 0.28f, 0.23f, 0.16f)
                     rect(tileX + 0.40f, tileY + 0.08f, 0.20f, 0.06f, 0.66f, 0.60f, 0.42f)
                 }
+                TileType.BOOKSHELF -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.24f, 0.19f, 0.14f)
+                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.39f, 0.28f, 0.18f)
+                    rect(tileX + 0.18f, tileY + 0.34f, 0.64f, 0.07f, 0.15f, 0.14f, 0.12f)
+                    rect(tileX + 0.18f, tileY + 0.62f, 0.64f, 0.07f, 0.15f, 0.14f, 0.12f)
+                    rect(tileX + 0.23f, tileY + 0.16f, 0.10f, 0.17f, 0.58f, 0.36f, 0.23f)
+                    rect(tileX + 0.39f, tileY + 0.16f, 0.12f, 0.17f, 0.30f, 0.45f, 0.39f)
+                    rect(tileX + 0.58f, tileY + 0.16f, 0.13f, 0.17f, 0.58f, 0.51f, 0.36f)
+                    rect(tileX + 0.28f, tileY + 0.43f, 0.12f, 0.17f, 0.31f, 0.40f, 0.52f)
+                    rect(tileX + 0.49f, tileY + 0.43f, 0.16f, 0.17f, 0.63f, 0.55f, 0.34f)
+                }
                 TileType.STORAGE -> {
                     rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.34f, 0.27f, 0.17f)
                     rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.18f, 0.20f, 0.19f)
