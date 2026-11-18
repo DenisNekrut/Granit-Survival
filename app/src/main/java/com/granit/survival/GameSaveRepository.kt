@@ -99,7 +99,7 @@ class GameSaveRepository(context: Context) {
     private fun loadFromFile(target: File, engine: GameEngine): Boolean {
         if (!target.exists()) return false
         val root = JSONObject(AtomicFile(target).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() })
-        require(root.getInt("saveVersion") == SAVE_VERSION) {
+        require(root.getInt("saveVersion") in 1..SAVE_VERSION) {
             "Unsupported save version: ${root.optInt("saveVersion", -1)}"
         }
         engine.restoreSaveSnapshot(EngineSaveSnapshot.fromJson(root.getJSONObject("state")))
