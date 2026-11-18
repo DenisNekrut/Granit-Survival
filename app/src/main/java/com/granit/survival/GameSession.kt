@@ -1,0 +1,30 @@
+package com.granit.survival
+
+import android.content.Context
+
+/**
+ * Owns the long-lived game state and Android persistence adapters.
+ * Activity actions that load/save are performed only after the render thread is paused.
+ */
+class GameSession(context: Context) {
+    val saves = GameSaveRepository(context.applicationContext)
+    val settings = GameSettingsRepository(context.applicationContext)
+    var engine: GameEngine = GameEngine()
+        private set
+
+    fun startNewGame() {
+        engine = GameEngine()
+    }
+
+    fun saveSlot(slot: Int): SaveSlotInfo = saves.save(slot, engine)
+
+    fun loadSlot(slot: Int): Boolean = saves.load(slot, engine)
+
+    fun loadMostRecent(): Boolean {
+        val candidate = saves.listSlots()
+            .filter { it.exists && !it.corrupted && it.savedAtMillis != null }
+            .maxByOrNull { it.savedAtMillis ?: 0L }
+            ?: return false
+        return runCatching { loadSlot(candidate.slot) }.getOrDefault(false)
+    }
+}
