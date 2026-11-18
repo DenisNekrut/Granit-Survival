@@ -99,14 +99,14 @@ class GameEngine {
     }
 
     fun useBandage(): Boolean {
-        if (!inventory.remove(ItemType.BANDAGE, 1) || needs.health >= 100f) return false
+        if (needs.health >= 100f || !inventory.remove(ItemType.BANDAGE, 1)) return false
         needs.restoreHealth(BANDAGE_HEALING)
         advanceGameMinutes(3)
         return true
     }
 
     fun useMedicalKit(): Boolean {
-        if (!inventory.remove(ItemType.MEDICAL_KIT, 1)) return false
+        if (needs.health >= 100f || !inventory.remove(ItemType.MEDICAL_KIT, 1)) return false
         needs.restoreHealth(MEDICAL_KIT_HEALING)
         advanceGameMinutes(5)
         return true
