@@ -21,7 +21,8 @@ class GameEngine {
     }
 
     val player = PlayerState()
-    var tileMap = TileMap()
+    private val zoneMaps = mutableMapOf<WorldZone, TileMap>()
+    var tileMap = TileMap().also { zoneMaps[WorldZone.BUNKER] = it }
         private set
     val zone: WorldZone get() = tileMap.zone
     val camera = Camera2D()
@@ -73,12 +74,23 @@ class GameEngine {
     fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 1.5f)
 
     fun changeZone(target: WorldZone) {
-        tileMap = TileMap(zone = target)
+        tileMap = zoneMaps.getOrPut(target) { TileMap(zone = target) }
         player.x = target.spawnX
         player.y = target.spawnY
         camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
         wasInteracting = false
         isMoving = false
+    }
+
+    fun zoneResourceSnapshot(): List<ZoneResourceSnapshot> = WorldZone.values().map { target ->
+        ZoneResourceSnapshot(target, zoneMaps.getOrPut(target) { TileMap(zone = target) }.resourceSnapshot())
+    }
+
+    fun restoreZoneResources(snapshots: List<ZoneResourceSnapshot>) {
+        snapshots.forEach { snapshot ->
+            zoneMaps.getOrPut(snapshot.zone) { TileMap(zone = snapshot.zone) }
+                .restoreResources(snapshot.resources)
+        }
     }
 
     fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean =
@@ -118,11 +130,14 @@ class GameEngine {
         clock = worldClock.snapshot(),
         remainingResources = tileMap.resourceSnapshot(),
         zone = zone,
+        zoneResources = zoneResourceSnapshot(),
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
     fun restoreSaveSnapshot(snapshot: EngineSaveSnapshot) {
+        restoreZoneResources(snapshot.zoneResources)
         changeZone(snapshot.zone)
+        if (snapshot.zoneResources.isEmpty()) tileMap.restoreResources(snapshot.remainingResources)
         player.x = snapshot.player.x
         player.y = snapshot.player.y
         player.speed = snapshot.player.speed
