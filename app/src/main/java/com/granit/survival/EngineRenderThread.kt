@@ -22,7 +22,8 @@ class EngineRenderThread(
     @Volatile private var viewportHeight = initialHeight.coerceAtLeast(1)
     @Volatile private var touchX = 0f
     @Volatile private var touchY = 0f
-    @Volatile private var touching = false
+    @Volatile private var joystickActive = false
+    @Volatile private var interacting = false
 
     fun requestStop() {
         running.set(false)
@@ -34,10 +35,14 @@ class EngineRenderThread(
         viewportHeight = height.coerceAtLeast(1)
     }
 
-    fun setTouch(x: Float, y: Float, isTouching: Boolean) {
+    fun setJoystick(x: Float, y: Float, active: Boolean) {
         touchX = x
         touchY = y
-        touching = isTouching
+        joystickActive = active
+    }
+
+    fun setInteracting(active: Boolean) {
+        interacting = active
     }
 
     override fun run() {
@@ -93,12 +98,12 @@ class EngineRenderThread(
                 GLES20.glViewport(0, 0, width, height)
                 renderer.resize(width, height)
 
-                val active = touching
+                val active = joystickActive
                 val dx = touchX - width * 0.16f
                 val dy = touchY - height * 0.78f
                 val radius = (height * 0.19f).coerceAtLeast(72f)
                 val distance = sqrt(dx * dx + dy * dy)
-                val input = if (active && touchX < width * 0.55f && distance > radius * 0.12f) {
+                val input = if (active && distance > radius * 0.12f) {
                     val magnitude = (distance / radius).coerceAtMost(1f)
                     EngineInput(
                         moveX = (dx / distance) * magnitude,
