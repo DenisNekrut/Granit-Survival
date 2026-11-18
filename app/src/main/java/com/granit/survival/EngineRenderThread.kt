@@ -85,6 +85,7 @@ class EngineRenderThread(
             renderer.create()
             renderer.resize(viewportWidth, viewportHeight)
             val engine = session.engine
+            val gameSettings = session.settings.load()
             val fixedFrameDelayNanos = 16_000_000L
             var previousFrame = System.nanoTime()
 
@@ -102,10 +103,10 @@ class EngineRenderThread(
                 val active = joystickActive
                 val dx = touchX - width * 0.16f
                 val dy = touchY - height * 0.78f
-                val radius = (height * 0.19f).coerceAtLeast(72f)
+                val radius = (height * 0.19f * gameSettings.joystickScale).coerceAtLeast(72f)
                 val distance = sqrt(dx * dx + dy * dy)
                 val input = if (active && distance > radius * 0.12f) {
-                    val magnitude = (distance / radius).coerceAtMost(1f)
+                    val magnitude = ((distance / radius) * gameSettings.joystickSensitivity).coerceAtMost(1f)
                     EngineInput(
                         moveX = (dx / distance) * magnitude,
                         moveY = (dy / distance) * magnitude
