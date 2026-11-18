@@ -28,9 +28,11 @@ The current prototype contains:
 - resource pickup for wood, metal, fabric, canned food and water;
 - a separate bunker storage container with atomic deposit/withdraw operations;
 - an in-game clock, hunger/thirst/energy/health simulation and sleep-to-morning cycle;
-- in-memory wake-up checkpoints that restore player, inventory, bunker storage, needs, clock and collected world resources.
+- in-memory wake-up checkpoints that restore player, inventory, bunker storage, needs, clock and collected world resources;
+- versioned JSON save snapshots for player state, inventory, bunker storage, survival needs, world clock, resource nodes and wake-up checkpoint, written through Android AtomicFile;
+- HUD bars connected to live health, hunger, thirst, energy and day/time values.
 
-This is an early technical prototype, not yet a complete game. Checkpoints are currently in-memory; versioned JSON persistence and Android device testing are still required.
+This is an early technical prototype, not yet a complete game. The JSON repository and snapshot serialization are implemented but still need integration with the menu/session lifecycle and device verification. The current HUD is functional but still uses placeholder geometry.
 
 ## Downloading a test APK
 
