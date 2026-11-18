@@ -70,6 +70,18 @@ class CraftingTest {
     }
 
     @Test
+    fun healingItemsAreNotConsumedAtFullHealth() {
+        val engine = GameEngine()
+        engine.inventory.add(ItemType.BANDAGE, 1)
+        engine.inventory.add(ItemType.MEDICAL_KIT, 1)
+
+        assertFalse(engine.useBandage())
+        assertFalse(engine.useMedicalKit())
+        assertEquals(1, engine.inventory.count(ItemType.BANDAGE))
+        assertEquals(1, engine.inventory.count(ItemType.MEDICAL_KIT))
+    }
+
+    @Test
     fun unknownRecipeDoesNotChangeInventory() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.FABRIC, 3)
