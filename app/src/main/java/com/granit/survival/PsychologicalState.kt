@@ -18,6 +18,10 @@ class PsychologicalState {
     var morale: Float = 70f
         private set
 
+    /** Fatigue and stress gently reduce travel speed; the penalty is capped. */
+    val movementSpeedMultiplier: Float
+        get() = (1f - fatigue * 0.0012f - stress * 0.0003f).coerceIn(0.82f, 1f)
+
     fun advanceAwake(minutes: Int, moving: Boolean, zone: WorldZone) {
         require(minutes >= 0)
         if (minutes == 0) return
