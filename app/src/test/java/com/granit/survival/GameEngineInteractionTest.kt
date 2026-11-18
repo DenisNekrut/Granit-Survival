@@ -33,6 +33,27 @@ class GameEngineInteractionTest {
     }
 
     @Test
+    fun collectingResourcesAndChangingZonesConsumeGameTime() {
+        val engine = GameEngine()
+        engine.player.x = 7.5f
+        engine.player.y = 8.5f
+        val start = engine.worldClock.totalMinutes
+
+        engine.updateFrame(1f / 60f, EngineInput(interact = true))
+        assertEquals(start + GameEngine.RESOURCE_GATHER_MINUTES, engine.worldClock.totalMinutes)
+        assertEquals(1, engine.inventory.count(ItemType.WOOD))
+
+        engine.changeZone(WorldZone.BUNKER)
+        engine.player.x = 20.5f
+        engine.player.y = 0.8f
+        engine.updateFrame(1f / 60f, EngineInput(interact = false))
+        engine.updateFrame(1f / 60f, EngineInput(interact = true))
+        assertEquals(WorldZone.FOREST, engine.zone)
+        assertEquals(start + GameEngine.RESOURCE_GATHER_MINUTES + GameEngine.ZONE_TRAVEL_MINUTES,
+            engine.worldClock.totalMinutes)
+    }
+
+    @Test
     fun consumingFoodAndWaterUsesOneItemAndAdvancesTime() {
         val engine = GameEngine()
         engine.needs.advanceAwake(500)
