@@ -1,13 +1,13 @@
 name: Android Debug Build
 on:
   push:
-    branches: [main, "architecture/**", "feature/**"]
+    branches: [main, "architecture/**"]
   pull_request:
     branches: [main]
   workflow_dispatch:
 
 concurrency:
-  group: android-build-${{ github.ref }}
+  group: android-build-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
