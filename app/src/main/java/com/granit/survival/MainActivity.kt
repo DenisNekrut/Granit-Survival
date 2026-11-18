@@ -117,6 +117,7 @@ class MainActivity : Activity() {
         panel.addView(label("Стресс: " + session.engine.psychology.stress.toInt() + "  ·  Одиночество: " + session.engine.psychology.loneliness.toInt(), 13f, Color.LTGRAY))
         panel.addView(label("Усталость: " + session.engine.psychology.fatigue.toInt() + "  ·  Мораль: " + session.engine.psychology.morale.toInt(), 13f, Color.LTGRAY))
         panel.addView(menuButton("ПРОДОЛЖИТЬ") { enterGame() })
+        panel.addView(menuButton("ЖУРНАЛ ЭКСПЕДИЦИЙ") { showJournal() })
         panel.addView(menuButton("ЕСТЬ КОНСЕРВЫ", enabled = session.engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
             if (session.consumeFood()) { Toast.makeText(this, "Консервы использованы", Toast.LENGTH_SHORT).show(); showPauseMenu() }
         })
@@ -181,6 +182,21 @@ class MainActivity : Activity() {
                     panel.addView(label(poi.title, 15f, Color.WHITE))
                     panel.addView(label(poi.description, 12f, Color.LTGRAY))
                 }
+            }
+        }
+        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        showOverlay(panel)
+    }
+
+    private fun showJournal() {
+        val discovered = session.engine.discoveredPointDetails()
+        val panel = createPanel("ЖУРНАЛ ЭКСПЕДИЦИЙ", discovered.size.toString() + " / " + PointOfInterestCatalog.all().size + " мест обнаружено")
+        if (discovered.isEmpty()) {
+            panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
+        } else {
+            discovered.forEach { poi ->
+                panel.addView(label(poi.title + " · " + poi.zone.displayName, 16f, Color.WHITE))
+                panel.addView(label(poi.description, 13f, Color.LTGRAY))
             }
         }
         panel.addView(menuButton("НАЗАД") { showPauseMenu() })
