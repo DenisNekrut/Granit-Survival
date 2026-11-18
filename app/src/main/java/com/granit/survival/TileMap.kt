@@ -111,6 +111,7 @@ class TileMap(
             ItemType.FABRIC -> TileType.RESOURCE_FABRIC
             ItemType.CANNED_FOOD -> TileType.RESOURCE_FOOD
             ItemType.WATER -> TileType.RESOURCE_WATER
+            else -> return false
         }
         if (get(location.x, location.y) != expected) return false
         set(location.x, location.y, TileType.FLOOR)
@@ -176,8 +177,9 @@ class TileMap(
                 ItemType.FABRIC -> TileType.RESOURCE_FABRIC
                 ItemType.CANNED_FOOD -> TileType.RESOURCE_FOOD
                 ItemType.WATER -> TileType.RESOURCE_WATER
+                else -> null
             }
-            set(resource.x, resource.y, type)
+            if (type != null) set(resource.x, resource.y, type)
         }
     }
 
