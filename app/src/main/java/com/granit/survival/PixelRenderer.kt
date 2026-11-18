@@ -106,6 +106,14 @@ class PixelRenderer {
                     rect(tileX + 0.72f, tileY + 0.38f, 0.10f, 0.48f, 0.28f, 0.23f, 0.16f)
                     rect(tileX + 0.40f, tileY + 0.08f, 0.20f, 0.06f, 0.66f, 0.60f, 0.42f)
                 }
+                TileType.RADIO -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.18f, 0.22f, 0.20f)
+                    rect(tileX + 0.10f, tileY + 0.24f, 0.80f, 0.52f, 0.28f, 0.31f, 0.27f)
+                    rect(tileX + 0.18f, tileY + 0.32f, 0.34f, 0.18f, 0.13f, 0.20f, 0.19f)
+                    rect(tileX + 0.62f, tileY + 0.32f, 0.08f, 0.08f, 0.72f, 0.56f, 0.30f)
+                    rect(tileX + 0.62f, tileY + 0.48f, 0.08f, 0.08f, 0.72f, 0.56f, 0.30f)
+                    rect(tileX + 0.20f, tileY + 0.58f, 0.60f, 0.06f, 0.10f, 0.13f, 0.12f)
+                }
                 TileType.BOOKSHELF -> {
                     rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.24f, 0.19f, 0.14f)
                     rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.39f, 0.28f, 0.18f)
