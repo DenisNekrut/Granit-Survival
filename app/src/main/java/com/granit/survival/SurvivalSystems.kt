@@ -78,6 +78,10 @@ class SurvivalNeeds {
     var energy: Float = 100f
         private set
 
+    /** Low energy slows movement gradually without making the player immobile. */
+    val movementSpeedMultiplier: Float
+        get() = 0.55f + 0.45f * (energy / 100f).coerceIn(0f, 1f)
+
     fun advanceAwake(minutes: Int) {
         require(minutes >= 0)
         if (minutes == 0) return
