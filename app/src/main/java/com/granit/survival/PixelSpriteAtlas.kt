@@ -58,4 +58,26 @@ object PixelSpriteAtlas {
     )
 
     fun sprite(id: String): PixelSprite? = sprites[id]
+
+    fun allIds(): Set<String> = sprites.keys
+
+    /** Returns atlas integrity errors; an empty list means every frame is renderable. */
+    fun validate(): List<String> {
+        val errors = mutableListOf<String>()
+        sprites.forEach { (id, sprite) ->
+            val expectedHeight = sprite.frames.firstOrNull()?.size ?: 0
+            val expectedWidth = sprite.frames.firstOrNull()?.firstOrNull()?.length ?: 0
+            if (expectedHeight == 0 || expectedWidth == 0) errors += "$id has an empty frame"
+            sprite.frames.forEachIndexed { frameIndex, frame ->
+                if (frame.size != expectedHeight) errors += "$id frame $frameIndex has inconsistent height"
+                frame.forEachIndexed { rowIndex, row ->
+                    if (row.length != expectedWidth) errors += "$id frame $frameIndex row $rowIndex has inconsistent width"
+                    row.filter { it != '.' && it !in sprite.palette }.toSet().forEach { symbol ->
+                        errors += "$id frame $frameIndex uses undefined palette symbol $symbol"
+                    }
+                }
+            }
+        }
+        return errors
+    }
 }
