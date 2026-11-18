@@ -20,6 +20,8 @@ class PixelRenderer {
         .order(ByteOrder.nativeOrder()).asFloatBuffer()
 
     fun create() {
+        val atlasErrors = PixelSpriteAtlas.validate()
+        check(atlasErrors.isEmpty()) { "Invalid pixel sprite atlas: ${atlasErrors.joinToString()}" }
         val vertexShader = compileShader(
             GLES20.GL_VERTEX_SHADER,
             "attribute vec2 aPosition; void main(){ gl_Position = vec4(aPosition, 0.0, 1.0); }"
@@ -112,7 +114,7 @@ class PixelRenderer {
         val px = engine.player.x
         val py = engine.player.y
         drawAtlasSprite("player", px, py - 0.48f, 0.06f,
-            (engine.simulationTimeSeconds * 4.0).toInt())
+            if (engine.isMoving) (engine.simulationTimeSeconds * 4.0).toInt() else 0)
 
         // Screen-space HUD reads the live simulation values.
         screenRect(0.42f, 0.28f, 4.75f, 2.72f, 0.055f, 0.067f, 0.066f)
