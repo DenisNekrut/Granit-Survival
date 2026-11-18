@@ -40,10 +40,9 @@ class GameSession(context: Context) {
             .filter { it.exists && !it.corrupted && it.savedAtMillis != null }
             .maxByOrNull { it.savedAtMillis ?: 0L }
         val autoTimestamp = saves.autoSaveTimestamp()
-        return if (autoTimestamp != null && autoTimestamp > (candidate?.savedAtMillis ?: 0L)) {
-            runCatching { saves.loadAuto(engine) }.getOrDefault(false)
-        } else {
-            candidate?.let { runCatching { loadSlot(it.slot) }.getOrDefault(false) } ?: false
+        if (autoTimestamp != null && autoTimestamp > (candidate?.savedAtMillis ?: 0L)) {
+            if (runCatching { saves.loadAuto(engine) }.getOrDefault(false)) return true
         }
+        return candidate?.let { runCatching { loadSlot(it.slot) }.getOrDefault(false) } ?: false
     }
 }
