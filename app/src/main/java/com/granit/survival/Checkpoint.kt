@@ -9,6 +9,7 @@ data class WakeCheckpoint(
     val needs: SurvivalNeedsSnapshot,
     val psychology: PsychologicalStateSnapshot = PsychologicalStateSnapshot(),
     val bookLibrary: BookLibrarySnapshot = BookLibrarySnapshot(),
+    val radio: BunkerRadioSnapshot = BunkerRadioSnapshot(),
     val clock: WorldClockSnapshot,
     val remainingResources: List<ResourceLocation>,
     val zone: WorldZone,
@@ -27,6 +28,7 @@ class CheckpointSystem {
             needs = engine.needs.snapshot(),
             psychology = engine.psychology.snapshot(),
             bookLibrary = engine.bookLibrary.snapshot(),
+            radio = engine.radioSystem.snapshot(),
             clock = engine.worldClock.snapshot(),
             remainingResources = engine.tileMap.resourceSnapshot(),
             zone = engine.zone,
@@ -55,6 +57,7 @@ class CheckpointSystem {
         engine.needs.restore(saved.needs)
         engine.psychology.restore(saved.psychology)
         engine.bookLibrary.restore(saved.bookLibrary)
+        engine.radioSystem.restore(saved.radio)
         engine.worldClock.restore(saved.clock)
         engine.tileMap.restoreResources(saved.remainingResources)
         engine.camera.follow(engine.player.x, engine.player.y, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT)
