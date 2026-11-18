@@ -255,7 +255,7 @@ class MainActivity : Activity() {
         addSetting("ГРОМКОСТЬ ЭФФЕКТОВ", effects * 100, 100, { "Уровень: $it%" }) { effects = it / 100f }
         addSetting("ЧУВСТВИТЕЛЬНОСТЬ УПРАВЛЕНИЯ", (sensitivity * 50), 100, { "Множитель: ${(it / 50f).formatOneDecimal()}x" }) { sensitivity = it / 50f }
         addSetting("РАЗМЕР ДЖОЙСТИКА", ((scale - 0.8f) * 166.66f), 100, { "Размер: ${(0.8f + it / 166.66f).formatOneDecimal()}x" }) { scale = 0.8f + it / 166.66f }
-        addSetting("ПРОЗРАЧНОСТЬ КНОПОК", ((opacity - 0.35f) / 0.65f * 100), 100, { "Прозрачность: $it%" }) { opacity = 0.35f + it / 100f * 0.65f }
+        addSetting("ПРОЗРАЧНОСТЬ КНОПОК", ((opacity - 0.35f) / 0.65f * 100), 100, { "Прозрачность: ${(35 + it * 0.65f).toInt()}%" }) { opacity = 0.35f + it / 100f * 0.65f }
         val quality = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, GraphicsQuality.values().map { it.name })
             setSelection(GraphicsQuality.values().indexOf(current.graphicsQuality).coerceAtLeast(0))
