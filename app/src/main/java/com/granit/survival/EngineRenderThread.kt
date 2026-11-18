@@ -1,27 +1,43 @@
 package com.granit.survival
+
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
 import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.opengl.GLES20
+import android.util.Log
 import android.view.SurfaceHolder
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.sqrt
 
-/** Minimal platform renderer bootstrap. All GL calls stay on this thread. */
-class EngineRenderThread(private val surfaceHolder: SurfaceHolder) : Thread("Granit-RenderThread") {
+/** Owns the EGL context, fixed-step simulation and rendering on one thread. */
+class EngineRenderThread(
+    private val surfaceHolder: SurfaceHolder,
+    initialWidth: Int,
+    initialHeight: Int
+) : Thread("Granit-RenderThread") {
     private val running = AtomicBoolean(true)
-    @Volatile private var viewportWidth = 1
-    @Volatile private var viewportHeight = 1
+    @Volatile private var viewportWidth = initialWidth.coerceAtLeast(1)
+    @Volatile private var viewportHeight = initialHeight.coerceAtLeast(1)
     @Volatile private var touchX = 0f
+    @Volatile private var touchY = 0f
     @Volatile private var touching = false
 
-    fun requestStop() { running.set(false); interrupt() }
-    fun setViewport(width: Int, height: Int) {
-        viewportWidth = width.coerceAtLeast(1); viewportHeight = height.coerceAtLeast(1)
+    fun requestStop() {
+        running.set(false)
+        interrupt()
     }
+
+    fun setViewport(width: Int, height: Int) {
+        viewportWidth = width.coerceAtLeast(1)
+        viewportHeight = height.coerceAtLeast(1)
+    }
+
     fun setTouch(x: Float, y: Float, isTouching: Boolean) {
-        touchX = x; touching = isTouching
+        touchX = x
+        touchY = y
+        touching = isTouching
     }
 
     override fun run() {
@@ -37,7 +53,8 @@ class EngineRenderThread(private val surfaceHolder: SurfaceHolder) : Thread("Gra
             val configAttributes = intArrayOf(
                 EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
                 EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8,
-                EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8, EGL14.EGL_NONE
+                EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8,
+                EGL14.EGL_NONE
             )
             val configs = arrayOfNulls<EGLConfig>(1)
             val count = IntArray(1)
@@ -58,29 +75,63 @@ class EngineRenderThread(private val surfaceHolder: SurfaceHolder) : Thread("Gra
             }
 
             GLES20.glDisable(GLES20.GL_DEPTH_TEST)
-            var lastFrame = System.nanoTime()
+            val renderer = PixelRenderer()
+            renderer.create()
+            renderer.resize(viewportWidth, viewportHeight)
+            val engine = GameEngine()
+            val fixedFrameDelayNanos = 16_000_000L
+            var previousFrame = System.nanoTime()
+
             while (running.get() && surfaceHolder.surface.isValid) {
-                val now = System.nanoTime()
-                val delta = ((now - lastFrame) / 1_000_000_000.0).toFloat()
-                lastFrame = now
-                GLES20.glViewport(0, 0, viewportWidth, viewportHeight)
-                val pulse = if (touching) (touchX / viewportWidth).coerceIn(0f, 1f) * 0.08f else 0f
-                GLES20.glClearColor(0.035f + pulse, 0.055f, 0.075f + delta.coerceAtMost(0.05f), 1f)
-                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
+                val frameStart = System.nanoTime()
+                val deltaSeconds = ((frameStart - previousFrame) / 1_000_000_000.0)
+                    .toFloat().coerceAtMost(0.25f)
+                previousFrame = frameStart
+
+                val width = viewportWidth.coerceAtLeast(1)
+                val height = viewportHeight.coerceAtLeast(1)
+                GLES20.glViewport(0, 0, width, height)
+                renderer.resize(width, height)
+
+                val active = touching
+                val dx = touchX - width * 0.16f
+                val dy = touchY - height * 0.78f
+                val radius = (height * 0.19f).coerceAtLeast(72f)
+                val distance = sqrt(dx * dx + dy * dy)
+                val input = if (active && touchX < width * 0.55f && distance > radius * 0.12f) {
+                    val magnitude = (distance / radius).coerceAtMost(1f)
+                    EngineInput(
+                        moveX = (dx / distance) * magnitude,
+                        moveY = (dy / distance) * magnitude
+                    )
+                } else {
+                    EngineInput()
+                }
+
+                engine.updateFrame(deltaSeconds, input)
+                renderer.render(engine, touchX, touchY, active)
+
                 if (!EGL14.eglSwapBuffers(display, eglSurface)) {
                     val eglError = EGL14.eglGetError()
                     if (eglError == EGL14.EGL_BAD_SURFACE || eglError == EGL14.EGL_CONTEXT_LOST) break
                     throw IllegalStateException("eglSwapBuffers failed: " + Integer.toHexString(eglError))
                 }
-                try { sleep(16) } catch (_: InterruptedException) {
+
+                val elapsed = System.nanoTime() - frameStart
+                val sleepMillis = ((fixedFrameDelayNanos - elapsed) / 1_000_000L).coerceAtLeast(1L)
+                try {
+                    sleep(sleepMillis)
+                } catch (_: InterruptedException) {
                     if (!running.get()) break
                 }
             }
         } catch (failure: Throwable) {
-            android.util.Log.e("GranitEngine", "Render thread failed", failure)
+            Log.e("GranitEngine", "Render thread failed", failure)
         } finally {
             if (display != EGL14.EGL_NO_DISPLAY) {
-                EGL14.eglMakeCurrent(display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
+                EGL14.eglMakeCurrent(
+                    display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT
+                )
                 if (eglSurface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, eglSurface)
                 if (context != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, context)
                 EGL14.eglTerminate(display)
