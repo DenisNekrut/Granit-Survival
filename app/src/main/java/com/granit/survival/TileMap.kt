@@ -1,7 +1,7 @@
 package com.granit.survival
 
 enum class TileType {
-    FLOOR, WALL, BED, WORKBENCH, STORAGE, EXIT,
+    FLOOR, WALL, BED, WORKBENCH, STORAGE, BOOKSHELF, EXIT,
     EXIT_TO_BUNKER, EXIT_TO_FOREST, EXIT_TO_RUINS, EXIT_TO_ROAD,
     RESOURCE_WOOD, RESOURCE_METAL, RESOURCE_FABRIC, RESOURCE_FOOD, RESOURCE_WATER
 }
@@ -31,6 +31,7 @@ class TileMap(
         fill(2, 4, 3, 1, TileType.STORAGE)
         fill(16, 2, 2, 2, TileType.STORAGE)
         fill(9, 1, 2, 1, TileType.WORKBENCH)
+        fill(20, 2, 1, 2, TileType.BOOKSHELF)
         set(width / 2, 0, TileType.EXIT_TO_FOREST)
         set(7, 8, TileType.RESOURCE_WOOD); set(12, 8, TileType.RESOURCE_METAL)
         set(10, 11, TileType.RESOURCE_FABRIC); set(14, 10, TileType.RESOURCE_FOOD)
@@ -78,7 +79,7 @@ class TileMap(
             worldX - radius to worldY + radius, worldX + radius to worldY + radius)
         return points.all { (x, y) ->
             when (get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())) {
-                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE -> false
+                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF -> false
                 else -> true
             }
         }
@@ -133,7 +134,7 @@ class TileMap(
         var best = maxDistance * maxDistance
         forEachTile { x, y, type ->
             val valid = when (type) {
-                TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.EXIT,
+                TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF, TileType.EXIT,
                 TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS,
                 TileType.EXIT_TO_ROAD -> true
                 else -> false
