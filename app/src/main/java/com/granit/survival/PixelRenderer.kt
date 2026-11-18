@@ -73,18 +73,31 @@ class PixelRenderer {
         engine.tileMap.forEachTile { tileX, tileY, type ->
             when (type) {
                 TileType.FLOOR -> Unit
-                TileType.WALL -> rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.29f, 0.30f, 0.27f)
+                TileType.WALL -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.24f, 0.26f, 0.24f)
+                    rect(tileX + 0.04f, tileY + 0.06f, 0.92f, 0.12f, 0.34f, 0.35f, 0.30f)
+                    rect(tileX + 0.08f, tileY + 0.28f, 0.84f, 0.035f, 0.17f, 0.19f, 0.18f)
+                    rect(tileX + 0.08f, tileY + 0.70f, 0.84f, 0.035f, 0.17f, 0.19f, 0.18f)
+                }
                 TileType.BED -> {
                     rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.31f, 0.25f, 0.18f)
                     rect(tileX + 0.08f, tileY + 0.12f, 0.84f, 0.18f, 0.43f, 0.35f, 0.23f)
+                    rect(tileX + 0.13f, tileY + 0.35f, 0.28f, 0.20f, 0.62f, 0.58f, 0.45f)
+                    rect(tileX + 0.48f, tileY + 0.34f, 0.38f, 0.07f, 0.20f, 0.17f, 0.14f)
                 }
                 TileType.WORKBENCH -> {
                     rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.26f)
                     rect(tileX + 0.12f, tileY + 0.18f, 0.76f, 0.18f, 0.48f, 0.35f, 0.20f)
+                    rect(tileX + 0.18f, tileY + 0.38f, 0.10f, 0.48f, 0.28f, 0.23f, 0.16f)
+                    rect(tileX + 0.72f, tileY + 0.38f, 0.10f, 0.48f, 0.28f, 0.23f, 0.16f)
+                    rect(tileX + 0.40f, tileY + 0.08f, 0.20f, 0.06f, 0.66f, 0.60f, 0.42f)
                 }
                 TileType.STORAGE -> {
                     rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.34f, 0.27f, 0.17f)
                     rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.18f, 0.20f, 0.19f)
+                    rect(tileX + 0.18f, tileY + 0.20f, 0.64f, 0.08f, 0.43f, 0.35f, 0.22f)
+                    rect(tileX + 0.46f, tileY + 0.32f, 0.08f, 0.46f, 0.40f, 0.34f, 0.22f)
+                    rect(tileX + 0.40f, tileY + 0.46f, 0.20f, 0.10f, 0.58f, 0.50f, 0.30f)
                 }
                 TileType.EXIT -> rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.39f)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, 0.55f, 0.35f, 0.20f)
