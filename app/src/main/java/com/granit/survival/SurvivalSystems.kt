@@ -25,7 +25,6 @@ class WorldClock(
     fun advanceMinutes(minutes: Int) {
         require(minutes >= 0) { "Minutes cannot be negative" }
         if (minutes == 0) return
-        val previousDay = minuteOfDay / MINUTES_PER_DAY
         val absolute = minuteOfDay.toLong() + minutes
         val crossedDays = absolute / MINUTES_PER_DAY
         minuteOfDay = (absolute % MINUTES_PER_DAY).toInt()
@@ -42,9 +41,6 @@ class WorldClock(
             MINUTES_PER_DAY - minuteOfDay + target
         }
         advanceMinutes(duration)
-        if (duration > 0 && day == 1 && minuteOfDay == target) {
-            // Day is advanced by advanceMinutes when midnight is crossed.
-        }
         return duration
     }
 
