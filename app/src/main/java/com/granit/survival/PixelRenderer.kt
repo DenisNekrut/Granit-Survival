@@ -91,13 +91,8 @@ class PixelRenderer {
         // Draw only non-floor tiles; the tile map is also used by movement collision.
         engine.tileMap.forEachTile { tileX, tileY, type ->
             when (type) {
-                TileType.FLOOR -> Unit
-                TileType.WALL -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.24f, 0.26f, 0.24f)
-                    rect(tileX + 0.04f, tileY + 0.06f, 0.92f, 0.12f, 0.34f, 0.35f, 0.30f)
-                    rect(tileX + 0.08f, tileY + 0.28f, 0.84f, 0.035f, 0.17f, 0.19f, 0.18f)
-                    rect(tileX + 0.08f, tileY + 0.70f, 0.84f, 0.035f, 0.17f, 0.19f, 0.18f)
-                }
+                TileType.FLOOR -> drawFloorDetail(tileX, tileY, engine.zone)
+                TileType.WALL -> drawZoneWall(tileX, tileY, engine.zone)
                 TileType.BED -> {
                     rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.31f, 0.25f, 0.18f)
                     rect(tileX + 0.08f, tileY + 0.12f, 0.84f, 0.18f, 0.43f, 0.35f, 0.23f)
@@ -130,8 +125,7 @@ class PixelRenderer {
                     rect(tileX + 0.40f, tileY + 0.46f, 0.20f, 0.10f, 0.58f, 0.50f, 0.30f)
                 }
                 TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
-                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD ->
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.39f)
+                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
                 TileType.RESOURCE_METAL -> drawResource(tileX, tileY, "metal")
                 TileType.RESOURCE_FABRIC -> drawResource(tileX, tileY, "fabric")
@@ -189,6 +183,66 @@ class PixelRenderer {
 
 
         GLES20.glDisableVertexAttribArray(positionLocation)
+    }
+
+    private fun drawFloorDetail(x: Int, y: Int, zone: WorldZone) {
+        val pattern = Math.floorMod(x * 7 + y * 11, 13)
+        when (zone) {
+            WorldZone.BUNKER -> {
+                if ((x + y) % 4 == 0) rect(x + 0.08f, y + 0.92f, 0.84f, 0.025f, 0.17f, 0.19f, 0.18f)
+                if (pattern == 0) rect(x + 0.20f, y + 0.24f, 0.08f, 0.05f, 0.20f, 0.22f, 0.21f)
+            }
+            WorldZone.FOREST -> {
+                if (pattern % 3 == 0) rect(x + 0.18f, y + 0.30f, 0.12f, 0.06f, 0.20f, 0.27f, 0.16f)
+                if (pattern % 5 == 0) rect(x + 0.66f, y + 0.68f, 0.08f, 0.08f, 0.25f, 0.25f, 0.19f)
+            }
+            WorldZone.RUINS -> {
+                if (pattern % 4 == 0) {
+                    rect(x + 0.18f, y + 0.20f, 0.42f, 0.035f, 0.22f, 0.21f, 0.19f)
+                    rect(x + 0.55f, y + 0.20f, 0.035f, 0.28f, 0.22f, 0.21f, 0.19f)
+                }
+            }
+            WorldZone.ROAD -> {
+                if (y % 5 == 0) rect(x + 0.12f, y + 0.48f, 0.76f, 0.025f, 0.18f, 0.20f, 0.22f)
+                if (pattern == 0) rect(x + 0.40f, y + 0.22f, 0.06f, 0.06f, 0.27f, 0.29f, 0.30f)
+            }
+        }
+    }
+
+    private fun drawZoneWall(x: Int, y: Int, zone: WorldZone) {
+        when (zone) {
+            WorldZone.BUNKER -> {
+                rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.24f, 0.26f, 0.24f)
+                rect(x + 0.04f, y + 0.06f, 0.92f, 0.12f, 0.34f, 0.35f, 0.30f)
+                rect(x + 0.08f, y + 0.28f, 0.84f, 0.035f, 0.17f, 0.19f, 0.18f)
+                rect(x + 0.08f, y + 0.70f, 0.84f, 0.035f, 0.17f, 0.19f, 0.18f)
+            }
+            WorldZone.FOREST -> {
+                rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.10f, 0.16f, 0.11f)
+                rect(x + 0.06f, y + 0.08f, 0.88f, 0.60f, 0.18f, 0.29f, 0.17f)
+                rect(x + 0.14f, y + 0.18f, 0.68f, 0.35f, 0.22f, 0.35f, 0.19f)
+                rect(x + 0.42f, y + 0.58f, 0.18f, 0.40f, 0.35f, 0.23f, 0.14f)
+            }
+            WorldZone.RUINS -> {
+                rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.20f, 0.19f, 0.18f)
+                rect(x + 0.04f, y + 0.10f, 0.45f, 0.34f, 0.34f, 0.32f, 0.29f)
+                rect(x + 0.48f, y + 0.22f, 0.46f, 0.28f, 0.29f, 0.28f, 0.25f)
+                rect(x + 0.18f, y + 0.60f, 0.70f, 0.25f, 0.37f, 0.34f, 0.30f)
+            }
+            WorldZone.ROAD -> {
+                rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.22f, 0.24f, 0.25f)
+                rect(x + 0.04f, y + 0.16f, 0.92f, 0.68f, 0.33f, 0.35f, 0.34f)
+                rect(x + 0.08f, y + 0.30f, 0.84f, 0.08f, 0.65f, 0.55f, 0.30f)
+                rect(x + 0.08f, y + 0.62f, 0.84f, 0.08f, 0.65f, 0.55f, 0.30f)
+            }
+        }
+    }
+
+    private fun drawExitTile(x: Int, y: Int) {
+        rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.12f, 0.22f, 0.23f)
+        rect(x + 0.12f, y + 0.08f, 0.76f, 0.84f, 0.28f, 0.43f, 0.42f)
+        rect(x + 0.22f, y + 0.18f, 0.56f, 0.64f, 0.12f, 0.20f, 0.20f)
+        rect(x + 0.34f, y + 0.46f, 0.32f, 0.08f, 0.72f, 0.67f, 0.49f)
     }
 
     private fun drawAtlasSprite(id: String, centerX: Float, topY: Float, pixelSize: Float, frame: Int = 0) {
