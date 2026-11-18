@@ -66,6 +66,34 @@ class GameEngine {
     /** Sleep is only available beside a bed in the bunker. */
     fun canSleep(): Boolean = tileMap.isNearTile(TileType.BED, player.x, player.y, 1.5f)
 
+    fun canAccessStorage(): Boolean = tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 1.5f)
+
+    fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean =
+        canAccessStorage() && bunkerStorage.deposit(inventory, type, amount)
+
+    fun transferFromStorage(type: ItemType, amount: Int = bunkerStorage.count(type)): Boolean =
+        canAccessStorage() && bunkerStorage.withdraw(inventory, type, amount)
+
+    fun consumeFood(): Boolean {
+        if (!inventory.remove(ItemType.CANNED_FOOD, 1)) return false
+        needs.consumeFood()
+        advanceAfterItemUse()
+        return true
+    }
+
+    fun drinkWater(): Boolean {
+        if (!inventory.remove(ItemType.WATER, 1)) return false
+        needs.drinkWater()
+        advanceAfterItemUse()
+        return true
+    }
+
+    private fun advanceAfterItemUse() {
+        worldClock.advanceMinutes(5)
+        needs.advanceAwake(5)
+        if (needs.health <= 0f) checkpointSystem.restore(this)
+    }
+
     /** Restore the complete wake-up state after a failed expedition. */
     fun respawnAtWakeCheckpoint(): Boolean = checkpointSystem.restore(this)
 
@@ -138,8 +166,16 @@ class GameEngine {
             return
         }
 
-        if (tileMap.nearestInteractable(player.x, player.y, 1.35f) != null) {
-            interactionCount++
+        when (tileMap.nearestInteractable(player.x, player.y, 1.35f)) {
+            TileType.STORAGE -> {
+                ItemType.values().forEach { type ->
+                    val amount = inventory.count(type)
+                    if (amount > 0) bunkerStorage.deposit(inventory, type, amount)
+                }
+                interactionCount++
+            }
+            TileType.BED, TileType.WORKBENCH, TileType.EXIT -> interactionCount++
+            else -> Unit
         }
     }
 }
