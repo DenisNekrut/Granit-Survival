@@ -116,7 +116,11 @@ class EngineRenderThread(
                 }
 
                 engine.updateFrame(deltaSeconds, input.copy(interact = interacting))
-                renderer.render(engine, touchX, touchY, active, interacting)
+                renderer.render(
+                    engine, touchX, touchY, active, interacting,
+                    controlsOpacity = gameSettings.controlsOpacity,
+                    joystickScale = gameSettings.joystickScale
+                )
 
                 if (!EGL14.eglSwapBuffers(display, eglSurface)) {
                     val eglError = EGL14.eglGetError()
