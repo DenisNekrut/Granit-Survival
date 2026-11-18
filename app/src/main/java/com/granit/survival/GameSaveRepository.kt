@@ -110,11 +110,11 @@ class GameSaveRepository(context: Context) {
 
 private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("player", player.toJson())
-    .put("inventory", inventory.toJson())
-    .put("bunkerStorage", bunkerStorage.toJson())
+    .put("inventory", inventory.toItemStacksJson())
+    .put("bunkerStorage", bunkerStorage.toItemStacksJson())
     .put("needs", needs.toJson())
     .put("clock", clock.toJson())
-    .put("remainingResources", remainingResources.toJson())
+    .put("remainingResources", remainingResources.toResourcesJson())
     .put("wakeCheckpoint", wakeCheckpoint?.toJson() ?: JSONObject.NULL)
 
 private fun PlayerSnapshot.toJson() = JSONObject()
@@ -129,7 +129,7 @@ private fun SurvivalNeedsSnapshot.toJson() = JSONObject()
 private fun WorldClockSnapshot.toJson() = JSONObject()
     .put("day", day).put("minuteOfDay", minuteOfDay).put("totalMinutes", totalMinutes)
 
-private fun List<ItemStack?>.toJson(): JSONArray = JSONArray().also { array ->
+private fun List<ItemStack?>.toItemStacksJson(): JSONArray = JSONArray().also { array ->
     forEach { stack ->
         array.put(if (stack == null) JSONObject.NULL else JSONObject()
             .put("type", stack.type.name)
@@ -137,7 +137,7 @@ private fun List<ItemStack?>.toJson(): JSONArray = JSONArray().also { array ->
     }
 }
 
-private fun List<ResourceLocation>.toJson(): JSONArray = JSONArray().also { array ->
+private fun List<ResourceLocation>.toResourcesJson(): JSONArray = JSONArray().also { array ->
     forEach { resource ->
         array.put(JSONObject()
             .put("x", resource.x)
@@ -148,11 +148,11 @@ private fun List<ResourceLocation>.toJson(): JSONArray = JSONArray().also { arra
 
 private fun WakeCheckpoint.toJson() = JSONObject()
     .put("player", player.toJson())
-    .put("inventory", inventory.toJson())
-    .put("bunkerStorage", bunkerStorage.toJson())
+    .put("inventory", inventory.toItemStacksJson())
+    .put("bunkerStorage", bunkerStorage.toItemStacksJson())
     .put("needs", needs.toJson())
     .put("clock", clock.toJson())
-    .put("remainingResources", remainingResources.toJson())
+    .put("remainingResources", remainingResources.toResourcesJson())
 
 private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveSnapshot {
     val checkpointJson = json.optJSONObject("wakeCheckpoint")
