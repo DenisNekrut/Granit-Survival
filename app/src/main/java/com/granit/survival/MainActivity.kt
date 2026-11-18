@@ -113,6 +113,16 @@ class MainActivity : Activity() {
         gameSurface.visibility = View.GONE
         val panel = createPanel("ПАУЗА", "Состояние игры сохранено в памяти")
         panel.addView(menuButton("ПРОДОЛЖИТЬ") { enterGame() })
+        panel.addView(menuButton("СОН ДО 07:00", enabled = session.engine.canSleep()) {
+            runCatching { session.sleepAndAutosave() }
+                .onSuccess { slept ->
+                    if (slept) {
+                        Toast.makeText(this, "Новый день. Автосохранение создано.", Toast.LENGTH_SHORT).show()
+                        showPauseMenu()
+                    } else Toast.makeText(this, "Для сна нужно находиться рядом с кроватью.", Toast.LENGTH_SHORT).show()
+                }
+                .onFailure { Toast.makeText(this, "Не удалось создать автосохранение: ${it.message}", Toast.LENGTH_LONG).show() }
+        })
         panel.addView(menuButton("СОХРАНИТЬ ИГРУ") { showSaveSlots(true) })
         panel.addView(menuButton("СОХРАНЕНИЯ") { showSaveSlots(false) })
         panel.addView(menuButton("НАСТРОЙКИ") { showSettings() })
