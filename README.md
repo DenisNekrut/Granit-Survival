@@ -18,6 +18,11 @@ The legacy Unity-based plan is retained for history only and is superseded by th
 
 ## Development status
 
-The repository is being migrated from the original planning-only Unity proposal to the custom Android engine. The first milestone is the Android bootstrap: application shell, surface lifecycle, EGL context, render thread, and touch input.
+The first engine prototype now contains:
+- Android application shell and SurfaceView lifecycle;
+- EGL14 context and a dedicated OpenGL ES 2.0 render thread;
+- fixed-step simulation loop;
+- a first block-based bunker scene;
+- a controllable player state and touch joystick input.
 
-No milestone is considered complete until its build and acceptance checks have actually passed.
+This is an early technical prototype, not yet a complete game. The next work is to validate the build, improve input/rendering, and add world collision and tile-map support. Device testing is still required.
