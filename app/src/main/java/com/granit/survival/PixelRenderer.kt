@@ -54,11 +54,21 @@ class PixelRenderer {
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
     }
 
-    fun render(engine: GameEngine, joystickX: Float, joystickY: Float, touching: Boolean, interacting: Boolean) {
+    fun render(
+        engine: GameEngine,
+        joystickX: Float,
+        joystickY: Float,
+        touching: Boolean,
+        interacting: Boolean,
+        controlsOpacity: Float = 0.8f,
+        joystickScale: Float = 1f
+    ) {
         GLES20.glClearColor(0.035f, 0.047f, 0.055f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (program == 0) return
         GLES20.glUseProgram(program)
+        GLES20.glEnable(GLES20.GL_BLEND)
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         currentCamera = engine.camera
         GLES20.glEnableVertexAttribArray(positionLocation)
 
@@ -145,9 +155,10 @@ class PixelRenderer {
         drawInventory(engine.inventory)
 
         // Virtual joystick and interaction button.
-        screenRect(2.0f, 8.2f, 2.4f, 2.4f, 0.22f, 0.25f, 0.24f)
+        screenRect(2.0f, 8.2f, 2.4f * joystickScale, 2.4f * joystickScale,
+            0.22f, 0.25f, 0.24f, controlsOpacity)
         if (touching) {
-            val radiusPx = (screenHeight * 0.19f).coerceAtLeast(72f)
+            val radiusPx = (screenHeight * 0.19f * joystickScale).coerceAtLeast(72f)
             val thumbX = (joystickX - worldOffsetX) / worldScale
             val thumbY = (joystickY - worldOffsetY) / worldScale
             val thumbSize = (radiusPx * 0.36f) / worldScale
@@ -156,13 +167,13 @@ class PixelRenderer {
                 thumbY - thumbSize * 0.5f,
                 thumbSize,
                 thumbSize,
-                0.67f, 0.65f, 0.55f
+                0.67f, 0.65f, 0.55f, controlsOpacity
             )
         }
         screenRect(16.8f, 9.2f, 2.2f, 2.2f,
             if (interacting) 0.48f else 0.28f,
             if (interacting) 0.55f else 0.32f,
-            if (interacting) 0.42f else 0.30f)
+            if (interacting) 0.42f else 0.30f, controlsOpacity)
 
 
         GLES20.glDisableVertexAttribArray(positionLocation)
@@ -325,7 +336,10 @@ class PixelRenderer {
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
     }
 
-    private fun screenRect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float) {
+    private fun screenRect(
+        x: Float, y: Float, width: Float, height: Float,
+        r: Float, g: Float, b: Float, alpha: Float = 1f
+    ) {
         val left = worldOffsetX + x * worldScale
         val top = worldOffsetY + y * worldScale
         val right = worldOffsetX + (x + width) * worldScale
@@ -339,7 +353,7 @@ class PixelRenderer {
         vertexBuffer.clear()
         vertexBuffer.put(vertices).position(0)
         GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
-        GLES20.glUniform4f(colorLocation, r, g, b, 1f)
+        GLES20.glUniform4f(colorLocation, r, g, b, alpha.coerceIn(0f, 1f))
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
     }
 
