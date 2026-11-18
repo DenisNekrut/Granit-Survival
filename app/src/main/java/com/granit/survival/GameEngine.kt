@@ -63,7 +63,8 @@ class GameEngine {
 
     fun isPoiDiscovered(id: String): Boolean = id in discoveredPoiIds
     fun discoveredPointsOfInterest(): Set<String> = discoveredPoiIds.toSet()
-    fun discoveredPointDetails(): List<PointOfInterest> = discoveredPoiIds.mapNotNull(PointOfInterestCatalog::byId)
+    fun discoveredPointDetails(): List<PointOfInterest> =
+        PointOfInterestCatalog.all().filter { it.id in discoveredPoiIds }
 
     fun restoreDiscoveredPointsOfInterest(ids: Set<String>) {
         discoveredPoiIds.clear()
