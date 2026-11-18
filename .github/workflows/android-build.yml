@@ -32,7 +32,7 @@ jobs:
         run: |
           for attempt in 1 2 3; do
             echo "Android build attempt ${attempt}/3"
-            if gradle --no-daemon :app:assembleDebug; then
+            if gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug; then
               exit 0
             fi
             if [ "${attempt}" -lt 3 ]; then
