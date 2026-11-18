@@ -15,6 +15,7 @@ class GameEngine {
     companion object {
         const val WORLD_WIDTH = 40f
         const val WORLD_HEIGHT = 24f
+        const val MEDICAL_KIT_HEALING = 35f
         private const val FIXED_STEP_SECONDS = 1f / 60f
         private const val MAX_FRAME_SECONDS = 0.25f
         private const val GAME_MINUTE_REAL_SECONDS = 1f
@@ -72,6 +73,32 @@ class GameEngine {
     fun canSleep(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.BED, player.x, player.y, 1.5f)
 
     fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 1.5f)
+
+    fun canUseWorkbench(): Boolean = zone == WorldZone.BUNKER &&
+        tileMap.isNearTile(TileType.WORKBENCH, player.x, player.y, 1.5f)
+
+    fun craft(recipeId: String): Boolean {
+        if (!canUseWorkbench()) return false
+        val recipe = CraftingRecipe.byId(recipeId) ?: return false
+        if (!recipe.canCraft(inventory)) return false
+        recipe.ingredients.forEach { (type, amount) -> inventory.remove(type, amount) }
+        check(inventory.add(recipe.output, recipe.outputAmount) == 0) {
+            "Crafting output did not fit after ingredient validation"
+        }
+        worldClock.advanceMinutes(recipe.craftMinutes)
+        needs.advanceAwake(recipe.craftMinutes)
+        if (needs.health <= 0f) checkpointSystem.restore(this)
+        return true
+    }
+
+    fun useMedicalKit(): Boolean {
+        if (!inventory.remove(ItemType.MEDICAL_KIT, 1)) return false
+        needs.restoreHealth(MEDICAL_KIT_HEALING)
+        worldClock.advanceMinutes(5)
+        needs.advanceAwake(5)
+        if (needs.health <= 0f) checkpointSystem.restore(this)
+        return true
+    }
 
     fun changeZone(target: WorldZone) {
         tileMap = zoneMaps.getOrPut(target) { TileMap(zone = target) }
