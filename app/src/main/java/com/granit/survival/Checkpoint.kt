@@ -1,0 +1,44 @@
+package com.granit.survival
+
+data class PlayerSnapshot(val x: Float, val y: Float, val speed: Float)
+
+data class WakeCheckpoint(
+    val player: PlayerSnapshot,
+    val inventory: List<ItemStack?>,
+    val bunkerStorage: List<ItemStack?>,
+    val needs: SurvivalNeedsSnapshot,
+    val clock: WorldClockSnapshot,
+    val remainingResources: List<ResourceLocation>
+)
+
+/** Captures the complete reversible run state at wake-up. */
+class CheckpointSystem {
+    private var checkpoint: WakeCheckpoint? = null
+
+    fun capture(engine: GameEngine) {
+        checkpoint = WakeCheckpoint(
+            player = PlayerSnapshot(engine.player.x, engine.player.y, engine.player.speed),
+            inventory = engine.inventory.snapshot(),
+            bunkerStorage = engine.bunkerStorage.snapshot(),
+            needs = engine.needs.snapshot(),
+            clock = engine.worldClock.snapshot(),
+            remainingResources = engine.tileMap.resourceSnapshot()
+        )
+    }
+
+    fun hasCheckpoint(): Boolean = checkpoint != null
+
+    fun restore(engine: GameEngine): Boolean {
+        val saved = checkpoint ?: return false
+        engine.player.x = saved.player.x
+        engine.player.y = saved.player.y
+        engine.player.speed = saved.player.speed
+        engine.inventory.restore(saved.inventory)
+        engine.bunkerStorage.restore(saved.bunkerStorage)
+        engine.needs.restore(saved.needs)
+        engine.worldClock.restore(saved.clock)
+        engine.tileMap.restoreResources(saved.remainingResources)
+        engine.camera.follow(engine.player.x, engine.player.y, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT)
+        return true
+    }
+}
