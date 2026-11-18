@@ -27,6 +27,14 @@ class GameSession(context: Context) {
         return true
     }
 
+    fun transferToStorage(type: ItemType): Boolean = engine.transferToStorage(type)
+
+    fun transferFromStorage(type: ItemType): Boolean = engine.transferFromStorage(type)
+
+    fun consumeFood(): Boolean = engine.consumeFood()
+
+    fun drinkWater(): Boolean = engine.drinkWater()
+
     fun loadMostRecent(): Boolean {
         val candidate = saves.listSlots()
             .filter { it.exists && !it.corrupted && it.savedAtMillis != null }
