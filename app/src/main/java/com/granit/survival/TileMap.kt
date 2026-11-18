@@ -32,6 +32,7 @@ class TileMap(
         fill(16, 2, 2, 2, TileType.STORAGE)
         fill(9, 1, 2, 1, TileType.WORKBENCH)
         fill(20, 2, 1, 2, TileType.BOOKSHELF)
+        set(24, 2, TileType.RADIO)
         set(width / 2, 1, TileType.EXIT_TO_FOREST)
         set(7, 8, TileType.RESOURCE_WOOD); set(12, 8, TileType.RESOURCE_METAL)
         set(10, 11, TileType.RESOURCE_FABRIC); set(14, 10, TileType.RESOURCE_FOOD)
