@@ -63,6 +63,22 @@ class WorldZoneTest {
     }
 
     @Test
+    fun saveRestoreKeepsCollectedResourcesInEveryZone() {
+        val original = GameEngine()
+        original.changeZone(WorldZone.FOREST)
+        original.tileMap.collectResource(ResourceLocation(7, 5, ItemType.WOOD))
+        val snapshot = original.createSaveSnapshot()
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(snapshot)
+        assertEquals(WorldZone.FOREST, restored.zone)
+        assertEquals(TileType.FLOOR, restored.tileMap[7, 5])
+        restored.changeZone(WorldZone.BUNKER)
+        restored.changeZone(WorldZone.FOREST)
+        assertEquals(TileType.FLOOR, restored.tileMap[7, 5])
+    }
+
+    @Test
     fun saveSnapshotIncludesCurrentAndWakeZones() {
         val engine = GameEngine()
         engine.sleepUntilMorning()
