@@ -54,6 +54,11 @@ class PsychologicalState {
         }
     }
 
+    fun applyReading(moraleGain: Float, stressRelief: Float) {
+        morale = (morale + moraleGain.coerceAtLeast(0f)).coerceAtMost(100f)
+        stress = (stress - stressRelief.coerceAtLeast(0f)).coerceAtLeast(0f)
+    }
+
     fun restore(snapshot: PsychologicalStateSnapshot) {
         stress = snapshot.stress.coerceIn(0f, 100f)
         loneliness = snapshot.loneliness.coerceIn(0f, 100f)
