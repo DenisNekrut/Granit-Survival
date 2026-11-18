@@ -2,41 +2,51 @@
 
 2D pixel-art survival game for Android, built on **Granit Engine**, a custom engine developed specifically for this project.
 
-## Current technical direction
+## Technical direction
 
-- Platform: Android (landscape)
+- Platform: Android, landscape orientation
 - Language: Kotlin/JVM
-- Rendering backend: EGL14 + OpenGL ES 2.0
-- Engine: custom implementation; no Unity, Godot, or MonoGame
-- Architecture: Android Platform / Granit Engine / Granit Survival game layer
+- Rendering: EGL14 + OpenGL ES 2.0
+- Engine: custom implementation; Unity, Godot and MonoGame are not used
+- Architecture: Android platform layer / Granit Engine / Granit Survival game layer
 
 ## Implemented prototype
 
-- Android application shell, SurfaceView lifecycle and EGL14 render thread.
-- Fixed-step simulation loop, camera, collision and multitouch virtual joystick.
-- Four connected areas: bunker, forest, ruins and road.
-- Separate resource layouts for each area; collected resources persist when travelling between zones.
-- 4×4 inventory, resource collection, bunker storage, item transfer, canned food and water consumption.
-- Survival clock, health, hunger, thirst, energy and sleep until 07:00; gathering and travel spend game time.
-- Psychological indicators: stress, loneliness, fatigue and morale; sleep/return aid recovery, while stress and fatigue gently affect movement speed.
-- Wake-up checkpoint with rollback of player, inventory, bunker storage, survival needs, psychology, time and resources in every zone.
-- Three manual save slots plus a separate atomic autosave file, versioned JSON format v3 and backward reading of older versions.
-- Main menu, pause screen, save-slot manager, storage screen and settings screen.
-- Settings persist through SharedPreferences. Joystick sensitivity and scale are applied; audio, vibration and graphics quality still need integration.
-- PixelSpriteAtlas with a shared palette, player idle/walk frames, resource and medical-item sprites, and atlas validation.
-- Basic workbench recipes: bandage and medical kit; healing items are consumed only when health can be restored.
-- HUD with live survival meters, day/time and current zone label.
+### Engine and gameplay
+- Android application shell, SurfaceView lifecycle and EGL render thread.
+- Fixed-step simulation, camera, collision, virtual joystick and multitouch input.
+- Four connected areas: bunker, forest, ruins and road; exits are reachable from each zone's spawn.
+- Separate maps and resource states for each area; collected resources remain collected when revisiting.
+- Gathering and travelling consume in-game time.
+- 4×4 inventory, resource collection, bunker storage and item transfer.
+- Health, hunger, thirst, energy, food and water.
+- Sleep until 07:00, wake-up checkpoint and rollback of the reversible run state.
+
+### Bunker, knowledge and events
+- Main menu, pause menu, save-slot manager, settings, storage and workbench screens.
+- Three manual save slots and a separate atomic autosave; JSON schema v5 reads older versions 1–4.
+- Workbench recipes for bandage and medical kit; medical kit recipe unlocks after reading a technical manual.
+- Bunker library with fiction, science, technical manuals, diaries and magazines. Reading consumes game time and may affect morale/stress.
+- Bunker radio with one daily broadcast: weather, maintenance notes, archival broadcast or weak signal. Listening consumes 10 in-game minutes.
+- Read books, unlocked knowledge and radio state are included in save/checkpoint rollback.
+- Psychological indicators: stress, loneliness, fatigue and morale. Sleep/return aid recovery; fatigue and stress gently reduce movement speed.
+
+### Graphics and settings
+- PixelSpriteAtlas with player idle/walk frames, resource and medical-item sprites.
+- Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
+- Pixel-art bed, storage, workbench, bookshelf and radio.
+- HUD displays live survival meters, day/time and current zone.
+- Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored but still need integration.
 
 ## Documentation
-
 - [Granit Engine architecture v2.0](docs/architecture/GRANIT_ENGINE_ARCHITECTURE.md)
 - [Project requirements and progress tracker](docs/PROJECT_BACKLOG.md)
 
-The legacy Unity-based plan is retained for history only and is superseded by the custom-engine architecture above.
+The older Unity-oriented plan is retained for historical reference and is superseded by the custom-engine architecture above.
 
-## Development status
+## Remaining work
 
-The prototype now has the first connected gameplay loop across four areas, but it is not yet a complete game. The maps and sprite art are early placeholders. There are no finished NPC/event systems, story content or book library; crafting currently has only two medical recipes, and audio integration is incomplete. Physical Android device testing remains outstanding.
+This is still a playable prototype, not a finished game. The next work includes a complete art pass and external sprite sheets, more recipes and bunker upgrades, richer weather/story events, NPCs and expedition objectives, full audio/settings integration, and physical Android device testing.
 
 ## Downloading a test APK
 
