@@ -96,9 +96,10 @@ class GameEngine {
 
     fun listenToRadio(): RadioEvent? {
         if (!canUseRadio()) return null
-        val event = radioSystem.eventForDay(worldClock.day) ?: return null
+        val listeningDay = worldClock.day
+        val event = radioSystem.eventForDay(listeningDay) ?: return null
         if (!advanceGameMinutes(event.broadcastMinutes)) return null
-        radioSystem.markListened(worldClock.day)
+        radioSystem.markListened(listeningDay)
         psychology.applyReading(event.moraleGain, event.stressRelief)
         return event
     }
