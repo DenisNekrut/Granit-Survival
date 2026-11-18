@@ -25,7 +25,7 @@ class SurvivalSystemsTest {
         val sleptMinutes = clock.sleepUntilMorning()
         needs.sleep(sleptMinutes)
 
-        assertEquals(9, sleptMinutes)
+        assertEquals(540, sleptMinutes)
         assertEquals(7, clock.hour)
         assertEquals(2, clock.day)
         assertTrue(needs.energy > energyBeforeSleep)
