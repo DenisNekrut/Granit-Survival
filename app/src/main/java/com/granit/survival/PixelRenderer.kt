@@ -100,40 +100,19 @@ class PixelRenderer {
                     rect(tileX + 0.40f, tileY + 0.46f, 0.20f, 0.10f, 0.58f, 0.50f, 0.30f)
                 }
                 TileType.EXIT -> rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.39f)
-                TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, 0.55f, 0.35f, 0.20f)
-                TileType.RESOURCE_METAL -> drawResource(tileX, tileY, 0.55f, 0.60f, 0.62f)
-                TileType.RESOURCE_FABRIC -> drawResource(tileX, tileY, 0.35f, 0.49f, 0.46f)
-                TileType.RESOURCE_FOOD -> drawResource(tileX, tileY, 0.68f, 0.48f, 0.20f)
-                TileType.RESOURCE_WATER -> drawResource(tileX, tileY, 0.22f, 0.48f, 0.68f)
+                TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
+                TileType.RESOURCE_METAL -> drawResource(tileX, tileY, "metal")
+                TileType.RESOURCE_FABRIC -> drawResource(tileX, tileY, "fabric")
+                TileType.RESOURCE_FOOD -> drawResource(tileX, tileY, "food")
+                TileType.RESOURCE_WATER -> drawResource(tileX, tileY, "water")
             }
         }
 
-        // Character sprite: layered pixel-art silhouette instead of placeholder blocks.
+        // Animated pixel-art character sprite selected from the logical atlas.
         val px = engine.player.x
         val py = engine.player.y
-        drawPixelSprite(
-            rows = listOf(
-                "....HHHH....",
-                "...HHHHHH...",
-                "...SSSSSS...",
-                "..SSSSSSSS..",
-                "..SSSSSSSS..",
-                "..SSSSSSSS..",
-                "..CCAAAAAC..",
-                ".PCCCCCCCC..",
-                ".PCCCCCCCC..",
-                ".PCCCCCCCC..",
-                "..CCCCCCCC..",
-                "..BBBBBBBB..",
-                "..BB..BB....",
-                "..BB..BB....",
-                "DD....DD....",
-                "DD....DD...."
-            ),
-            centerX = px,
-            topY = py - 0.48f,
-            pixelSize = 0.06f
-        )
+        drawAtlasSprite("player", px, py - 0.48f, 0.06f,
+            (engine.simulationTimeSeconds * 4.0).toInt())
 
         // Screen-space HUD reads the live simulation values.
         screenRect(0.42f, 0.28f, 4.75f, 2.72f, 0.055f, 0.067f, 0.066f)
@@ -171,18 +150,21 @@ class PixelRenderer {
         GLES20.glDisableVertexAttribArray(positionLocation)
     }
 
-    private fun drawPixelSprite(rows: List<String>, centerX: Float, topY: Float, pixelSize: Float) {
+    private fun drawAtlasSprite(id: String, centerX: Float, topY: Float, pixelSize: Float, frame: Int = 0) {
+        val sprite = PixelSpriteAtlas.sprite(id) ?: return
+        val rows = sprite.frames[Math.floorMod(frame, sprite.frames.size)]
+        drawPixelSprite(rows, centerX, topY, pixelSize, sprite.palette)
+    }
+
+    private fun drawPixelSprite(
+        rows: List<String>,
+        centerX: Float,
+        topY: Float,
+        pixelSize: Float,
+        palette: Map<Char, FloatArray>
+    ) {
         val spriteWidth = rows.maxOf { it.length }
         val left = centerX - spriteWidth * pixelSize * 0.5f
-        val palette = mapOf(
-            'H' to floatArrayOf(0.13f, 0.12f, 0.11f),
-            'S' to floatArrayOf(0.68f, 0.51f, 0.37f),
-            'C' to floatArrayOf(0.25f, 0.34f, 0.30f),
-            'A' to floatArrayOf(0.64f, 0.48f, 0.25f),
-            'P' to floatArrayOf(0.15f, 0.20f, 0.18f),
-            'B' to floatArrayOf(0.28f, 0.31f, 0.29f),
-            'D' to floatArrayOf(0.10f, 0.11f, 0.10f)
-        )
         rows.forEachIndexed { rowIndex, row ->
             var column = 0
             while (column < row.length) {
@@ -266,10 +248,9 @@ class PixelRenderer {
         }
     }
 
-    private fun drawResource(x: Int, y: Int, r: Float, g: Float, b: Float) {
+    private fun drawResource(x: Int, y: Int, spriteId: String) {
         rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.16f, 0.18f, 0.17f)
-        rect(x + 0.18f, y + 0.22f, 0.64f, 0.56f, r, g, b)
-        rect(x + 0.28f, y + 0.12f, 0.44f, 0.12f, r * 0.75f, g * 0.75f, b * 0.75f)
+        drawAtlasSprite(spriteId, x + 0.5f, y + 0.12f, 0.075f)
     }
 
     private fun drawInventory(inventory: Inventory) {
