@@ -20,11 +20,22 @@ class GameSession(context: Context) {
 
     fun loadSlot(slot: Int): Boolean = saves.load(slot, engine)
 
+    fun sleepAndAutosave(): Boolean {
+        if (!engine.canSleep()) return false
+        engine.sleepUntilMorning()
+        saves.saveAuto(engine)
+        return true
+    }
+
     fun loadMostRecent(): Boolean {
         val candidate = saves.listSlots()
             .filter { it.exists && !it.corrupted && it.savedAtMillis != null }
             .maxByOrNull { it.savedAtMillis ?: 0L }
-            ?: return false
-        return runCatching { loadSlot(candidate.slot) }.getOrDefault(false)
+        val autoTimestamp = saves.autoSaveTimestamp()
+        return if (autoTimestamp != null && autoTimestamp > (candidate?.savedAtMillis ?: 0L)) {
+            runCatching { saves.loadAuto(engine) }.getOrDefault(false)
+        } else {
+            candidate?.let { runCatching { loadSlot(it.slot) }.getOrDefault(false) } ?: false
+        }
     }
 }
