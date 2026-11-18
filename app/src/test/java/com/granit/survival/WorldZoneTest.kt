@@ -58,6 +58,8 @@ class WorldZoneTest {
         assertTrue(engine.respawnAtWakeCheckpoint())
         assertEquals(WorldZone.BUNKER, engine.zone)
         assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 8])
+        engine.changeZone(WorldZone.FOREST)
+        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 5])
     }
 
     @Test
@@ -68,5 +70,7 @@ class WorldZoneTest {
         val snapshot = engine.createSaveSnapshot()
         assertEquals(WorldZone.FOREST, snapshot.zone)
         assertEquals(WorldZone.BUNKER, snapshot.wakeCheckpoint?.zone)
+        assertTrue(snapshot.zoneResources.isNotEmpty())
+        assertTrue(snapshot.wakeCheckpoint?.zoneResources?.isNotEmpty() == true)
     }
 }
