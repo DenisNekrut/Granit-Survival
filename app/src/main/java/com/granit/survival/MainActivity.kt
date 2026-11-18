@@ -124,6 +124,9 @@ class MainActivity : Activity() {
             if (session.drinkWater()) { Toast.makeText(this, "Вода использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
         })
         panel.addView(menuButton("МАСТЕРСКАЯ", enabled = session.engine.canUseWorkbench()) { showCrafting() })
+        panel.addView(menuButton("ПЕРЕВЯЗАТЬСЯ", enabled = session.engine.inventory.count(ItemType.BANDAGE) > 0 && session.engine.needs.health < 100f) {
+            if (session.engine.useBandage()) { Toast.makeText(this, "Бинт использован", Toast.LENGTH_SHORT).show(); showPauseMenu() }
+        })
         panel.addView(menuButton("АПТЕЧКА", enabled = session.engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && session.engine.needs.health < 100f) {
             if (session.engine.useMedicalKit()) { Toast.makeText(this, "Аптечка использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
         })
