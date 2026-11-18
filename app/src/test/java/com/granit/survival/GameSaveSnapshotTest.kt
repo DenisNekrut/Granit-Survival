@@ -10,6 +10,7 @@ class GameSaveSnapshotTest {
         val engine = GameEngine()
         engine.inventory.add(ItemType.WOOD, 4)
         engine.inventory.add(ItemType.METAL, 2)
+        engine.bookLibrary.markRead("old_novel")
         engine.sleepUntilMorning()
         val saved = engine.createSaveSnapshot()
 
@@ -25,6 +26,7 @@ class GameSaveSnapshotTest {
         assertEquals(4, engine.inventory.count(ItemType.WOOD))
         assertEquals(saved.clock, engine.worldClock.snapshot())
         assertEquals(saved.needs, engine.needs.snapshot())
+        assertEquals(saved.bookLibrary, engine.bookLibrary.snapshot())
         assertEquals(saved.psychology, engine.psychology.snapshot())
         assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 8])
         assertTrue(engine.checkpointSystem.hasCheckpoint())
