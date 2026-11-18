@@ -16,6 +16,8 @@ class GameEngine {
         const val WORLD_WIDTH = 40f
         const val WORLD_HEIGHT = 24f
         const val MEDICAL_KIT_HEALING = 35f
+        const val RESOURCE_GATHER_MINUTES = 2
+        const val ZONE_TRAVEL_MINUTES = 8
         private const val FIXED_STEP_SECONDS = 1f / 60f
         private const val MAX_FRAME_SECONDS = 0.25f
         private const val GAME_MINUTE_REAL_SECONDS = 1f
@@ -65,7 +67,11 @@ class GameEngine {
         val sleptMinutes = worldClock.sleepUntilMorning()
         needs.sleep(sleptMinutes)
         gameMinuteAccumulator = 0f
-        checkpointSystem.capture(this)
+        if (needs.health <= 0f) {
+            checkpointSystem.restore(this)
+        } else {
+            checkpointSystem.capture(this)
+        }
         return sleptMinutes
     }
 
@@ -85,18 +91,14 @@ class GameEngine {
         check(inventory.add(recipe.output, recipe.outputAmount) == 0) {
             "Crafting output did not fit after ingredient validation"
         }
-        worldClock.advanceMinutes(recipe.craftMinutes)
-        needs.advanceAwake(recipe.craftMinutes)
-        if (needs.health <= 0f) checkpointSystem.restore(this)
+        advanceGameMinutes(recipe.craftMinutes)
         return true
     }
 
     fun useMedicalKit(): Boolean {
         if (!inventory.remove(ItemType.MEDICAL_KIT, 1)) return false
         needs.restoreHealth(MEDICAL_KIT_HEALING)
-        worldClock.advanceMinutes(5)
-        needs.advanceAwake(5)
-        if (needs.health <= 0f) checkpointSystem.restore(this)
+        advanceGameMinutes(5)
         return true
     }
 
@@ -134,21 +136,32 @@ class GameEngine {
     fun consumeFood(): Boolean {
         if (!inventory.remove(ItemType.CANNED_FOOD, 1)) return false
         needs.consumeFood()
-        advanceAfterItemUse()
+        advanceGameMinutes(5)
         return true
     }
 
     fun drinkWater(): Boolean {
         if (!inventory.remove(ItemType.WATER, 1)) return false
         needs.drinkWater()
-        advanceAfterItemUse()
+        advanceGameMinutes(5)
         return true
     }
 
-    private fun advanceAfterItemUse() {
-        worldClock.advanceMinutes(5)
-        needs.advanceAwake(5)
-        if (needs.health <= 0f) checkpointSystem.restore(this)
+    /** Apply the cost of a discrete action using the same clock/needs rules as real time. */
+    private fun advanceGameMinutes(minutes: Int) {
+        if (minutes <= 0) return
+        worldClock.advanceMinutes(minutes)
+        needs.advanceAwake(minutes)
+        if (needs.health <= 0f) {
+            checkpointSystem.restore(this)
+            gameMinuteAccumulator = 0f
+        }
+    }
+
+    private fun travelToZone(target: WorldZone) {
+        if (target == zone) return
+        changeZone(target)
+        advanceGameMinutes(ZONE_TRAVEL_MINUTES)
     }
 
     /** Restore the complete wake-up state after a failed expedition. */
@@ -189,8 +202,9 @@ class GameEngine {
     private fun fixedUpdate(delta: Float, input: EngineInput) {
         val length = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
         val scale = if (length > 1f) 1f / length else 1f
-        val stepX = input.moveX * scale * player.speed * delta
-        val stepY = input.moveY * scale * player.speed * delta
+        val effectiveSpeed = player.speed * needs.movementSpeedMultiplier
+        val stepX = input.moveX * scale * effectiveSpeed * delta
+        val stepY = input.moveY * scale * effectiveSpeed * delta
         isMoving = kotlin.math.abs(stepX) > 0.0001f || kotlin.math.abs(stepY) > 0.0001f
 
         val nextX = (player.x + stepX).coerceIn(0.65f, WORLD_WIDTH - 0.65f)
@@ -226,6 +240,7 @@ class GameEngine {
                 collectedResourceCount++
                 lastCollectedItem = resource.type
                 interactionCount++
+                advanceGameMinutes(RESOURCE_GATHER_MINUTES)
             }
             return
         }
@@ -238,11 +253,14 @@ class GameEngine {
                 }
                 interactionCount++
             }
-            TileType.EXIT_TO_BUNKER -> { changeZone(WorldZone.BUNKER); interactionCount++ }
-            TileType.EXIT_TO_FOREST -> { changeZone(WorldZone.FOREST); interactionCount++ }
-            TileType.EXIT_TO_RUINS -> { changeZone(WorldZone.RUINS); interactionCount++ }
-            TileType.EXIT_TO_ROAD -> { changeZone(WorldZone.ROAD); interactionCount++ }
-            TileType.EXIT -> { changeZone(if (zone == WorldZone.BUNKER) WorldZone.FOREST else WorldZone.BUNKER); interactionCount++ }
+            TileType.EXIT_TO_BUNKER -> { travelToZone(WorldZone.BUNKER); interactionCount++ }
+            TileType.EXIT_TO_FOREST -> { travelToZone(WorldZone.FOREST); interactionCount++ }
+            TileType.EXIT_TO_RUINS -> { travelToZone(WorldZone.RUINS); interactionCount++ }
+            TileType.EXIT_TO_ROAD -> { travelToZone(WorldZone.ROAD); interactionCount++ }
+            TileType.EXIT -> {
+                travelToZone(if (zone == WorldZone.BUNKER) WorldZone.FOREST else WorldZone.BUNKER)
+                interactionCount++
+            }
             TileType.BED, TileType.WORKBENCH -> interactionCount++
             else -> Unit
         }
