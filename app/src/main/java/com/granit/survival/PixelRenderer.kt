@@ -174,6 +174,7 @@ class PixelRenderer {
             WorldZone.ROAD -> "ROAD"
         }
         drawText(zoneLabel, 0.68f, 0.80f, 0.055f, 0.57f, 0.68f, 0.60f)
+        drawText("W:" + engine.weather.shortCode, 3.55f, 0.43f, 0.055f, 0.60f, 0.72f, 0.76f)
         drawNeedBar("HP", engine.needs.health, 1.05f, 0.68f, 0.24f, 0.20f)
         drawNeedBar("FO", engine.needs.hunger, 1.52f, 0.64f, 0.43f, 0.22f)
         drawNeedBar("WT", engine.needs.thirst, 1.99f, 0.25f, 0.48f, 0.66f)
@@ -337,6 +338,10 @@ class PixelRenderer {
             '8' to listOf("111", "101", "111", "101", "111"),
             '9' to listOf("111", "101", "111", "001", "111"),
             'D' to listOf("110", "101", "101", "101", "110"),
+            'C' to listOf("111", "100", "100", "100", "111"),
+            'L' to listOf("100", "100", "100", "100", "111"),
+            'G' to listOf("111", "100", "101", "101", "111"),
+            'V' to listOf("101", "101", "101", "101", "010"),
             'A' to listOf("010", "101", "111", "101", "101"),
             'B' to listOf("110", "101", "110", "101", "110"),
             'I' to listOf("111", "010", "010", "010", "111"),
