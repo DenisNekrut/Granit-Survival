@@ -155,8 +155,9 @@ class PixelRenderer {
         drawInventory(engine.inventory)
 
         // Virtual joystick and interaction button.
-        screenRect(2.0f, 8.2f, 2.4f * joystickScale, 2.4f * joystickScale,
-            0.22f, 0.25f, 0.24f, controlsOpacity)
+        val joystickVisualSize = 2.4f * joystickScale
+        screenRect(3.2f - joystickVisualSize * 0.5f, 9.4f - joystickVisualSize * 0.5f,
+            joystickVisualSize, joystickVisualSize, 0.22f, 0.25f, 0.24f, controlsOpacity)
         if (touching) {
             val radiusPx = (screenHeight * 0.19f * joystickScale).coerceAtLeast(72f)
             val thumbX = (joystickX - worldOffsetX) / worldScale
