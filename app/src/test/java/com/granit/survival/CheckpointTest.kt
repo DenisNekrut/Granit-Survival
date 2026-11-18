@@ -9,6 +9,8 @@ class CheckpointTest {
     fun wakeCheckpointRestoresRunInventoryNeedsClockAndWorldResources() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.WOOD, 3)
+        engine.inventory.add(ItemType.METAL, 2)
+        engine.bunkerStorage.deposit(engine.inventory, ItemType.METAL, 1)
         engine.sleepUntilMorning()
 
         val checkpointPlayerX = engine.player.x
@@ -26,8 +28,8 @@ class CheckpointTest {
 
         assertEquals(checkpointPlayerX, engine.player.x, 0.001f)
         assertEquals(3, engine.inventory.count(ItemType.WOOD))
-        assertEquals(0, engine.inventory.count(ItemType.METAL))
-        assertEquals(0, engine.bunkerStorage.count(ItemType.METAL))
+        assertEquals(1, engine.inventory.count(ItemType.METAL))
+        assertEquals(1, engine.bunkerStorage.count(ItemType.METAL))
         assertEquals(checkpointNeeds, engine.needs.snapshot())
         assertEquals(checkpointDay, engine.worldClock.day)
         assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 8])
