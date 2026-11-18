@@ -120,6 +120,10 @@ class MainActivity : Activity() {
         panel.addView(menuButton("ПИТЬ ВОДУ", enabled = session.engine.inventory.count(ItemType.WATER) > 0) {
             if (session.drinkWater()) { Toast.makeText(this, "Вода использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
         })
+        panel.addView(menuButton("МАСТЕРСКАЯ", enabled = session.engine.canUseWorkbench()) { showCrafting() })
+        panel.addView(menuButton("АПТЕЧКА", enabled = session.engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && session.engine.needs.health < 100f) {
+            if (session.engine.useMedicalKit()) { Toast.makeText(this, "Аптечка использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
+        })
         panel.addView(menuButton("ХРАНИЛИЩЕ", enabled = session.engine.canAccessStorage()) { showStorage() })
         panel.addView(menuButton("СОН ДО 07:00", enabled = session.engine.canSleep()) {
             runCatching { session.sleepAndAutosave() }
@@ -142,6 +146,23 @@ class MainActivity : Activity() {
                 .setPositiveButton("В МЕНЮ") { _, _ -> showMainMenu() }
                 .show()
         })
+        showOverlay(panel)
+    }
+
+    private fun showCrafting() {
+        val panel = createPanel("МАСТЕРСКАЯ", "Рецепты доступны рядом с верстаком")
+        CraftingRecipe.all.forEach { recipe ->
+            val costs = recipe.ingredients.entries.joinToString(" · ") { entry -> entry.key.displayName + ": " + entry.value }
+            panel.addView(label(recipe.title + " — " + recipe.output.displayName, 16f, Color.WHITE))
+            panel.addView(label("Материалы: " + costs + " · Время: " + recipe.craftMinutes + " мин.", 13f, Color.LTGRAY))
+            panel.addView(menuButton("СОЗДАТЬ", enabled = recipe.canCraft(session.engine.inventory)) {
+                if (session.engine.craft(recipe.id)) {
+                    Toast.makeText(this, recipe.title + ": готово", Toast.LENGTH_SHORT).show()
+                    showCrafting()
+                } else Toast.makeText(this, "Не хватает материалов или места", Toast.LENGTH_SHORT).show()
+            })
+        }
+        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
         showOverlay(panel)
     }
 
