@@ -89,6 +89,14 @@ class SurvivalNeeds {
         }
     }
 
+    fun consumeFood() {
+        hunger = (hunger + FOOD_HUNGER_RESTORE).coerceAtMost(100f)
+    }
+
+    fun drinkWater() {
+        thirst = (thirst + WATER_THIRST_RESTORE).coerceAtMost(100f)
+    }
+
     fun sleep(minutes: Int) {
         require(minutes >= 0)
         if (minutes == 0) return
@@ -117,5 +125,7 @@ class SurvivalNeeds {
         const val SLEEP_HUNGER_LOSS_PER_MINUTE = 0.025f
         const val SLEEP_THIRST_LOSS_PER_MINUTE = 0.04f
         const val HEALTH_LOSS_PER_MINUTE = 0.04f
+        const val FOOD_HUNGER_RESTORE = 42f
+        const val WATER_THIRST_RESTORE = 48f
     }
 }
