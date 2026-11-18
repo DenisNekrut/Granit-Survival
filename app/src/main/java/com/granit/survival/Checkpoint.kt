@@ -8,6 +8,7 @@ data class WakeCheckpoint(
     val bunkerStorage: List<ItemStack?>,
     val needs: SurvivalNeedsSnapshot,
     val psychology: PsychologicalStateSnapshot = PsychologicalStateSnapshot(),
+    val bookLibrary: BookLibrarySnapshot = BookLibrarySnapshot(),
     val clock: WorldClockSnapshot,
     val remainingResources: List<ResourceLocation>,
     val zone: WorldZone,
@@ -25,6 +26,7 @@ class CheckpointSystem {
             bunkerStorage = engine.bunkerStorage.snapshot(),
             needs = engine.needs.snapshot(),
             psychology = engine.psychology.snapshot(),
+            bookLibrary = engine.bookLibrary.snapshot(),
             clock = engine.worldClock.snapshot(),
             remainingResources = engine.tileMap.resourceSnapshot(),
             zone = engine.zone,
@@ -52,6 +54,7 @@ class CheckpointSystem {
         engine.bunkerStorage.restore(saved.bunkerStorage)
         engine.needs.restore(saved.needs)
         engine.psychology.restore(saved.psychology)
+        engine.bookLibrary.restore(saved.bookLibrary)
         engine.worldClock.restore(saved.clock)
         engine.tileMap.restoreResources(saved.remainingResources)
         engine.camera.follow(engine.player.x, engine.player.y, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT)
@@ -62,6 +65,7 @@ class CheckpointSystem {
         inventory = inventory.map { it?.copy() },
         bunkerStorage = bunkerStorage.map { it?.copy() },
         remainingResources = remainingResources.toList(),
-        zoneResources = zoneResources.map { it.copy(resources = it.resources.toList()) }
+        zoneResources = zoneResources.map { it.copy(resources = it.resources.toList()) },
+        bookLibrary = bookLibrary.copy(readBookIds = bookLibrary.readBookIds.toSet())
     )
 }
