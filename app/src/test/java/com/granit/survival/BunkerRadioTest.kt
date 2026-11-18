@@ -51,6 +51,9 @@ class BunkerRadioTest {
         engine.player.y = 2.5f
         assertNotNull(engine.listenToRadio())
         assertTrue(engine.respawnAtWakeCheckpoint())
+        // Respawn restores the bunker checkpoint position; walk back to the radio before checking access.
+        engine.player.x = 24.5f
+        engine.player.y = 2.5f
         assertTrue(engine.canUseRadio())
     }
 }
