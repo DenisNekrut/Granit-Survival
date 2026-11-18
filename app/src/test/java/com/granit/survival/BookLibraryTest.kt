@@ -23,6 +23,20 @@ class BookLibraryTest {
     }
 
     @Test
+    fun fictionAndDiaryReadingAffectMoraleAndStress() {
+        val engine = GameEngine()
+        engine.player.x = 20.5f
+        engine.player.y = 2.5f
+        val moraleBefore = engine.psychology.morale
+        assertTrue(engine.readBook("old_novel"))
+        assertTrue(engine.psychology.morale > moraleBefore)
+        val stressBefore = engine.psychology.stress
+        assertTrue(engine.readBook("bunker_diary"))
+        assertTrue(engine.psychology.stress < stressBefore)
+        assertFalse(engine.readBook("old_novel"))
+    }
+
+    @Test
     fun readingProgressRollsBackUntilNextWakeCheckpoint() {
         val engine = GameEngine()
         engine.sleepUntilMorning()
