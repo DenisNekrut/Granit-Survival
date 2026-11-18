@@ -113,8 +113,8 @@ class EngineRenderThread(
                     EngineInput()
                 }
 
-                engine.updateFrame(deltaSeconds, input)
-                renderer.render(engine, touchX, touchY, active)
+                engine.updateFrame(deltaSeconds, input.copy(interact = interacting))
+                renderer.render(engine, touchX, touchY, active, interacting)
 
                 if (!EGL14.eglSwapBuffers(display, eglSurface)) {
                     val eglError = EGL14.eglGetError()
