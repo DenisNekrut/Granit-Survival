@@ -49,6 +49,36 @@ class WorldZoneTest {
         assertEquals(WorldZone.FOREST, engine.zone)
     }
 
+
+    @Test
+    fun everyZoneSpawnCanReachAllItsExitsWithoutCrossingWalls() {
+        val exits = mapOf(
+            WorldZone.BUNKER to listOf(20 to 1),
+            WorldZone.FOREST to listOf(20 to 22, 1 to 12, 38 to 12),
+            WorldZone.RUINS to listOf(38 to 12),
+            WorldZone.ROAD to listOf(1 to 12)
+        )
+        WorldZone.values().forEach { zone ->
+            val map = TileMap(zone = zone)
+            val start = kotlin.math.floor(zone.spawnX).toInt() to kotlin.math.floor(zone.spawnY).toInt()
+            val visited = mutableSetOf(start)
+            val queue = ArrayDeque<Pair<Int, Int>>()
+            queue.add(start)
+            while (queue.isNotEmpty()) {
+                val (x, y) = queue.removeFirst()
+                listOf(x + 1 to y, x - 1 to y, x to y + 1, x to y - 1).forEach { next ->
+                    if (next !in visited && map.isWalkable(next.first + 0.5f, next.second + 0.5f)) {
+                        visited.add(next)
+                        queue.add(next)
+                    }
+                }
+            }
+            exits.getValue(zone).forEach { (x, y) ->
+                assertTrue("$zone exit ($x,$y) must be reachable from spawn", (x to y) in visited)
+            }
+        }
+    }
+
     @Test
     fun checkpointRestoresZoneAndResources() {
         val engine = GameEngine()
