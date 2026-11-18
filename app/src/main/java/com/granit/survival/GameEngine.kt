@@ -17,13 +17,20 @@ class GameEngine {
         const val WORLD_HEIGHT = 24f
         private const val FIXED_STEP_SECONDS = 1f / 60f
         private const val MAX_FRAME_SECONDS = 0.25f
+        private const val GAME_MINUTE_REAL_SECONDS = 1f
     }
 
     val player = PlayerState()
     val tileMap = TileMap()
     val camera = Camera2D()
     val inventory = Inventory()
+    val bunkerStorage = BunkerStorage()
+    val needs = SurvivalNeeds()
+    val worldClock = WorldClock()
+    val checkpointSystem = CheckpointSystem()
+
     private var accumulator = 0f
+    private var gameMinuteAccumulator = 0f
     var simulationTimeSeconds: Double = 0.0
         private set
     var interactionCount: Int = 0
@@ -34,6 +41,11 @@ class GameEngine {
         private set
     private var wasInteracting = false
 
+    init {
+        // The initial safe state acts as the first wake-up checkpoint.
+        checkpointSystem.capture(this)
+    }
+
     fun updateFrame(frameDeltaSeconds: Float, input: EngineInput) {
         accumulator += frameDeltaSeconds.coerceIn(0f, MAX_FRAME_SECONDS)
         while (accumulator >= FIXED_STEP_SECONDS) {
@@ -41,6 +53,18 @@ class GameEngine {
             accumulator -= FIXED_STEP_SECONDS
         }
     }
+
+    /** Sleep until 07:00, restore energy, begin the next wake cycle and save a checkpoint. */
+    fun sleepUntilMorning(): Int {
+        val sleptMinutes = worldClock.sleepUntilMorning()
+        needs.sleep(sleptMinutes)
+        gameMinuteAccumulator = 0f
+        checkpointSystem.capture(this)
+        return sleptMinutes
+    }
+
+    /** Restore the complete wake-up state after a failed expedition. */
+    fun respawnAtWakeCheckpoint(): Boolean = checkpointSystem.restore(this)
 
     private fun fixedUpdate(delta: Float, input: EngineInput) {
         val length = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
@@ -56,6 +80,18 @@ class GameEngine {
 
         if (input.interact && !wasInteracting) interact()
         wasInteracting = input.interact
+
+        gameMinuteAccumulator += delta
+        while (gameMinuteAccumulator >= GAME_MINUTE_REAL_SECONDS) {
+            worldClock.advanceMinutes(1)
+            needs.advanceAwake(1)
+            gameMinuteAccumulator -= GAME_MINUTE_REAL_SECONDS
+            if (needs.health <= 0f) {
+                checkpointSystem.restore(this)
+                gameMinuteAccumulator = 0f
+                break
+            }
+        }
 
         camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
         simulationTimeSeconds += delta.toDouble()
