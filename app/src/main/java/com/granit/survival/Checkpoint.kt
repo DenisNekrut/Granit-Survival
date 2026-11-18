@@ -28,8 +28,14 @@ class CheckpointSystem {
 
     fun hasCheckpoint(): Boolean = checkpoint != null
 
+    fun snapshot(): WakeCheckpoint? = checkpoint?.deepCopy()
+
+    fun restoreSnapshot(snapshot: WakeCheckpoint?) {
+        checkpoint = snapshot?.deepCopy()
+    }
+
     fun restore(engine: GameEngine): Boolean {
-        val saved = checkpoint ?: return false
+        val saved = checkpoint?.deepCopy() ?: return false
         engine.player.x = saved.player.x
         engine.player.y = saved.player.y
         engine.player.speed = saved.player.speed
@@ -41,4 +47,10 @@ class CheckpointSystem {
         engine.camera.follow(engine.player.x, engine.player.y, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT)
         return true
     }
+
+    private fun WakeCheckpoint.deepCopy() = copy(
+        inventory = inventory.map { it?.copy() },
+        bunkerStorage = bunkerStorage.map { it?.copy() },
+        remainingResources = remainingResources.toList()
+    )
 }
