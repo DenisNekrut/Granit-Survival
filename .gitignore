@@ -1,0 +1,12 @@
+# Local Android release-signing material — never commit
+/signing/
+/ANDROID_RELEASE_SECRETS.txt
+*.keystore
+*.jks
+
+# Gradle / Android build output
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
