@@ -93,46 +93,39 @@ class MainActivity : Activity() {
     private fun handleContextAction() {
         if (!activeGame || isFinishing) return
         val engine = session.engine
-        when {
-            engine.canUseWorkbench() -> showCrafting()
-            engine.canAccessStorage() -> showStorage()
-            engine.canAccessBookshelf() -> showBookLibrary()
-            engine.canAccessDiningTable() -> {
-                val panel = createPanel("СТОЛОВАЯ", "Запасы экспедиции")
-                panel.addView(label("Консервы: ${engine.inventory.count(ItemType.CANNED_FOOD)}", 15f, Color.WHITE))
-                panel.addView(label("Вода: ${engine.inventory.count(ItemType.WATER)}", 15f, Color.WHITE))
-                panel.addView(menuButton("СЪЕСТЬ КОНСЕРВЫ", enabled = engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
-                    if (session.consumeFood()) showDiningPanel()
-                })
-                panel.addView(menuButton("ВЫПИТЬ ВОДУ", enabled = engine.inventory.count(ItemType.WATER) > 0) {
-                    if (session.drinkWater()) showDiningPanel()
-                })
-                panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
-                showOverlay(panel)
-            }
-            engine.canAccessMedicalStation() -> showMedicalPanel()
-            engine.canAccessGenerator() -> showGeneratorPanel()
-            engine.zone == WorldZone.BUNKER &&
-                engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f) -> {
-                if (!engine.bunkerPower.hasPower) {
-                    showMessageWindow("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
-                } else {
+        // Resource gathering is handled by the simulation first.
+        if (engine.tileMap.nearestResource(engine.player.x, engine.player.y, 1.35f) != null) return
+        when (engine.tileMap.nearestInteractable(engine.player.x, engine.player.y, 1.35f)) {
+            TileType.WORKBENCH -> showCrafting()
+            TileType.STORAGE -> showStorage()
+            TileType.BOOKSHELF -> showBookLibrary()
+            TileType.DINING_TABLE -> showDiningPanel()
+            TileType.MEDICAL_STATION -> showMedicalPanel()
+            TileType.GENERATOR -> showGeneratorPanel()
+            TileType.RADIO -> {
+                if (!engine.bunkerPower.hasPower) showMessageWindow("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
+                else {
                     val event = engine.listenToRadio()
                     if (event != null) showMessageWindow(event.title, event.description)
                     else showMessageWindow("РАДИОПРИЁМНИК", "Сегодня эфир остаётся пустым.")
                 }
             }
-            engine.canSleep() -> {
-                val panel = createPanel("СПАЛЬНЯ", "Можно завершить день и восстановить силы")
-                panel.addView(label("Сон завершит текущий день. После пробуждения будет создана контрольная точка.", 13f, Color.rgb(206, 215, 202)))
-                panel.addView(menuButton("СПАТЬ ДО 07:00") {
-                    runCatching { session.sleepAndAutosave() }
-                        .onSuccess { slept -> if (slept) { enterGame(); Toast.makeText(this, "Новый день. Автосохранение создано.", Toast.LENGTH_SHORT).show() } }
-                        .onFailure { Toast.makeText(this, "Не удалось сохранить игру: ${it.message}", Toast.LENGTH_LONG).show() }
-                })
-                panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
-                showOverlay(panel)
+            TileType.BED -> {
+                if (!engine.canSleep()) showMessageWindow("СПАЛЬНЯ", "Сейчас нельзя лечь спать.")
+                else {
+                    val panel = createPanel("СПАЛЬНЯ", "Можно завершить день и восстановить силы")
+                    panel.addView(label("Сон завершит текущий день. После пробуждения будет создана контрольная точка.", 13f, Color.rgb(206, 215, 202)))
+                    panel.addView(menuButton("СПАТЬ ДО 07:00") {
+                        runCatching { session.sleepAndAutosave() }
+                            .onSuccess { slept -> if (slept) { enterGame(); Toast.makeText(this, "Новый день. Автосохранение создано.", Toast.LENGTH_SHORT).show() } }
+                            .onFailure { error -> Toast.makeText(this, "Не удалось сохранить игру: " + error.message, Toast.LENGTH_LONG).show() }
+                    })
+                    panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
+                    showOverlay(panel)
+                }
             }
+            TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD, null -> Unit
+            else -> Unit
         }
     }
 
@@ -456,6 +449,7 @@ class MainActivity : Activity() {
 
     private fun showCrafting() {
         val panel = createPanel("МАСТЕРСКАЯ", "Рецепты доступны рядом с верстаком")
+        if (!session.engine.bunkerPower.hasPower) panel.addView(label("Нет питания: генератор необходимо запустить.", 13f, Color.rgb(230, 165, 116)))
         CraftingRecipe.all.forEach { recipe ->
             val costs = recipe.ingredients.entries.joinToString(" · ") { entry -> entry.key.displayName + ": " + entry.value }
             panel.addView(label(recipe.title + " — " + recipe.output.displayName, 16f, Color.WHITE))
@@ -636,9 +630,15 @@ class MainActivity : Activity() {
             isFillViewport = true
             clipToPadding = false
             setPadding(dp(8), dp(8), dp(8), dp(8))
+            isClickable = true
+            setOnClickListener { /* Consume taps inside the card; buttons handle their own actions. */ }
             addView(content)
         }
-        val overlay = FrameLayout(this).apply { isClickable = true; isFocusable = true }
+        val overlay = FrameLayout(this).apply {
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { if (activeGame) closeStationPanel() }
+        }
         if (activeGame) {
             // The simulation and ambient audio continue while the interaction card is open.
             // The interaction card is a compact HUD layer, not a replacement screen.
