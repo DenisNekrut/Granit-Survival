@@ -2,6 +2,8 @@ package com.granit.survival
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.json.JSONObject
+import com.granit.survival.save.SaveCodec
 import org.junit.Test
 
 class GameSaveSnapshotTest {
@@ -24,6 +26,29 @@ class GameSaveSnapshotTest {
         assertEquals(expectedEquipment, restored.equipment.snapshot())
         assertEquals(expectedStatistics, restored.statistics.snapshot())
         assertEquals(808L, restored.tileMap.layoutSeed)
+    }
+
+    @Test
+    fun serializedSaveSnapshotRoundTripsThroughCurrentCodec() {
+        val original = GameEngine { 808L }
+        original.inventory.add(ItemType.WOOD, 3)
+        original.changeZone(WorldZone.FOREST)
+        original.player.x = 11f
+        original.player.y = 12f
+        original.sleepUntilMorning()
+        val expected = original.createSaveSnapshot()
+
+        val encoded = SaveCodec.encode(expected.toJson(), 123456L)
+        val envelope = SaveCodec.decode(encoded)
+        val restored = EngineSaveSnapshot.fromJson(envelope.getJSONObject("state"))
+
+        assertEquals(expected.player, restored.player)
+        assertEquals(expected.inventory, restored.inventory)
+        assertEquals(expected.needs, restored.needs)
+        assertEquals(expected.clock, restored.clock)
+        assertEquals(expected.zone, restored.zone)
+        assertEquals(expected.zoneResources, restored.zoneResources)
+        assertEquals(expected.wakeCheckpoint, restored.wakeCheckpoint)
     }
 
     @Test
