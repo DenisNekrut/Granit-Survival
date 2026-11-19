@@ -22,7 +22,7 @@
 - Health, hunger, thirst, energy, food and water.
 - Sleep until 07:00, wake-up checkpoint and rollback of the reversible run state, including equipment, statistics and generated map state.
 - Deterministic five-state weather cycle; outdoor conditions gently affect movement, and radio forecasts the next day.
-- Dynamic outdoor lighting follows the in-game clock: cold dark nights, gradual dawn, bright daytime, warm dusk and a smooth return to night.
+- Dynamic outdoor lighting follows the in-game clock using smoothstep transitions: cold dark nights, gradual dawn, bright daytime, warm dusk and a smooth return to night. Unit tests cover every minute and adjacent-minute continuity.
 
 ### Bunker, knowledge and events
 - Main menu, pause menu with a prominent return-to-menu action, expedition journal, character statistics, save-slot manager, settings, storage and workbench screens.
@@ -40,7 +40,7 @@
 - PixelSpriteAtlas + GeneratedPixelSprites with original project artwork: 16×24 character frames in four directions (four walk frames per direction), plus 16×16 hatches, bunker furniture, control console, generator, medical station, trees, bushes, rubble, streetlamp and crate.
 - Distinct hatch artwork for bunker ladder entry and outdoor transitions; hatch sprites are used in the world renderer.
 - Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
-- Time-of-day lighting is applied to outdoor zones. The bunker uses permanent warm artificial lighting from six ceiling fixtures, with separate pools of light in its rooms regardless of outdoor time.
+- Time-of-day lighting is applied to outdoor zones with smooth interpolation. The bunker uses permanent warm artificial lighting from six ceiling fixtures, with layered pixel-art light falloff and separate warm pools in its rooms regardless of outdoor time. Generator-linked power and emergency lighting are the next planned systems.
 - Bunker is divided into connected bedroom, dining room, generator room, medical room, workshop and utility storage room; each room has contextual access.
 - HUD displays live survival meters, day/time, current zone and weather.
 - Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored but still need integration.
