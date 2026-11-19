@@ -70,8 +70,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         private set
     private var wasInteracting = false
     val zombies = mutableListOf<ZombieActor>()
-    val autoAimTarget: ZombieActor? get() = if (zone == WorldZone.BUNKER) null else
-        ZombieSystem.findVisibleTarget(zombies, player, tileMap)
+    val autoAimTarget: ZombieActor? get() =
+        CombatSystem.findAutoAimTarget(zone, zombies, player, tileMap)
     private var pulseCooldownSeconds = 0f
     private var idleSeconds = 0f
     // First idle destination must differ from the initial spawn room.
@@ -263,7 +263,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun changeZone(target: WorldZone, regenerate: Boolean = true, entryFrom: WorldZone? = null) {
         val previousZone = zone
         if (target != previousZone) psychology.onZoneChange(previousZone, target)
-        val targetMap = if (regenerate && target.isProcedurallyGenerated) {
+        val targetMap = if (ZoneTransitionSystem.shouldGenerateFreshMap(target, regenerate)) {
             createZoneMap(target, mapSeedGenerator()).also { zoneMaps[target] = it }
         } else {
             zoneMaps.getOrPut(target) { createZoneMap(target) }
@@ -274,13 +274,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         lastDiscoveryTitle = null
         lastDiscoveryHudLabel = null
         val arrival = entryFrom
-            ?.let { arrivalExitFor(it, target) }
+            ?.let { ZoneTransitionSystem.arrivalExitFor(it, target) }
             ?.let(tileMap::spawnBesideExit)
         player.x = arrival?.first ?: target.spawnX
         player.y = arrival?.second ?: target.spawnY
         camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         zombies.clear()
-        zombies += ZombieSystem.spawn(target, tileMap, player.x, player.y)
+        zombies += CombatSystem.spawn(target, tileMap, player.x, player.y)
         pulseCooldownSeconds = 0f
         wasInteracting = false
         isMoving = false
@@ -337,17 +337,6 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         }
     }
 
-    private fun arrivalExitFor(from: WorldZone, target: WorldZone): TileType? = when (target) {
-        WorldZone.BUNKER -> if (from != WorldZone.BUNKER) TileType.EXIT_TO_FOREST else null
-        WorldZone.FOREST -> when (from) {
-            WorldZone.BUNKER -> TileType.EXIT_TO_BUNKER
-            WorldZone.RUINS -> TileType.EXIT_TO_RUINS
-            WorldZone.ROAD -> TileType.EXIT_TO_ROAD
-            WorldZone.FOREST -> null
-        }
-        WorldZone.RUINS, WorldZone.ROAD ->
-            if (from == WorldZone.FOREST) TileType.EXIT_TO_FOREST else null
-    }
 
     private fun travelToZone(target: WorldZone) {
         if (target == zone) return
@@ -477,11 +466,10 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (input.fire && pulseCooldownSeconds <= 0f && zone != WorldZone.BUNKER && equipment.weaponDrawn) {
             pulseCooldownSeconds = 0.55f
             val selectedTarget = autoAimTarget
-            if (selectedTarget != null) ZombieSystem.pulseHitTarget(zombies, selectedTarget)
-            else ZombieSystem.pulseHit(zombies, player, player.facing)
+            CombatSystem.firePulse(zombies, selectedTarget, player)
         }
         pulseCooldownSeconds = (pulseCooldownSeconds - delta).coerceAtLeast(0f)
-        val contactDamage = ZombieSystem.update(zombies, player, tileMap, delta)
+        val contactDamage = CombatSystem.update(zombies, player, tileMap, delta)
         if (contactDamage > 0f) {
             needs.applyDamage(contactDamage)
             if (needs.health <= 0f) {
