@@ -80,6 +80,79 @@ class WorldZoneTest {
     }
 
     @Test
+    fun fixedBunkerAndFirstForestMapIgnoreProceduralSeeds() {
+        listOf(WorldZone.BUNKER, WorldZone.FOREST).forEach { zone ->
+            val first = TileMap(zone = zone, seed = 111L)
+            val second = TileMap(zone = zone, seed = 999L)
+            assertEquals(first.resourceSnapshot(), second.resourceSnapshot())
+            assertEquals(null, first.layoutSeed)
+            assertEquals(null, second.layoutSeed)
+        }
+    }
+
+    @Test
+    fun proceduralMapsAreDeterministicForASeedAndDifferentAcrossSeeds() {
+        listOf(WorldZone.RUINS, WorldZone.ROAD).forEach { zone ->
+            val first = TileMap(zone = zone, seed = 12345L)
+            val same = TileMap(zone = zone, seed = 12345L)
+            val different = TileMap(zone = zone, seed = 54321L)
+            assertEquals(first.resourceSnapshot(), same.resourceSnapshot())
+            assertEquals(first.layoutSeed, same.layoutSeed)
+            assertTrue(first.resourceSnapshot() != different.resourceSnapshot())
+            assertTrue(first.isWalkable(zone.spawnX, zone.spawnY))
+        }
+    }
+
+    @Test
+    fun proceduralZoneRegeneratesOnEveryEntryButForestRemainsFixed() {
+        val seeds = listOf(101L, 202L)
+        var nextSeed = 0
+        val engine = GameEngine { seeds[nextSeed++] }
+
+        engine.changeZone(WorldZone.FOREST)
+        val firstForestMap = engine.tileMap
+        engine.changeZone(WorldZone.RUINS)
+        assertEquals(101L, engine.tileMap.layoutSeed)
+        engine.changeZone(WorldZone.FOREST)
+        assertTrue(engine.tileMap === firstForestMap)
+        engine.changeZone(WorldZone.RUINS)
+        assertEquals(202L, engine.tileMap.layoutSeed)
+    }
+
+    @Test
+    fun saveRestoreReconstructsCurrentProceduralMapFromItsSeed() {
+        val original = GameEngine { 501L }
+        original.changeZone(WorldZone.RUINS)
+        val savedSeed = original.tileMap.layoutSeed
+        val savedResources = original.tileMap.resourceSnapshot()
+        val snapshot = original.createSaveSnapshot()
+
+        val restored = GameEngine { 777L }
+        restored.restoreSaveSnapshot(snapshot)
+        assertEquals(savedSeed, restored.tileMap.layoutSeed)
+        assertEquals(savedResources, restored.tileMap.resourceSnapshot())
+
+        restored.changeZone(WorldZone.FOREST)
+        restored.changeZone(WorldZone.RUINS)
+        assertEquals(777L, restored.tileMap.layoutSeed)
+    }
+
+    @Test
+    fun wakeCheckpointRollbackDoesNotKeepAnExpeditionGeneratedAfterWake() {
+        val seeds = listOf(301L, 302L)
+        var nextSeed = 0
+        val engine = GameEngine { seeds[nextSeed++] }
+        engine.sleepUntilMorning()
+        engine.changeZone(WorldZone.RUINS)
+        assertEquals(301L, engine.tileMap.layoutSeed)
+
+        assertTrue(engine.respawnAtWakeCheckpoint())
+        assertEquals(WorldZone.BUNKER, engine.zone)
+        engine.changeZone(WorldZone.RUINS)
+        assertEquals(302L, engine.tileMap.layoutSeed)
+    }
+
+    @Test
     fun checkpointRestoresZoneAndResources() {
         val engine = GameEngine()
         engine.sleepUntilMorning()
