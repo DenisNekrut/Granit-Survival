@@ -674,7 +674,7 @@ class MainActivity : Activity() {
             overlay.setBackgroundColor(Color.rgb(8, 14, 15))
             overlay.addView(scroll, FrameLayout.LayoutParams(dp(560), -1, Gravity.CENTER))
         }
-        if (root.childCount > 1) root.removeViewAt(1)
+        if (root.childCount > 1) root.removeViews(1, root.childCount - 1)
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1))
     }
 
