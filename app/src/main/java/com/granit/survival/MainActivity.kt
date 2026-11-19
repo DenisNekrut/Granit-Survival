@@ -35,6 +35,20 @@ class MainActivity : Activity() {
     private var activeGame = false
     private var pausedGame = false
     private var canSaveFromSlots = false
+    private val stationPanelRouter by lazy {
+        StationPanelRouter(
+            mapOf(
+                TileType.WORKBENCH to ::showCrafting,
+                TileType.STORAGE to ::showStorage,
+                TileType.BOOKSHELF to ::showBookLibrary,
+                TileType.DINING_TABLE to ::showDiningPanel,
+                TileType.MEDICAL_STATION to ::showMedicalPanel,
+                TileType.GENERATOR to ::showGeneratorPanel,
+                TileType.RADIO to ::showRadioPanel,
+                TileType.BED to ::showBedPanel
+            )
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,40 +117,41 @@ class MainActivity : Activity() {
     private fun handleContextAction() {
         if (!activeGame || isFinishing) return
         val engine = session.engine
-        // Resource gathering is handled by the simulation first.
-        if (engine.tileMap.nearestResource(engine.player.x, engine.player.y, 1.35f) != null) return
-        when (engine.tileMap.nearestInteractable(engine.player.x, engine.player.y, 1.35f)) {
-            TileType.WORKBENCH -> showCrafting()
-            TileType.STORAGE -> showStorage()
-            TileType.BOOKSHELF -> showBookLibrary()
-            TileType.DINING_TABLE -> showDiningPanel()
-            TileType.MEDICAL_STATION -> showMedicalPanel()
-            TileType.GENERATOR -> showGeneratorPanel()
-            TileType.RADIO -> {
-                if (!engine.bunkerPower.hasPower) showMessageWindow("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
-                else {
-                    val event = engine.listenToRadio()
-                    if (event != null) showMessageWindow(event.title, event.description)
-                    else showMessageWindow("РАДИОПРИЁМНИК", "Сегодня эфир остаётся пустым.")
-                }
-            }
-            TileType.BED -> {
-                if (!engine.canSleep()) showMessageWindow("СПАЛЬНЯ", "Сейчас нельзя лечь спать.")
-                else {
-                    val panel = createPanel("СПАЛЬНЯ", "Можно завершить день и восстановить силы")
-                    panel.addView(label("Сон завершит текущий день. После пробуждения будет создана контрольная точка.", 13f, Color.rgb(206, 215, 202)))
-                    panel.addView(menuButton("СПАТЬ ДО 07:00") {
-                        runCatching { session.sleepAndAutosave() }
-                            .onSuccess { slept -> if (slept) { enterGame(); Toast.makeText(this, "Новый день. Автосохранение создано.", Toast.LENGTH_SHORT).show() } }
-                            .onFailure { error -> Toast.makeText(this, "Не удалось сохранить игру: " + error.message, Toast.LENGTH_LONG).show() }
-                    })
-                    panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
-                    showOverlay(panel)
-                }
-            }
-            TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD, null -> Unit
-            else -> Unit
+        val hasNearbyResource = engine.tileMap.nearestResource(
+            engine.player.x, engine.player.y, 1.35f
+        ) != null
+        val target = engine.tileMap.nearestInteractable(
+            engine.player.x, engine.player.y, 1.35f
+        )
+        stationPanelRouter.route(target, hasNearbyResource)
+    }
+
+    private fun showRadioPanel() {
+        val engine = session.engine
+        if (!engine.bunkerPower.hasPower) {
+            showMessageWindow("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
+            return
         }
+        val event = engine.listenToRadio()
+        if (event != null) showMessageWindow(event.title, event.description)
+        else showMessageWindow("РАДИОПРИЁМНИК", "Сегодня эфир остаётся пустым.")
+    }
+
+    private fun showBedPanel() {
+        val engine = session.engine
+        if (!engine.canSleep()) {
+            showMessageWindow("СПАЛЬНЯ", "Сейчас нельзя лечь спать.")
+            return
+        }
+        val panel = createPanel("СПАЛЬНЯ", "Можно завершить день и восстановить силы")
+        panel.addView(label("Сон завершит текущий день. После пробуждения будет создана контрольная точка.", 13f, Color.rgb(206, 215, 202)))
+        panel.addView(menuButton("СПАТЬ ДО 07:00") {
+            runCatching { session.sleepAndAutosave() }
+                .onSuccess { slept -> if (slept) { enterGame(); Toast.makeText(this, "Новый день. Автосохранение создано.", Toast.LENGTH_SHORT).show() } }
+                .onFailure { error -> Toast.makeText(this, "Не удалось сохранить игру: " + error.message, Toast.LENGTH_LONG).show() }
+        })
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
+        showOverlay(panel)
     }
 
     private fun showGeneratorPanel() {
