@@ -133,6 +133,7 @@ class MainActivity : Activity() {
         activeGame = false
         pausedGame = true
         gameSurface.pauseEngine()
+        session.audio.stop()
         gameSurface.visibility = View.GONE
         val panel = createPanel("ПАУЗА", "Состояние игры сохранено в памяти")
         panel.addView(label("Психологическое состояние", 16f, Color.WHITE))
@@ -283,6 +284,7 @@ class MainActivity : Activity() {
     private fun showSaveSlots(allowSave: Boolean) {
         activeGame = false
         gameSurface.pauseEngine()
+        session.audio.stop()
         gameSurface.visibility = View.GONE
         canSaveFromSlots = allowSave
         val panel = createPanel("СОХРАНЕНИЯ", "Три независимых слота на устройстве")
@@ -339,6 +341,7 @@ $date"
     private fun showSettings() {
         activeGame = false
         gameSurface.pauseEngine()
+        session.audio.stop()
         gameSurface.visibility = View.GONE
         val current = session.settings.load()
         val panel = createPanel("НАСТРОЙКИ", "Параметры управления и отображения")
