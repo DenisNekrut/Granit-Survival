@@ -345,7 +345,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         worldClock.restore(snapshot.clock)
         tileMap.restoreResources(snapshot.remainingResources)
         checkpointSystem.restoreSnapshot(snapshot.wakeCheckpoint)
-        camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
+        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         accumulator = 0f
         gameMinuteAccumulator = 0f
         wasInteracting = false
@@ -399,7 +399,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             }
         }
 
-        camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
+        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         simulationTimeSeconds += delta.toDouble()
     }
 
