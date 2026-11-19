@@ -9,26 +9,27 @@ import java.nio.FloatBuffer
 class PixelRenderer {
     private var program = 0
     private var positionLocation = -1
-    private var colorLocation = -1
+    private var vertexColorLocation = -1
     private var screenWidth = 1
     private var screenHeight = 1
     private var worldScale = 1f
     private var worldOffsetX = 0f
     private var worldOffsetY = 0f
     private var currentCamera: Camera2D? = null
-    private val vertexBuffer: FloatBuffer = ByteBuffer.allocateDirect(8 * 4)
-        .order(ByteOrder.nativeOrder()).asFloatBuffer()
+    private var vertexBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_VERTEX_CAPACITY * 2)
+    private var colorBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_VERTEX_CAPACITY * 4)
+    private var queuedVertexCount = 0
 
     fun create() {
         val atlasErrors = PixelSpriteAtlas.validate()
         check(atlasErrors.isEmpty()) { "Invalid pixel sprite atlas: ${atlasErrors.joinToString()}" }
         val vertexShader = compileShader(
             GLES20.GL_VERTEX_SHADER,
-            "attribute vec2 aPosition; void main(){ gl_Position = vec4(aPosition, 0.0, 1.0); }"
+            "attribute vec2 aPosition; attribute vec4 aColor; varying vec4 vColor; void main(){ gl_Position = vec4(aPosition, 0.0, 1.0); vColor = aColor; }"
         )
         val fragmentShader = compileShader(
             GLES20.GL_FRAGMENT_SHADER,
-            "precision mediump float; uniform vec4 uColor; void main(){ gl_FragColor = uColor; }"
+            "precision mediump float; varying vec4 vColor; void main(){ gl_FragColor = vColor; }"
         )
         program = GLES20.glCreateProgram()
         GLES20.glAttachShader(program, vertexShader)
@@ -42,7 +43,8 @@ class PixelRenderer {
         GLES20.glDeleteShader(vertexShader)
         GLES20.glDeleteShader(fragmentShader)
         positionLocation = GLES20.glGetAttribLocation(program, "aPosition")
-        colorLocation = GLES20.glGetUniformLocation(program, "uColor")
+        vertexColorLocation = GLES20.glGetAttribLocation(program, "aColor")
+        check(positionLocation >= 0 && vertexColorLocation >= 0) { "Pixel shader attributes are unavailable" }
     }
 
     fun resize(width: Int, height: Int) {
@@ -70,7 +72,9 @@ class PixelRenderer {
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         currentCamera = engine.camera
+        queuedVertexCount = 0
         GLES20.glEnableVertexAttribArray(positionLocation)
+        GLES20.glEnableVertexAttribArray(vertexColorLocation)
 
         // Each zone has its own floor tone to make transitions immediately readable.
         val floorTone = when (engine.zone) {
@@ -208,7 +212,9 @@ class PixelRenderer {
             if (interacting) 0.42f else 0.30f, controlsOpacity)
 
 
+        flushBatch()
         GLES20.glDisableVertexAttribArray(positionLocation)
+        GLES20.glDisableVertexAttribArray(vertexColorLocation)
     }
 
     private fun drawFloorDetail(x: Int, y: Int, zone: WorldZone) {
@@ -428,40 +434,50 @@ class PixelRenderer {
         val top = worldOffsetY + viewY * worldScale
         val right = worldOffsetX + (viewX + width) * worldScale
         val bottom = worldOffsetY + (viewY + height) * worldScale
-        val vertices = floatArrayOf(
-            toNdcX(left), toNdcY(top),
-            toNdcX(left), toNdcY(bottom),
-            toNdcX(right), toNdcY(top),
-            toNdcX(right), toNdcY(bottom)
-        )
-        vertexBuffer.clear()
-        vertexBuffer.put(vertices).position(0)
-        GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
-        GLES20.glUniform4f(colorLocation, r, g, b, 1f)
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+        appendQuad(left, top, right, bottom, r, g, b, 1f)
     }
 
-    private fun screenRect(
-        x: Float, y: Float, width: Float, height: Float,
-        r: Float, g: Float, b: Float, alpha: Float = 1f
-    ) {
+    private fun screenRect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float, alpha: Float = 1f) {
         val left = worldOffsetX + x * worldScale
         val top = worldOffsetY + y * worldScale
         val right = worldOffsetX + (x + width) * worldScale
         val bottom = worldOffsetY + (y + height) * worldScale
-        val vertices = floatArrayOf(
-            toNdcX(left), toNdcY(top),
-            toNdcX(left), toNdcY(bottom),
-            toNdcX(right), toNdcY(top),
-            toNdcX(right), toNdcY(bottom)
-        )
-        vertexBuffer.clear()
-        vertexBuffer.put(vertices).position(0)
-        GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
-        GLES20.glUniform4f(colorLocation, r, g, b, alpha.coerceIn(0f, 1f))
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+        appendQuad(left, top, right, bottom, r, g, b, alpha.coerceIn(0f, 1f))
     }
 
+    /** Adds two triangles to the frame batch without issuing a draw call. */
+    private fun appendQuad(left: Float, top: Float, right: Float, bottom: Float, r: Float, g: Float, b: Float, a: Float) {
+        ensureBatchCapacity(queuedVertexCount + 6)
+        val x1 = toNdcX(left); val y1 = toNdcY(top)
+        val x2 = toNdcX(right); val y2 = toNdcY(bottom)
+        vertexBuffer.put(x1).put(y1).put(x1).put(y2).put(x2).put(y1)
+        vertexBuffer.put(x2).put(y1).put(x1).put(y2).put(x2).put(y2)
+        repeat(6) { colorBuffer.put(r).put(g).put(b).put(a) }
+        queuedVertexCount += 6
+    }
+
+    private fun ensureBatchCapacity(requiredVertices: Int) {
+        if (requiredVertices <= vertexBuffer.capacity() / 2) return
+        var capacity = vertexBuffer.capacity() / 2
+        while (capacity < requiredVertices) capacity *= 2
+        val nextVertices = allocateFloatBuffer(capacity * 2)
+        val nextColors = allocateFloatBuffer(capacity * 4)
+        vertexBuffer.flip(); colorBuffer.flip()
+        nextVertices.put(vertexBuffer); nextColors.put(colorBuffer)
+        vertexBuffer = nextVertices; colorBuffer = nextColors
+    }
+
+    private fun flushBatch() {
+        if (queuedVertexCount == 0) return
+        vertexBuffer.flip(); colorBuffer.flip()
+        GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
+        GLES20.glVertexAttribPointer(vertexColorLocation, 4, GLES20.GL_FLOAT, false, 0, colorBuffer)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, queuedVertexCount)
+        vertexBuffer.clear(); colorBuffer.clear(); queuedVertexCount = 0
+    }
+
+    private fun allocateFloatBuffer(floatCount: Int): FloatBuffer =
+        ByteBuffer.allocateDirect(floatCount * java.lang.Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer()
     private fun toNdcX(x: Float) = (x / screenWidth) * 2f - 1f
     private fun toNdcY(y: Float) = 1f - (y / screenHeight) * 2f
 
@@ -476,4 +492,5 @@ class PixelRenderer {
         }
         return shader
     }
+    private companion object { const val INITIAL_VERTEX_CAPACITY = 8192 }
 }
