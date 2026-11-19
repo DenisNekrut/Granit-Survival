@@ -32,7 +32,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val equipment = PlayerEquipment()
     val statistics = CharacterStatistics()
     private val zoneMaps = mutableMapOf<WorldZone, TileMap>()
-    var tileMap = TileMap().also { zoneMaps[WorldZone.BUNKER] = it }
+    var tileMap = createZoneMap(WorldZone.BUNKER).also { zoneMaps[WorldZone.BUNKER] = it }
         private set
     val zone: WorldZone get() = tileMap.zone
     val camera = Camera2D()
@@ -215,9 +215,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val previousZone = zone
         if (target != previousZone) psychology.onZoneChange(previousZone, target)
         val targetMap = if (regenerate && target.isProcedurallyGenerated) {
-            TileMap(zone = target, seed = mapSeedGenerator()).also { zoneMaps[target] = it }
+            createZoneMap(target, mapSeedGenerator()).also { zoneMaps[target] = it }
         } else {
-            zoneMaps.getOrPut(target) { TileMap(zone = target) }
+            zoneMaps.getOrPut(target) { createZoneMap(target) }
         }
         tileMap = targetMap
         equipment.onZoneChanged(previousZone, target)
@@ -229,7 +229,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             ?.let(tileMap::spawnBesideExit)
         player.x = arrival?.first ?: target.spawnX
         player.y = arrival?.second ?: target.spawnY
-        camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
+        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         wasInteracting = false
         isMoving = false
     }
@@ -242,15 +242,15 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun restoreZoneResources(snapshots: List<ZoneResourceSnapshot>) {
         zoneMaps.clear()
         if (snapshots.isEmpty()) {
-            zoneMaps[WorldZone.BUNKER] = TileMap(zone = WorldZone.BUNKER)
+            zoneMaps[WorldZone.BUNKER] = createZoneMap(WorldZone.BUNKER)
             return
         }
         snapshots.forEach { snapshot ->
-            val map = TileMap(zone = snapshot.zone, seed = snapshot.seed)
+            val map = createZoneMap(snapshot.zone, snapshot.seed)
             map.restoreResources(snapshot.resources)
             zoneMaps[snapshot.zone] = map
         }
-        zoneMaps.putIfAbsent(WorldZone.BUNKER, TileMap(zone = WorldZone.BUNKER))
+        zoneMaps.putIfAbsent(WorldZone.BUNKER, createZoneMap(WorldZone.BUNKER))
     }
 
     fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean =
@@ -371,10 +371,10 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             }
         }
 
-        val nextX = (player.x + stepX).coerceIn(0.65f, WORLD_WIDTH - 0.65f)
+        val nextX = (player.x + stepX).coerceIn(0.65f, tileMap.width - 0.65f)
         if (tileMap.isWalkable(nextX, player.y)) player.x = nextX
 
-        val nextY = (player.y + stepY).coerceIn(0.8f, WORLD_HEIGHT - 0.8f)
+        val nextY = (player.y + stepY).coerceIn(0.8f, tileMap.height - 0.8f)
         if (tileMap.isWalkable(player.x, nextY)) player.y = nextY
         val movedX = player.x - previousX
         val movedY = player.y - previousY
