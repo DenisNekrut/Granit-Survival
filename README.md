@@ -52,8 +52,8 @@
 - [Project requirements and progress tracker](docs/PROJECT_BACKLOG.md)
 - [Android debug APK installation](docs/ANDROID_INSTALL.md)
 - [Android device smoke tests](docs/ANDROID_DEVICE_SMOKE_TEST.md)
-- [Contribution guide](../CONTRIBUTING.md)
-- [Security policy](../SECURITY.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
 
 The older Unity-oriented plan is retained for historical reference and is superseded by the custom-engine architecture above.
 
