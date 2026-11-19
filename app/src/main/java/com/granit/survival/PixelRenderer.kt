@@ -158,7 +158,10 @@ class PixelRenderer {
         GLES20.glClearColor(0.055f, 0.065f, 0.067f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (program == 0) return
-        val cameraHeight = if (engine.zone == WorldZone.BUNKER) 12f else 9.5f
+        val cameraHeight = if (engine.zone == WorldZone.BUNKER) {
+            // The bunker is compact, but the camera must still have room to track the player.
+            minOf(8.2f, 16.5f * screenHeight / screenWidth)
+        } else 9.5f
         worldScale = (screenHeight / cameraHeight) * displayScale
         GLES20.glUseProgram(program)
         GLES20.glEnable(GLES20.GL_BLEND)
