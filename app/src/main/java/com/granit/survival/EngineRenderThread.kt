@@ -1,5 +1,6 @@
 package com.granit.survival
 
+import android.content.Context
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
@@ -16,7 +17,8 @@ class EngineRenderThread(
     private val surfaceHolder: SurfaceHolder,
     initialWidth: Int,
     initialHeight: Int,
-    private val session: GameSession
+    private val session: GameSession,
+    private val appContext: Context
 ) : Thread("Granit-RenderThread") {
     private val running = AtomicBoolean(true)
     @Volatile private var viewportWidth = initialWidth.coerceAtLeast(1)
@@ -83,7 +85,7 @@ class EngineRenderThread(
 
             GLES20.glDisable(GLES20.GL_DEPTH_TEST)
             renderer = PixelRenderer()
-            renderer.create()
+            renderer.create(appContext.assets)
             renderer.resize(viewportWidth, viewportHeight)
             val engine = session.engine
             val gameSettings = session.settings.load()
