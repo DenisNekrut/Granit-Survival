@@ -19,23 +19,23 @@ object ZonePropSelector {
                 else -> null
             }
             WorldZone.FOREST -> when {
-                hash < 5 -> "bush"
-                hash in 15..18 -> "grass_patch"
-                hash in 37..40 -> "tree"
-                hash in 72..74 -> "fallen_log"
+                hash < 4 -> "bush"
+                hash in 15..17 -> "grass_patch"
+                hash in 37..39 -> "tree"
+                hash in 72..73 -> "fallen_log"
                 else -> null
             }
             WorldZone.RUINS -> when {
-                hash < 4 -> "barrel"
-                hash in 24..29 -> "debris"
-                hash in 46..49 -> "metal_scrap"
-                hash in 80..82 -> "puddle"
+                hash < 3 -> "barrel"
+                hash in 24..28 -> "debris"
+                hash in 46..48 -> "metal_scrap"
+                hash in 80..81 -> "puddle"
                 else -> null
             }
             WorldZone.ROAD -> when {
                 hash < 3 -> "streetlamp"
-                hash in 20..23 -> "road_sign"
-                hash in 42..45 -> "wreck"
+                hash in 20..22 -> "road_sign"
+                hash in 42..44 -> "wreck"
                 hash in 70..72 -> "puddle"
                 else -> null
             }
