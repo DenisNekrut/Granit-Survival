@@ -282,6 +282,25 @@ class PixelRenderer {
             )
         }
 
+        // Stylized infected silhouettes are simple original shapes, sorted near ground level.
+        engine.zombies.forEach { zombie ->
+            val z = zombie.x
+            val y = zombie.y
+            val flash = zombie.hitFlash > 0f
+            val bodyR = if (flash) 0.55f else 0.24f
+            val bodyG = if (flash) 0.82f else 0.34f
+            val bodyB = if (flash) 0.78f else 0.27f
+            rect(z - 0.34f, y + 0.27f, 0.68f, 0.12f, 0.035f, 0.045f, 0.04f, 0.58f)
+            rect(z - 0.20f, y - 0.27f, 0.40f, 0.53f, bodyR, bodyG, bodyB)
+            rect(z - 0.17f, y - 0.48f, 0.34f, 0.27f, 0.39f, 0.48f, 0.39f)
+            rect(z - 0.31f, y - 0.13f, 0.13f, 0.43f, bodyR, bodyG, bodyB)
+            rect(z + 0.18f, y - 0.12f, 0.13f, 0.42f, bodyR, bodyG, bodyB)
+            rect(z - 0.17f, y + 0.21f, 0.13f, 0.29f, 0.19f, 0.24f, 0.21f)
+            rect(z + 0.04f, y + 0.21f, 0.13f, 0.29f, 0.19f, 0.24f, 0.21f)
+            rect(z - 0.11f, y - 0.39f, 0.055f, 0.045f, 0.86f, 0.34f, 0.25f)
+            rect(z + 0.055f, y - 0.39f, 0.055f, 0.045f, 0.86f, 0.34f, 0.25f)
+        }
+
         // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
         drawWorldLighting(engine, bunkerLamps)
 
@@ -355,6 +374,14 @@ class PixelRenderer {
             if (interacting) 0.55f else 0.32f,
             if (interacting) 0.42f else 0.30f, controlsOpacity)
 
+
+        if (engine.zone != WorldZone.BUNKER) {
+            val fireDiameter = controlUnit * 0.13f * joystickScale
+            val fireCenterY = screenHeight * 0.59f
+            screenRectPx(actionCenterX - fireDiameter * 0.5f, fireCenterY - fireDiameter * 0.5f,
+                fireDiameter, fireDiameter, if (interacting) 0.58f else 0.36f, 0.25f, 0.20f, controlsOpacity)
+            drawText("PULSE", 0.0f, 0.0f, 0.01f, 0f, 0f, 0f)
+        }
 
         flushTextureBatch()
         flushBatch()
