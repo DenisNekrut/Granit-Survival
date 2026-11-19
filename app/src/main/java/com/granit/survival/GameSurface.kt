@@ -42,6 +42,17 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
         stopThread()
     }
 
+    fun syncViewportFromView() {
+        val viewWidth = width.coerceAtLeast(0)
+        val viewHeight = height.coerceAtLeast(0)
+        if (viewWidth > 1 && viewHeight > 1) {
+            surfaceWidth = viewWidth
+            surfaceHeight = viewHeight
+            Log.i(TAG, "syncViewportFromView: ${viewWidth}x${viewHeight}")
+            renderThread?.setViewport(viewWidth, viewHeight)
+        }
+    }
+
     fun releaseEngine() {
         resumed = false
         stopThread()
