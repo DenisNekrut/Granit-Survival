@@ -10,7 +10,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     @Volatile private var renderThread: EngineRenderThread? = null
     @Volatile private var resumed = false
     @Volatile var onRenderFailure: ((Throwable) -> Unit)? = null
-    @Volatile var onActionButtonReleased: (() -> Unit)? = null
+    @Volatile var onInteractionProcessed: (() -> Unit)? = null
     @Volatile private var surfaceWidth = 0
     @Volatile private var surfaceHeight = 0
     @Volatile private var surfaceReady = false
@@ -72,6 +72,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
                 } else if (actionPointerId == MotionEvent.INVALID_POINTER_ID) {
                     actionPointerId = pointerId
                     thread.setInteracting(true)
+                    thread.requestInteraction()
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -87,9 +88,6 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
                 if (pointerId == actionPointerId) {
                     actionPointerId = MotionEvent.INVALID_POINTER_ID
                     thread.setInteracting(false)
-                    // The render thread handles world collection/transitions; the activity
-                    // opens the matching native panel after the action press has been released.
-                    post { onActionButtonReleased?.invoke() }
                 }
             }
             MotionEvent.ACTION_CANCEL -> {
@@ -106,7 +104,10 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     private fun startIfReady() {
         if (!resumed || !surfaceReady || surfaceWidth <= 1 || surfaceHeight <= 1 ||
             !holder.surface.isValid || renderThread?.isAlive == true) return
-        val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight, session, context.applicationContext) { failure ->
+        val thread = EngineRenderThread(
+            holder, surfaceWidth, surfaceHeight, session, context.applicationContext,
+            onInteractionProcessed = { post { onInteractionProcessed?.invoke() } }
+        ) { failure ->
             post { onRenderFailure?.invoke(failure) }
         }
         renderThread = thread
