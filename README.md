@@ -76,3 +76,10 @@ The APK is a debug build for testing, not a signed production release. A success
 - Hidden ceiling fixtures with warm light reflected onto floors and nearby objects; unlit bunker areas remain darker.
 - Contextual station windows are compact overlays over the active game, with a refreshed industrial field-console visual theme.
 - Original sprite palette and zone floor colors have been brightened for clearer material separation.
+
+
+### Continuous world and outdoor threats
+
+- Interaction cards remain over the visible world while the simulation and ambient audio continue. Reading, crafting, consuming supplies, medical actions, radio, resource gathering, travel and storage operations consume in-game time.
+- Outdoor maps (forest, ruins and road) now populate with original stylized infected NPCs. They approach the player, navigate around blocked tiles and create an abstract contact threat. The bunker remains safe.
+- The starter outdoor equipment is a fictional pulse carbine with a dedicated touch control and a cyan pulse effect. It uses abstract game-only hit rules and keeps the legacy SIGNAL_EMITTER save value readable.
