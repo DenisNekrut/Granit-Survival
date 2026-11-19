@@ -249,56 +249,25 @@ class MainActivity : Activity() {
         gameSurface.pauseEngine()
         session.audio.stop()
         gameSurface.visibility = View.GONE
-        val panel = createPanel("ПАУЗА", "Состояние игры сохранено в памяти")
-        panel.addView(label("Психологическое состояние", 16f, Color.WHITE))
-        panel.addView(label("Стресс: " + session.engine.psychology.stress.toInt() + "  ·  Одиночество: " + session.engine.psychology.loneliness.toInt(), 13f, Color.LTGRAY))
-        panel.addView(label("Усталость: " + session.engine.psychology.fatigue.toInt() + "  ·  Мораль: " + session.engine.psychology.morale.toInt(), 13f, Color.LTGRAY))
-        panel.addView(menuButton("ПРОДОЛЖИТЬ") { enterGame() })
-        panel.addView(menuButton("СТАТИСТИКА ПЕРСОНАЖА") { showCharacterStatistics() })
-        panel.addView(menuButton("ГЛАВНОЕ МЕНЮ") { confirmReturnToMainMenu() })
-        panel.addView(menuButton("ЖУРНАЛ ЭКСПЕДИЦИЙ") { showJournal() })
-        panel.addView(menuButton("ЕСТЬ КОНСЕРВЫ", enabled = session.engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
-            if (session.consumeFood()) { Toast.makeText(this, "Консервы использованы", Toast.LENGTH_SHORT).show(); showPauseMenu() }
-        })
-        panel.addView(menuButton("ПИТЬ ВОДУ", enabled = session.engine.inventory.count(ItemType.WATER) > 0) {
-            if (session.drinkWater()) { Toast.makeText(this, "Вода использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
-        })
-        panel.addView(menuButton("РАДИОПРИЁМНИК", enabled = session.engine.canUseRadio()) {
-            val event = session.engine.listenToRadio()
-            if (event != null) {
-                AlertDialog.Builder(this)
-                    .setTitle(event.title)
-                    .setMessage(event.description)
-                    .setPositiveButton("ПОНЯТНО") { _, _ -> showPauseMenu() }
-                    .show()
-            } else Toast.makeText(this, "Сейчас эфир недоступен", Toast.LENGTH_SHORT).show()
-        })
-        panel.addView(menuButton("БИБЛИОТЕКА", enabled = session.engine.canAccessBookshelf()) { showBookLibrary() })
-        panel.addView(menuButton("ЖУРНАЛ НАХОДОК (" + session.engine.discoveredPointsOfInterest().size + "/" + PointOfInterestCatalog.all().size + ")") {
-            showDiscoveryJournal()
-        })
-        panel.addView(menuButton("МАСТЕРСКАЯ", enabled = session.engine.canUseWorkbench()) { showCrafting() })
-        panel.addView(menuButton("ПЕРЕВЯЗАТЬСЯ", enabled = session.engine.inventory.count(ItemType.BANDAGE) > 0 && session.engine.needs.health < 100f) {
-            if (session.engine.useBandage()) { Toast.makeText(this, "Бинт использован", Toast.LENGTH_SHORT).show(); showPauseMenu() }
-        })
-        panel.addView(menuButton("АПТЕЧКА", enabled = session.engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && session.engine.needs.health < 100f) {
-            if (session.engine.useMedicalKit()) { Toast.makeText(this, "Аптечка использована", Toast.LENGTH_SHORT).show(); showPauseMenu() }
-        })
-        panel.addView(menuButton("ХРАНИЛИЩЕ", enabled = session.engine.canAccessStorage()) { showStorage() })
-        panel.addView(menuButton("СОН ДО 07:00", enabled = session.engine.canSleep()) {
-            runCatching { session.sleepAndAutosave() }
-                .onSuccess { slept ->
-                    if (slept) {
-                        Toast.makeText(this, "Новый день. Автосохранение создано.", Toast.LENGTH_SHORT).show()
-                        showPauseMenu()
-                    } else Toast.makeText(this, "Для сна нужно находиться рядом с кроватью.", Toast.LENGTH_SHORT).show()
-                }
-                .onFailure { Toast.makeText(this, "Не удалось создать автосохранение: ${it.message}", Toast.LENGTH_LONG).show() }
-        })
-        panel.addView(menuButton("СОХРАНИТЬ ИГРУ") { showSaveSlots(true) })
-        panel.addView(menuButton("СОХРАНЕНИЯ") { showSaveSlots(false) })
-        panel.addView(menuButton("НАСТРОЙКИ") { showSettings() })
-        showOverlay(panel)
+        PauseMenuScreen(
+            activity = this,
+            session = session,
+            createPanel = ::createPanel,
+            label = ::label,
+            menuButton = ::menuButton,
+            showOverlay = ::showOverlay,
+            enterGame = ::enterGame,
+            showCharacterStatistics = ::showCharacterStatistics,
+            confirmReturnToMainMenu = ::confirmReturnToMainMenu,
+            showJournal = ::showJournal,
+            showBookLibrary = ::showBookLibrary,
+            showDiscoveryJournal = ::showDiscoveryJournal,
+            showCrafting = ::showCrafting,
+            showStorage = ::showStorage,
+            showSaveSlots = ::showSaveSlots,
+            showSettings = ::showSettings,
+            refresh = ::showPauseMenu
+        ).show()
     }
 
     private fun confirmReturnToMainMenu() {
