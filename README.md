@@ -41,7 +41,7 @@
 - Distinct hatch artwork for bunker ladder entry and outdoor transitions; hatch sprites are used in the world renderer.
 - Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
 - Time-of-day lighting is applied to outdoor zones with smooth interpolation. In the bunker, ceiling fixtures are hidden; only warm floor/object light pools are visible, with darker unlit areas between them. Generator-linked power, abstract fuel consumption and dim emergency lighting are implemented; the generator panel supports switching and refueling with wood.
-- Bunker is divided into connected bedroom, dining room, generator room, medical room, workshop and utility storage room; the bunker footprint is compact (34×20 tiles) while expedition zones remain 40×24. Each room has contextual access.
+- Bunker is divided into connected bedroom, dining room, generator room, medical room, workshop and utility storage room; the bunker footprint is compact (17×10 tiles) while expedition zones remain 40×24. Each room has contextual access.
 - HUD displays live survival meters, day/time, current zone and weather.
 - Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored; further device-level tuning is still needed.
 
@@ -72,7 +72,7 @@ The APK is a debug build for testing, not a signed production release. A success
 
 ### Visual interface pass
 
-- Compact bunker map: 34×20 tiles; outdoor expedition maps remain 40×24.
+- Compact bunker map: 17×10 tiles; outdoor expedition maps remain 40×24.
 - Hidden ceiling fixtures with warm light reflected onto floors and nearby objects; unlit bunker areas remain darker.
 - Contextual station windows are compact overlays over the active game, with a refreshed industrial field-console visual theme.
 - Original sprite palette and zone floor colors have been brightened for clearer material separation.

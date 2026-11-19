@@ -86,7 +86,7 @@
 - [x] Инвентарь 4×4, стеки, ограничения вместимости и подбор пяти видов ресурсов.
 - [x] GitHub Actions для unit-тестов, Debug APK и публикации артефакта.
 
-### 3.2 Реализовано в PR #2, ожидает review/merge
+### 3.2 Реализовано и объединено (PR #2, PR #5)
 - [x] Отдельное хранилище убежища и перенос предметов.
 - [x] Игровые часы, потребности и сон до 07:00.
 - [x] Wake-up checkpoint и откат состояния.
@@ -104,7 +104,7 @@
 - [x] PixelSpriteAtlas, idle/walk персонажа, спрайты ресурсов, медицинских предметов и мебели, визуальные варианты четырёх зон.
 - [x] Unit-тесты игровых систем, сохранений, отката, переходов, библиотеки, радио, погоды, журнала и атласа.
 
-**Статус интеграции:** PR #2 открыт, не объединён. Его head на момент ревизии — `f46066779cba133e91ce089dead3eb7117c6a202`. GitHub Actions run `44406757892` завершился успешно: unit tests, Debug APK и upload artifact — success. Это подтверждает CI именно для указанного head, но не физическое Android-тестирование.
+**Статус интеграции:** PR #2 объединён в `main` (2026-11-18), PR #5 (адаптивный экран, управление по краям и ambient-аудио) объединён 2026-11-19. Открытым остаётся PR #6, его CI красный; PR #3 устарел и конфликтует по merge. Успешный CI подтверждает unit tests и Debug APK, но не физическое Android-тестирование.
 
 ## 4. Обновлённая дорожная карта
 
@@ -115,12 +115,12 @@
 | 0. Engine bootstrap | Android shell, EGL/GLES2, render thread, lifecycle | DONE — PR #1 merged | CI и код в main |
 | 1. Базовый мир | TileMap, игрок, камера, коллизии, touch/multi-touch | DONE — PR #1 merged | Перемещение и столкновения; CI |
 | 2. Инвентарь и сбор | 4×4, стеки, ресурсы, вместимость | DONE — main | Unit-тесты и CI |
-| 3. Убежище и базовое выживание | Хранилище, перенос, еда/вода, потребности, время и сон | REVIEW — PR #2 | CI, review/merge и ручная проверка |
-| 4. Сохранения и checkpoint | JSON, три слота, autosave при пробуждении, полный rollback | REVIEW — PR #2 | Тесты round-trip/rollback, CI и проверка на устройстве |
-| 5. Меню и настройки | Главное меню, новая игра/продолжить, пауза, сохранения, настройки | REVIEW — PR #2 | Проверить все переходы UI и восстановление состояния |
-| 6. Карты и экспедиции | Четыре зоны, выходы, ресурсы зон, POI и журнал | REVIEW — PR #2 | Все выходы доступны, ресурсы/открытия корректно сохраняются и откатываются |
-| 7. Психология, библиотека и радио | Четыре показателя, шесть категорий книг, чтение, знания, ежедневные эфиры | REVIEW — PR #2; часть библиотеки требует расширения | Все категории представлены, эффекты/время/checkpoint покрыты тестами |
-| 8. Погода и события | Пять погодных состояний, прогноз, события в убежище и дни без вылазки | REVIEW — PR #2; расширение BACKLOG | День в убежище имеет понятные последствия; события воспроизводимы и откатываются |
+| 3. Убежище и базовое выживание | Хранилище, перенос, еда/вода, потребности, время и сон | DONE — merged (PR #2) | CI, review/merge и ручная проверка |
+| 4. Сохранения и checkpoint | JSON, три слота, autosave при пробуждении, полный rollback | DONE — merged (PR #2) | Тесты round-trip/rollback, CI и проверка на устройстве |
+| 5. Меню и настройки | Главное меню, новая игра/продолжить, пауза, сохранения, настройки | DONE — merged (PR #2, PR #5) | Проверить все переходы UI и восстановление состояния |
+| 6. Карты и экспедиции | Четыре зоны, выходы, ресурсы зон, POI и журнал | DONE — merged (PR #2) | Все выходы доступны, ресурсы/открытия корректно сохраняются и откатываются |
+| 7. Психология, библиотека и радио | Четыре показателя, шесть категорий книг, чтение, знания, ежедневные эфиры | DONE — merged (PR #2); часть библиотеки требует расширения | Все категории представлены, эффекты/время/checkpoint покрыты тестами |
+| 8. Погода и события | Пять погодных состояний, прогноз, события в убежище и дни без вылазки | DONE — merged (PR #2); расширение BACKLOG | День в убежище имеет понятные последствия; события воспроизводимы и откатываются |
 | 9. Графика и анимация | Полный art pass, внешние sprite sheets, GPU texture atlas, анимации окружения и персонажа | IN PROGRESS | Единый стиль, читаемые спрайты, корректное масштабирование, визуальная проверка на телефоне |
 | 10. Крафт и развитие убежища | Дополнительные рецепты, мастерская, улучшения и потребление ресурсов | BACKLOG / частично реализовано | Рецепты имеют условия, стоимость, результат, UI и тесты |
 | 11. NPC и динамика экспедиций | NPC, абстрактные угрозы, цели, сюжетные находки и события зон | BACKLOG | Неграфичные игровые состояния, понятная логика, тесты и связь с checkpoint |
@@ -173,7 +173,7 @@
 9. Следующий этап можно начинать после фиксации результата предыдущего; пользователь просил продолжать разработку последовательно, не ожидая отдельной команды после каждого небольшого этапа.
 
 ## 7. Ближайшая последовательность работ
-1. Завершить review PR #2 и сверить его diff с этой дорожной картой; не объединять без разрешения пользователя.
+1. Разблокировать PR #6: его CI падает на `Camera2DTest.cameraStopsAtWorldEdges` — тест ожидает мгновенного выхода камеры на границу мира, хотя `follow()` выполняет экспоненциальное сглаживание за один шаг.
 2. После интеграции провести ручной Android QA главного меню, настроек, сохранений, хранилища, сна и rollback.
 3. Завершить внешний sprite-sheet/texture-atlas pipeline и полный art pass всех четырёх зон.
 4. Расширить библиотеку до шести категорий и завершить контент/эффекты чтения.
@@ -183,10 +183,10 @@
 8. Провести балансировку, производительность и подготовить релизную сборку.
 
 ## 8. Проверки и ограничения статуса
-- Последний подтверждённый успешный CI на момент ревизии: [run 44406757892](https://github.com/DenisNekrut/Granit-Survival/actions/runs/44406757892), head `f46066779cba133e91ce089dead3eb7117c6a202`.
 - CI включает `:app:testDebugUnitTest`, `:app:assembleDebug` и загрузку APK artifact.
+- Локальная проверка ветки `main` (JDK 17, Gradle 8.13, Android SDK 36): 136 unit-тестов и `:app:assembleDebug` проходят, APK ≈ 1.06 МБ.
 - Физическое Android-тестирование не подтверждено.
-- PR #2 открыт и не объединён на момент ревизии.
+- PR #2 и PR #5 объединены; PR #6 открыт и красный по CI; PR #3 закрыт и заменён PR #4.
 - Старый файл `GRANIT_SURVIVAL_MASTER_PLAN` сохранён как исторический Unity-план; актуальные источники истины — этот документ и `docs/PROJECT_BACKLOG.md`.
 
 
@@ -246,3 +246,12 @@ The atlas includes additional bunker crates, industrial barrels and a roadside v
 
 
 Decoration selection is isolated in the pure `ZonePropSelector` helper. It derives a zone-specific sprite ID from the zone and tile coordinates; unit tests cover determinism, zone-specific prop sets and the roadside wreck pattern. This keeps decoration placement reproducible without expanding checkpoint/save data.
+
+
+### Atlas cell sizing from actual frame bounds (2026-11-20)
+
+`PixelSpriteTextureAtlas` previously hardcoded a 16×16 cell while the authored character frames are 16×24. `build()` therefore threw at the first player sprite; `PixelRenderer.create` caught the failure, logged it and left `spriteManifest` empty, so the GPU texture path was silently inactive and every sprite was rasterized as per-pixel CPU quads.
+
+The layout is now computed by `PixelSpriteTextureAtlas.plan()`: a platform-independent `SpriteAtlasPackPlan` derives the cell size from the largest authored frame, verifies that all frames of a sprite share dimensions, assigns every frame to a distinct cell and reports texture width/height. `build()` only rasterizes the resulting plan, so manifest creation and bitmap filling can no longer disagree about cell size.
+
+`PixelSpriteTextureAtlasTest` asserts that the cell covers the tallest frame (≥24), that no frame crosses its cell, that no cell is reused, that the texture fits every packed frame, that the derived manifest passes `SpriteAtlasManifestValidator` and that UV conversion stays inside 0..1 for the character frames. These checks run on the JVM without Android bitmap APIs, so a future hardcoded cell size fails CI instead of degrading rendering at runtime.
