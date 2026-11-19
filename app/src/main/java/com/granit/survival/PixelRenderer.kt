@@ -19,6 +19,12 @@ class PixelRenderer {
     private var vertexBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_VERTEX_CAPACITY * 2)
     private var colorBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_VERTEX_CAPACITY * 4)
     private var queuedVertexCount = 0
+    private var textureProgram = 0
+    private var texturePositionLocation = -1
+    private var textureUvLocation = -1
+    private var textureSamplerLocation = -1
+    private var spriteTexture: GlesTexture? = null
+    private var spriteManifest: SpriteAtlasManifest? = null
 
     fun create() {
         val atlasErrors = PixelSpriteAtlas.validate()
@@ -45,6 +51,49 @@ class PixelRenderer {
         positionLocation = GLES20.glGetAttribLocation(program, "aPosition")
         vertexColorLocation = GLES20.glGetAttribLocation(program, "aColor")
         check(positionLocation >= 0 && vertexColorLocation >= 0) { "Pixel shader attributes are unavailable" }
+
+        val textureVertexShader = compileShader(
+            GLES20.GL_VERTEX_SHADER,
+            "attribute vec2 aPosition; attribute vec2 aTexCoord; varying vec2 vTexCoord; void main(){ gl_Position = vec4(aPosition, 0.0, 1.0); vTexCoord = aTexCoord; }"
+        )
+        val textureFragmentShader = compileShader(
+            GLES20.GL_FRAGMENT_SHADER,
+            "precision mediump float; varying vec2 vTexCoord; uniform sampler2D uTexture; void main(){ gl_FragColor = texture2D(uTexture, vTexCoord); }"
+        )
+        textureProgram = GLES20.glCreateProgram()
+        GLES20.glAttachShader(textureProgram, textureVertexShader)
+        GLES20.glAttachShader(textureProgram, textureFragmentShader)
+        GLES20.glLinkProgram(textureProgram)
+        GLES20.glGetProgramiv(textureProgram, GLES20.GL_LINK_STATUS, status, 0)
+        check(status[0] == GLES20.GL_TRUE) {
+            "Texture shader link failed: " + GLES20.glGetProgramInfoLog(textureProgram)
+        }
+        GLES20.glDeleteShader(textureVertexShader)
+        GLES20.glDeleteShader(textureFragmentShader)
+        texturePositionLocation = GLES20.glGetAttribLocation(textureProgram, "aPosition")
+        textureUvLocation = GLES20.glGetAttribLocation(textureProgram, "aTexCoord")
+        textureSamplerLocation = GLES20.glGetUniformLocation(textureProgram, "uTexture")
+        check(texturePositionLocation >= 0 && textureUvLocation >= 0 && textureSamplerLocation >= 0) {
+            "Texture shader inputs are unavailable"
+        }
+
+        runCatching {
+            val generatedAtlas = PixelSpriteTextureAtlas.build()
+            val texture = GlesTexture()
+            texture.upload(generatedAtlas.bitmap, generatedAtlas.manifest.filter)
+            spriteManifest = generatedAtlas.manifest
+            spriteTexture = texture
+            generatedAtlas.bitmap.recycle()
+        }
+    }
+
+    fun destroy() {
+        spriteTexture?.release()
+        spriteTexture = null
+        if (program != 0) GLES20.glDeleteProgram(program)
+        if (textureProgram != 0) GLES20.glDeleteProgram(textureProgram)
+        program = 0
+        textureProgram = 0
     }
 
     fun resize(width: Int, height: Int) {
@@ -290,10 +339,65 @@ class PixelRenderer {
         frame: Int = 0,
         flipX: Boolean = false
     ) {
+        val manifest = spriteManifest
+        val texture = spriteTexture
+        val entry = manifest?.sprites?.firstOrNull { it.id == id }
+        if (manifest != null && texture != null && entry != null) {
+            val frameRect = entry.frames[Math.floorMod(frame, entry.frames.size)]
+            drawTexturedSprite(manifest, texture, frameRect, centerX, topY,
+                entry.frameWidth * pixelSize, entry.frameHeight * pixelSize, flipX)
+            return
+        }
         val sprite = PixelSpriteAtlas.sprite(id) ?: return
         val sourceRows = sprite.frames[Math.floorMod(frame, sprite.frames.size)]
         val rows = if (flipX) sourceRows.map { it.reversed() } else sourceRows
         drawPixelSprite(rows, centerX, topY, pixelSize, sprite.palette)
+    }
+
+    private fun drawTexturedSprite(
+        manifest: SpriteAtlasManifest,
+        texture: GlesTexture,
+        frame: SpriteAtlasFrame,
+        centerX: Float,
+        topY: Float,
+        width: Float,
+        height: Float,
+        flipX: Boolean
+    ) {
+        flushBatch()
+        val worldLeft = centerX - width * 0.5f
+        val viewX = currentCamera?.worldToViewX(worldLeft) ?: worldLeft
+        val viewY = currentCamera?.worldToViewY(topY) ?: topY
+        val left = worldOffsetX + viewX * worldScale
+        val top = worldOffsetY + viewY * worldScale
+        val right = left + width * worldScale
+        val bottom = top + height * worldScale
+        val x1 = toNdcX(left); val y1 = toNdcY(top)
+        val x2 = toNdcX(right); val y2 = toNdcY(bottom)
+        val uv = manifest.uvRect(frame)
+        val uvLeft = if (flipX) uv.right else uv.left
+        val uvRight = if (flipX) uv.left else uv.right
+        val positions = floatArrayOf(
+            x1, y1, x1, y2, x2, y1,
+            x2, y1, x1, y2, x2, y2
+        )
+        val coordinates = floatArrayOf(
+            uvLeft, uv.top, uvLeft, uv.bottom, uvRight, uv.top,
+            uvRight, uv.top, uvLeft, uv.bottom, uvRight, uv.bottom
+        )
+        val positionBuffer = allocateFloatBuffer(positions.size).put(positions).apply { position(0) }
+        val uvBuffer = allocateFloatBuffer(coordinates.size).put(coordinates).apply { position(0) }
+        GLES20.glUseProgram(textureProgram)
+        GLES20.glEnableVertexAttribArray(texturePositionLocation)
+        GLES20.glEnableVertexAttribArray(textureUvLocation)
+        GLES20.glVertexAttribPointer(texturePositionLocation, 2, GLES20.GL_FLOAT, false, 0, positionBuffer)
+        GLES20.glVertexAttribPointer(textureUvLocation, 2, GLES20.GL_FLOAT, false, 0, uvBuffer)
+        texture.bind(0)
+        GLES20.glUniform1i(textureSamplerLocation, 0)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6)
+        GLES20.glDisableVertexAttribArray(texturePositionLocation)
+        GLES20.glDisableVertexAttribArray(textureUvLocation)
+        GLES20.glUseProgram(program)
     }
 
     private fun drawPixelSprite(
