@@ -132,7 +132,7 @@ class GameEngineInteractionTest {
         assertEquals(WorldZone.ROAD, engine.zone)
         interactAt(1.5f, 12.5f) // road -> forest
         assertEquals(WorldZone.FOREST, engine.zone)
-        interactAt(8.5f, 2.5f) // forest -> bunker
+        interactAt(20.5f, 22.5f) // forest -> bunker
         assertEquals(WorldZone.BUNKER, engine.zone)
     }
 
