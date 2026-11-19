@@ -6,6 +6,7 @@ import kotlin.random.Random
 enum class TileType {
     FLOOR, WALL, BED, WORKBENCH, STORAGE, BOOKSHELF, RADIO, EXIT,
     EXIT_TO_BUNKER, EXIT_TO_FOREST, EXIT_TO_RUINS, EXIT_TO_ROAD,
+    DINING_TABLE, GENERATOR, MEDICAL_STATION,
     RESOURCE_WOOD, RESOURCE_METAL, RESOURCE_FABRIC, RESOURCE_FOOD, RESOURCE_WATER
 }
 
@@ -33,15 +34,49 @@ class TileMap(
     }
 
     private fun buildBunker() {
+        // Five connected rooms around a central corridor.
+        // Door gaps are intentionally left open in every partition.
+        for (x in 2 until width - 2) {
+            if (x !in setOf(6, 20, 30)) set(x, 10, TileType.WALL)
+            if (x !in setOf(6, 18, 30)) set(x, 13, TileType.WALL)
+        }
+        for (y in 2 until height - 2) {
+            if (y != 5 && y != 17) {
+                set(12, y, TileType.WALL)
+                set(24, y, TileType.WALL)
+            }
+        }
+
+        // Bedroom — upper-left.
         fill(2, 2, 5, 1, TileType.BED)
-        fill(2, 4, 3, 1, TileType.STORAGE)
-        fill(16, 2, 2, 2, TileType.STORAGE)
-        fill(9, 1, 2, 1, TileType.WORKBENCH)
-        fill(20, 2, 1, 2, TileType.BOOKSHELF)
-        set(24, 2, TileType.RADIO)
+        set(8, 4, TileType.STORAGE)
+        set(9, 1, TileType.WORKBENCH) // retained as the starter repair surface
+
+        // Dining room — upper-middle.
+        fill(16, 2, 2, 2, TileType.STORAGE) // food and water pantry
+        set(20, 2, TileType.BOOKSHELF)
+        set(17, 5, TileType.DINING_TABLE)
+
+        // Generator room — upper-right.
+        set(27, 4, TileType.GENERATOR)
+        set(31, 4, TileType.RADIO)
+
+        // Medical room — lower-left.
+        set(5, 17, TileType.MEDICAL_STATION)
+        set(8, 17, TileType.STORAGE)
+
+        // Workshop — lower-middle.
+        set(17, 17, TileType.WORKBENCH)
+        set(21, 17, TileType.BOOKSHELF)
+
+        // Exit from the bunker opens into the first, fixed forest location.
         set(width / 2, 1, TileType.EXIT_TO_FOREST)
-        set(7, 8, TileType.RESOURCE_WOOD); set(12, 8, TileType.RESOURCE_METAL)
-        set(10, 11, TileType.RESOURCE_FABRIC); set(14, 10, TileType.RESOURCE_FOOD)
+
+        // Small starter supplies remain available inside the safe room.
+        set(7, 8, TileType.RESOURCE_WOOD)
+        set(12, 8, TileType.RESOURCE_METAL)
+        set(10, 11, TileType.RESOURCE_FABRIC)
+        set(14, 10, TileType.RESOURCE_FOOD)
         set(5, 10, TileType.RESOURCE_WATER)
     }
 
@@ -136,7 +171,8 @@ class TileMap(
             worldX - radius to worldY + radius, worldX + radius to worldY + radius)
         return points.all { (x, y) ->
             when (get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())) {
-                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF, TileType.RADIO -> false
+                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF,
+                TileType.RADIO, TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> false
                 else -> true
             }
         }
@@ -192,7 +228,8 @@ class TileMap(
         var best = maxDistance * maxDistance
         forEachTile { x, y, type ->
             val valid = when (type) {
-                TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF, TileType.RADIO, TileType.EXIT,
+                TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF, TileType.RADIO,
+                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.EXIT,
                 TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS,
                 TileType.EXIT_TO_ROAD -> true
                 else -> false
