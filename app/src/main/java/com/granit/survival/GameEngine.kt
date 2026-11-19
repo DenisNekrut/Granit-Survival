@@ -140,7 +140,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
     fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 2.1f)
 
-    fun canUseWorkbench(): Boolean = zone == WorldZone.BUNKER &&
+    fun canUseWorkbench(): Boolean = zone == WorldZone.BUNKER && bunkerPower.hasPower &&
         tileMap.isNearTile(TileType.WORKBENCH, player.x, player.y, 1.5f)
 
     fun canAccessBookshelf(): Boolean = zone == WorldZone.BUNKER &&
@@ -167,7 +167,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun canAccessMedicalStation(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.MEDICAL_STATION, player.x, player.y, 1.5f)
 
-    fun canUseRadio(): Boolean = zone == WorldZone.BUNKER &&
+    fun canUseRadio(): Boolean = zone == WorldZone.BUNKER && bunkerPower.hasPower &&
         tileMap.isNearTile(TileType.RADIO, player.x, player.y, 1.5f) && radioSystem.canListen(worldClock.day)
 
     fun listenToRadio(): RadioEvent? {
