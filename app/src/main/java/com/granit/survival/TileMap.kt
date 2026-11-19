@@ -69,6 +69,9 @@ class TileMap(
         set(17, 17, TileType.WORKBENCH)
         set(21, 17, TileType.BOOKSHELF)
 
+        // Utility storage room — lower-right.
+        set(30, 17, TileType.STORAGE)
+
         // Exit from the bunker opens into the first, fixed forest location.
         set(width / 2, 1, TileType.EXIT_TO_FOREST)
 
@@ -126,7 +129,7 @@ class TileMap(
         val random = Random(seed)
         val spawnX = zone.spawnX.toInt()
         val spawnY = zone.spawnY.toInt()
-        val reserved = height / 2 - 1..height / 2 + 1
+        val reserved = (height / 2 - 1)..(height / 2 + 1)
 
         fun validPlacement(x: Int, y: Int): Boolean {
             if (x <= 1 || x >= width - 2 || y <= 1 || y >= height - 2) return false
