@@ -10,8 +10,8 @@ class BookLibraryTest {
     fun readingRequiresBookshelfAndUnlocksTechnicalRecipe() {
         val engine = GameEngine()
         assertFalse(engine.readBook("field_first_aid"))
-        engine.player.x = 9.5f
-        engine.player.y = 2.5f
+        engine.player.x = 8.5f
+        engine.player.y = 3.5f
         val before = engine.worldClock.totalMinutes
         assertTrue(engine.readBook("field_first_aid"))
         assertTrue(engine.bookLibrary.hasRead("field_first_aid"))
@@ -25,8 +25,8 @@ class BookLibraryTest {
     @Test
     fun fictionAndDiaryReadingAffectMoraleAndStress() {
         val engine = GameEngine()
-        engine.player.x = 9.5f
-        engine.player.y = 2.5f
+        engine.player.x = 8.5f
+        engine.player.y = 3.5f
         val moraleBefore = engine.psychology.morale
         assertTrue(engine.readBook("old_novel"))
         assertTrue(engine.psychology.morale > moraleBefore)
@@ -40,8 +40,8 @@ class BookLibraryTest {
     fun readingProgressRollsBackUntilNextWakeCheckpoint() {
         val engine = GameEngine()
         engine.sleepUntilMorning()
-        engine.player.x = 9.5f
-        engine.player.y = 2.5f
+        engine.player.x = 8.5f
+        engine.player.y = 3.5f
         assertTrue(engine.readBook("field_first_aid"))
         assertTrue(engine.bookLibrary.hasRead("field_first_aid"))
         assertTrue(engine.respawnAtWakeCheckpoint())
