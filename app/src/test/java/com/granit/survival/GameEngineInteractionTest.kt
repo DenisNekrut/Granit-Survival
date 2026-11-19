@@ -43,6 +43,24 @@ class GameEngineInteractionTest {
     }
 
     @Test
+    fun characterStatisticsTrackCollectionMovementTimeAndVisitedZones() {
+        val engine = GameEngine()
+        engine.player.x = 7.5f
+        engine.player.y = 8.5f
+        engine.updateFrame(1f / 60f, EngineInput(interact = true))
+        assertEquals(1, engine.statistics.snapshot().resourcesCollected)
+
+        engine.changeZone(WorldZone.FOREST)
+        repeat(65) {
+            engine.updateFrame(1f / 60f, EngineInput(moveX = 1f))
+        }
+        val stats = engine.statistics.snapshot()
+        assertTrue(stats.distanceTravelled > 0f)
+        assertTrue(stats.expeditionMinutes > 0L)
+        assertTrue(WorldZone.FOREST in stats.visitedZones)
+    }
+
+    @Test
     fun storageCanOnlyBeUsedNearbyAndTransfersItemsSafely() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.WOOD, 6)
