@@ -5,7 +5,9 @@ enum class ItemType(val displayName: String, val color: Int) {
     METAL("Металл", 0xFF8A969A.toInt()),
     FABRIC("Ткань", 0xFF718B86.toInt()),
     CANNED_FOOD("Консервы", 0xFFB28A43.toInt()),
-    WATER("Вода", 0xFF4E91B5.toInt())
+    WATER("Вода", 0xFF4E91B5.toInt()),
+    MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt()),
+    BANDAGE("Бинт", 0xFFD8D0B5.toInt())
 }
 
 data class ItemStack(
@@ -13,13 +15,17 @@ data class ItemStack(
     var quantity: Int
 )
 
-/** Fixed 4x4 inventory. Stack size is intentionally small for the first prototype. */
+/** Fixed-size item container. Stack size is intentionally small for the first prototype. */
 class Inventory(
     val columns: Int = 4,
     val rows: Int = 4,
     private val stackLimit: Int = 20
 ) {
     private val slots = MutableList<ItemStack?>(columns * rows) { null }
+
+    init {
+        require(columns > 0 && rows > 0 && stackLimit > 0)
+    }
 
     fun slot(index: Int): ItemStack? = slots.getOrNull(index)?.copy()
 
@@ -51,6 +57,17 @@ class Inventory(
         return remaining
     }
 
+    fun canAdd(type: ItemType, amount: Int = 1): Boolean {
+        if (amount <= 0) return false
+        var remaining = amount
+        slots.forEach { stack ->
+            if (stack?.type == type) remaining -= (stackLimit - stack.quantity).coerceAtLeast(0)
+        }
+        val emptySlots = slots.count { it == null }
+        remaining -= emptySlots * stackLimit
+        return remaining <= 0
+    }
+
     fun remove(type: ItemType, amount: Int = 1): Boolean {
         if (amount <= 0 || count(type) < amount) return false
         var remaining = amount
@@ -67,4 +84,14 @@ class Inventory(
     }
 
     fun snapshot(): List<ItemStack?> = slots.map { it?.copy() }
+
+    fun restore(snapshot: List<ItemStack?>) {
+        require(snapshot.size == slots.size) { "Inventory snapshot has an unexpected slot count" }
+        snapshot.forEach { stack ->
+            require(stack == null || stack.quantity in 1..stackLimit) {
+                "Inventory snapshot contains an invalid stack"
+            }
+        }
+        for (index in slots.indices) slots[index] = snapshot[index]?.copy()
+    }
 }

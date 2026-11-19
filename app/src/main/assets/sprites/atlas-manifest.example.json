@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "texture": "sprites/world-atlas.png",
+  "textureWidth": 256,
+  "textureHeight": 256,
+  "filter": "nearest",
+  "sprites": [
+    {
+      "id": "player_down",
+      "frameWidth": 16,
+      "frameHeight": 24,
+      "pivotX": 0.5,
+      "pivotY": 1.0,
+      "frames": [
+        { "x": 0, "y": 0, "width": 16, "height": 24 },
+        { "x": 16, "y": 0, "width": 16, "height": 24 }
+      ]
+    },
+    {
+      "id": "tree",
+      "frameWidth": 32,
+      "frameHeight": 40,
+      "pivotX": 0.5,
+      "pivotY": 1.0,
+      "frames": [
+        { "x": 0, "y": 32, "width": 32, "height": 40 }
+      ]
+    }
+  ]
+}

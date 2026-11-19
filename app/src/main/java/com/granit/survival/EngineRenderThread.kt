@@ -1,5 +1,6 @@
 package com.granit.survival
 
+import android.content.Context
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
@@ -15,7 +16,9 @@ import kotlin.math.sqrt
 class EngineRenderThread(
     private val surfaceHolder: SurfaceHolder,
     initialWidth: Int,
-    initialHeight: Int
+    initialHeight: Int,
+    private val session: GameSession,
+    private val appContext: Context
 ) : Thread("Granit-RenderThread") {
     private val running = AtomicBoolean(true)
     @Volatile private var viewportWidth = initialWidth.coerceAtLeast(1)
@@ -49,6 +52,7 @@ class EngineRenderThread(
         var display: EGLDisplay = EGL14.EGL_NO_DISPLAY
         var context: EGLContext = EGL14.EGL_NO_CONTEXT
         var eglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
+        var renderer: PixelRenderer? = null
         try {
             display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             check(display != EGL14.EGL_NO_DISPLAY) { "Unable to get EGL display" }
@@ -80,10 +84,11 @@ class EngineRenderThread(
             }
 
             GLES20.glDisable(GLES20.GL_DEPTH_TEST)
-            val renderer = PixelRenderer()
-            renderer.create()
+            renderer = PixelRenderer()
+            renderer.create(appContext.assets)
             renderer.resize(viewportWidth, viewportHeight)
-            val engine = GameEngine()
+            val engine = session.engine
+            val gameSettings = session.settings.load()
             val fixedFrameDelayNanos = 16_000_000L
             var previousFrame = System.nanoTime()
 
@@ -101,10 +106,10 @@ class EngineRenderThread(
                 val active = joystickActive
                 val dx = touchX - width * 0.16f
                 val dy = touchY - height * 0.78f
-                val radius = (height * 0.19f).coerceAtLeast(72f)
+                val radius = (height * 0.19f * gameSettings.joystickScale).coerceAtLeast(72f)
                 val distance = sqrt(dx * dx + dy * dy)
                 val input = if (active && distance > radius * 0.12f) {
-                    val magnitude = (distance / radius).coerceAtMost(1f)
+                    val magnitude = ((distance / radius) * gameSettings.joystickSensitivity).coerceAtMost(1f)
                     EngineInput(
                         moveX = (dx / distance) * magnitude,
                         moveY = (dy / distance) * magnitude
@@ -114,7 +119,11 @@ class EngineRenderThread(
                 }
 
                 engine.updateFrame(deltaSeconds, input.copy(interact = interacting))
-                renderer.render(engine, touchX, touchY, active, interacting)
+                renderer?.render(
+                    engine, touchX, touchY, active, interacting,
+                    controlsOpacity = gameSettings.controlsOpacity,
+                    joystickScale = gameSettings.joystickScale
+                )
 
                 if (!EGL14.eglSwapBuffers(display, eglSurface)) {
                     val eglError = EGL14.eglGetError()
@@ -134,6 +143,10 @@ class EngineRenderThread(
             Log.e("GranitEngine", "Render thread failed", failure)
         } finally {
             if (display != EGL14.EGL_NO_DISPLAY) {
+                if (context != EGL14.EGL_NO_CONTEXT && eglSurface != EGL14.EGL_NO_SURFACE &&
+                    EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) {
+                    runCatching { renderer?.destroy() }
+                }
                 EGL14.eglMakeCurrent(
                     display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT
                 )

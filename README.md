@@ -2,35 +2,56 @@
 
 2D pixel-art survival game for Android, built on **Granit Engine**, a custom engine developed specifically for this project.
 
-## Current technical direction
+## Technical direction
 
-- Platform: Android (landscape)
+- Platform: Android, landscape orientation
 - Language: Kotlin/JVM
-- Rendering backend: EGL14 + OpenGL ES 2.0
-- Engine: custom implementation; no Unity, Godot, or MonoGame
-- Architecture: Android Platform / Granit Engine / Granit Survival game layer
+- Rendering: EGL14 + OpenGL ES 2.0
+- Engine: custom implementation; Unity, Godot and MonoGame are not used
+- Architecture: Android platform layer / Granit Engine / Granit Survival game layer
+
+## Implemented prototype
+
+### Engine and gameplay
+- Android application shell, SurfaceView lifecycle and EGL render thread.
+- Fixed-step simulation, camera, collision, virtual joystick and multitouch input.
+- Four connected areas: bunker, forest, ruins and road; exits are reachable from each zone's spawn.
+- Separate maps and resource states for each area; collected resources remain collected when revisiting.
+- Gathering and travelling consume in-game time.
+- 4×4 inventory, resource collection, bunker storage and item transfer.
+- Health, hunger, thirst, energy, food and water.
+- Sleep until 07:00, wake-up checkpoint and rollback of the reversible run state.
+- Deterministic five-state weather cycle; outdoor conditions gently affect movement, and radio forecasts the next day.
+
+### Bunker, knowledge and events
+- Main menu, pause menu, expedition journal, save-slot manager, settings, storage and workbench screens.
+- Three manual save slots and a separate atomic autosave; JSON schema v6 reads older versions 1–5.
+- Workbench recipes for bandage and medical kit; medical kit recipe unlocks after reading a technical manual.
+- Bunker library with fiction, science, technical manuals, diaries and magazines. Reading consumes game time and may affect morale/stress.
+- Bunker radio with one daily broadcast: weather, maintenance notes, archival broadcast or weak signal. Listening consumes 10 in-game minutes.
+- Six discoverable landmarks in forest, ruins and road. Full Russian descriptions are recorded in the expedition journal.
+- Read books, discovered landmarks, radio state and psychological indicators are included in save/checkpoint rollback.
+- Psychological indicators: stress, loneliness, fatigue and morale. Sleep/return aid recovery; fatigue and stress gently reduce movement speed.
+
+### Graphics and settings
+- PixelSpriteAtlas with player idle/walk frames, resource and medical-item sprites.
+- Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
+- Pixel-art bed, storage, workbench, bookshelf and radio.
+- HUD displays live survival meters, day/time, current zone and weather.
+- Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored but still need integration.
 
 ## Documentation
-
 - [Granit Engine architecture v2.0](docs/architecture/GRANIT_ENGINE_ARCHITECTURE.md)
+- [Project requirements and progress tracker](docs/PROJECT_BACKLOG.md)
 
-The legacy Unity-based plan is retained for history only and is superseded by the architecture document above.
+The older Unity-oriented plan is retained for historical reference and is superseded by the custom-engine architecture above.
 
-## Development status
+## Remaining work
 
-The current prototype contains:
-- Android application shell, SurfaceView lifecycle and EGL14 render thread;
-- fixed-step simulation loop and OpenGL ES 2.0 renderer;
-- 40×24 tile map with bunker furniture, resource nodes and collision;
-- Camera2D follow behavior;
-- touch joystick and independent action pointer;
-- 4×4 inventory with stack merging, capacity checks and item removal;
-- resource pickup for wood, metal, fabric, canned food and water.
-
-This is an early technical prototype, not yet a complete game. Android device testing is still required.
+This is still a playable prototype, not a finished game. The next work includes a complete art pass and external sprite sheets, more recipes and bunker upgrades, richer weather/story events, NPCs and expedition objectives, full audio/settings integration, and physical Android device testing.
 
 ## Downloading a test APK
 
 Every successful GitHub Actions build uploads an artifact named **GranitSurvival-debug-apk**. Open the latest successful [Android Debug Build](https://github.com/DenisNekrut/Granit-Survival/actions), find the **Artifacts** section at the bottom of the run page, and download the ZIP. It contains `app-debug.apk`.
 
-The APK is a debug build for testing, not a signed production release.
+The APK is a debug build for testing, not a signed production release. A successful CI build does not mean the game has been tested on a physical phone.
