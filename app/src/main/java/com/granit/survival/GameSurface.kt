@@ -9,6 +9,7 @@ import android.view.SurfaceView
 class GameSurface(context: Context, private val session: GameSession) : SurfaceView(context), SurfaceHolder.Callback {
     @Volatile private var renderThread: EngineRenderThread? = null
     @Volatile private var resumed = false
+    @Volatile var onRenderFailure: ((Throwable) -> Unit)? = null
     @Volatile private var surfaceWidth = 0
     @Volatile private var surfaceHeight = 0
     @Volatile private var surfaceReady = false
@@ -101,7 +102,9 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     private fun startIfReady() {
         if (!resumed || !surfaceReady || surfaceWidth <= 1 || surfaceHeight <= 1 ||
             !holder.surface.isValid || renderThread?.isAlive == true) return
-        val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight, session, context.applicationContext)
+        val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight, session, context.applicationContext) { failure ->
+            post { onRenderFailure?.invoke(failure) }
+        }
         renderThread = thread
         thread.start()
     }
