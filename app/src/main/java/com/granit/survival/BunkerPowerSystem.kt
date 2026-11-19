@@ -44,6 +44,7 @@ class BunkerPowerSystem(
         require(minutes >= 0)
         if (minutes == 0 || !generatorRunning || fuelMinutesRemaining == 0) return
         fuelMinutesRemaining = (fuelMinutesRemaining - minutes).coerceAtLeast(0)
+        if (fuelMinutesRemaining == 0) generatorRunning = false
     }
 
     fun snapshot() = BunkerPowerSnapshot(generatorRunning, fuelMinutesRemaining)
