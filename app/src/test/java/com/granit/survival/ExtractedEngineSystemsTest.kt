@@ -34,6 +34,23 @@ class ExtractedEngineSystemsTest {
     }
 
 
+
+    @Test
+    fun inventorySystemDepositsAllBackpackItems() {
+        val backpack = Inventory()
+        val storage = BunkerStorage()
+        val system = InventorySystem(backpack, storage)
+        backpack.add(ItemType.WOOD, 4)
+        backpack.add(ItemType.WATER, 2)
+
+        assertTrue(system.depositAll())
+        assertEquals(0, backpack.count(ItemType.WOOD))
+        assertEquals(0, backpack.count(ItemType.WATER))
+        assertEquals(4, storage.count(ItemType.WOOD))
+        assertEquals(2, storage.count(ItemType.WATER))
+        assertFalse(system.depositAll())
+    }
+
     @Test
     fun clockAndNeedsSystemAdvancesTheSharedTimelineForActions() {
         val engine = GameEngine()
@@ -47,6 +64,23 @@ class ExtractedEngineSystemsTest {
 
         assertEquals(start + 5L, engine.worldClock.totalMinutes)
         assertEquals(100f - SurvivalNeeds.HUNGER_LOSS_PER_MINUTE * 5f, engine.needs.hunger, 0.001f)
+    }
+
+
+    @Test
+    fun clockAndNeedsSystemInvokesRollbackWhenAnActionCausesDeath() {
+        val engine = GameEngine()
+        engine.needs.restore(SurvivalNeedsSnapshot(health = 0f, hunger = 0f, thirst = 0f, energy = 0f))
+        val system = ClockAndNeedsSystem(
+            engine.worldClock, engine.bunkerPower, engine.statistics,
+            engine.needs, engine.psychology
+        )
+        var rollbackCalls = 0
+
+        val survived = system.advanceActionMinutes(1, engine.zone, false) { rollbackCalls++ }
+
+        assertFalse(survived)
+        assertEquals(1, rollbackCalls)
     }
 
     @Test
