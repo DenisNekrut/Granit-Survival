@@ -14,7 +14,7 @@ data class LoadedSpriteAtlas(
 class AndroidSpriteAtlasLoader(private val assets: AssetManager) {
     fun load(manifestPath: String): LoadedSpriteAtlas {
         require(manifestPath.isNotBlank() && !manifestPath.startsWith("/") &&
-            manifestPath.split('/').none { it == ".." }) { "Invalid atlas manifest path" }
+            !manifestPath.contains('\\\\') && manifestPath.split('/').none { it == ".." }) { "Invalid atlas manifest path" }
 
         val jsonText = assets.open(manifestPath).bufferedReader(Charsets.UTF_8).use { it.readText() }
         val root = JSONObject(jsonText)
