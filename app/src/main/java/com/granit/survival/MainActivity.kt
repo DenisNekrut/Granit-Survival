@@ -314,41 +314,20 @@ class MainActivity : Activity() {
     }
 
     private fun showBackpack() {
-        val engine = session.engine
-        val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · 4 × 4 ячейки")
-        for (index in 0 until engine.inventory.columns * engine.inventory.rows) {
-            val stack = engine.inventory.slot(index)
-            if (stack == null) {
-                panel.addView(label("Ячейка " + (index + 1) + " · пусто", 12f, Color.rgb(126, 139, 132)))
-                continue
-            }
-            val row = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(6), dp(3), dp(6), dp(3))
-            }
-            row.addView(label(stack.type.displayName + " × " + stack.quantity, 13f, Color.WHITE).apply {
-                gravity = Gravity.CENTER_VERTICAL
-            }, LinearLayout.LayoutParams(0, -2, 1f))
-            val useAction: (() -> Unit)? = when (stack.type) {
-                ItemType.CANNED_FOOD -> ({ if (session.consumeFood()) showBackpack() })
-                ItemType.WATER -> ({ if (session.drinkWater()) showBackpack() })
-                ItemType.BANDAGE -> ({ if (engine.useBandage()) showBackpack() })
-                ItemType.MEDICAL_KIT -> ({ if (engine.useMedicalKit()) showBackpack() })
-                else -> null
-            }
-            if (useAction != null) {
-                row.addView(menuButton("ИСПОЛЬЗОВАТЬ", enabled = when (stack.type) {
-                    ItemType.BANDAGE, ItemType.MEDICAL_KIT -> engine.needs.health < 100f
-                    else -> true
-                }) { useAction.invoke() }, LinearLayout.LayoutParams(dp(142), -2))
-            } else {
-                row.addView(label("ПАССИВНЫЙ ПРЕДМЕТ", 10f, Color.rgb(145, 160, 149)))
-            }
-            panel.addView(row)
-        }
-        panel.addView(menuButton("ЗАКРЫТЬ РЮКЗАК") { enterGame() })
-        showOverlay(panel)
+        InventoryScreen(
+            activity = this,
+            createPanel = ::createPanel,
+            label = ::label,
+            menuButton = ::menuButton,
+            showOverlay = ::showOverlay,
+            close = ::enterGame,
+            refresh = ::showBackpack,
+            consumeFood = session::consumeFood,
+            drinkWater = session::drinkWater,
+            useBandage = session.engine::useBandage,
+            useMedicalKit = session.engine::useMedicalKit,
+            dp = ::dp
+        ).show(session.engine)
     }
 
     private fun showPauseMenu() {
