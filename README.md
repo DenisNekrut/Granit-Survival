@@ -83,3 +83,7 @@ The APK is a debug build for testing, not a signed production release. A success
 - Interaction cards remain over the visible world while the simulation and ambient audio continue. Reading, crafting, consuming supplies, medical actions, radio, resource gathering, travel and storage operations consume in-game time.
 - Outdoor maps (forest, ruins and road) now populate with original stylized infected NPCs. They approach the player, navigate around blocked tiles and create an abstract contact threat. The bunker remains safe.
 - The starter outdoor equipment is a fictional pulse carbine with a dedicated touch control and a cyan pulse effect. It uses abstract game-only hit rules and keeps the legacy SIGNAL_EMITTER save value readable.
+
+
+### Infected variants
+Outdoor expeditions now feature three original infected archetypes: shamblers, runners, and brutes. They have distinct silhouettes, movement speeds, durability, and abstract contact pressure. Bunker interiors remain safe from infected spawns. The pulse-carbine remains a fictional energy effect with simplified hit detection.
