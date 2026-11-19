@@ -37,8 +37,10 @@ class Camera2D(
         val (desiredX, desiredY) = clampedTarget(targetX, targetY, worldWidth, worldHeight)
         val delta = deltaSeconds.coerceIn(0f, 0.25f)
         val blend = (1f - exp(-FOLLOW_SPEED * delta)).coerceIn(0f, 1f)
-        x += (desiredX - x) * blend
-        y += (desiredY - y) * blend
+        // A smaller world must be centered immediately; otherwise empty space is exposed
+        // while the camera slowly catches up from the previous viewport position.
+        x = if (worldWidth.coerceAtLeast(1f) <= viewportWidth) desiredX else x + (desiredX - x) * blend
+        y = if (worldHeight.coerceAtLeast(1f) <= viewportHeight) desiredY else y + (desiredY - y) * blend
     }
 
     /** Snap on zone loads/respawns to avoid showing the previous zone's camera position. */
