@@ -18,7 +18,7 @@ class PerformanceMonitorTest {
         assertEquals(3, snapshot.droppedFrames)
         assertEquals(5.0, snapshot.averageDrawCalls, 0.001)
         assertEquals(30L, snapshot.nativeHeapAllocatedBytes)
-        assertEquals(40, snapshot.pssKilobytes)
+        assertEquals(40L, snapshot.pssKilobytes)
     }
 
     @Test fun resetsWindowAfterSnapshotAndIgnoresEmptyWindow() {
