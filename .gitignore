@@ -1,0 +1,17 @@
+# Local Android release-signing material — never commit
+/signing/
+/ANDROID_RELEASE_SECRETS.txt
+*.keystore
+*.jks
+
+# Gradle / Android build output
+.gradle/
+.kotlin/
+**/build/
+local.properties
+*.iml
+.idea/
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
