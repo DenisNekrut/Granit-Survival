@@ -66,10 +66,14 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 val index = event.actionIndex
                 val pointerId = event.getPointerId(index)
-                if (event.getX(index) < surfaceWidth * 0.5f && joystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                val touchX = event.getX(index)
+                val touchY = event.getY(index)
+                val inJoystickArea = touchX < surfaceWidth * 0.38f && touchY > surfaceHeight * 0.62f
+                val inActionArea = touchX > surfaceWidth * 0.68f && touchY > surfaceHeight * 0.62f
+                if (inJoystickArea && joystickPointerId == MotionEvent.INVALID_POINTER_ID) {
                     joystickPointerId = pointerId
-                    thread.setJoystick(event.getX(index), event.getY(index), true)
-                } else if (actionPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    thread.setJoystick(touchX, touchY, true)
+                } else if (inActionArea && actionPointerId == MotionEvent.INVALID_POINTER_ID) {
                     actionPointerId = pointerId
                     thread.setInteracting(true)
                     thread.requestInteraction()
