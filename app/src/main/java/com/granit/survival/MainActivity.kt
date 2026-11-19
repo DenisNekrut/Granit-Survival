@@ -408,30 +408,61 @@ class MainActivity : Activity() {
     }
 
     private fun showOverlay(content: LinearLayout) {
+        // Keep the title visible while only the actual controls list can scroll.
+        val panelBackground = content.background
+        content.background = null
+        content.setPadding(dp(4), dp(4), dp(4), dp(8))
+
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+        }
+        repeat(minOf(2, content.childCount)) {
+            val child = content.getChildAt(0)
+            content.removeViewAt(0)
+            header.addView(child, LinearLayout.LayoutParams(-1, -2))
+        }
+
         val scroll = ScrollView(this).apply {
             isFillViewport = true
-            clipToPadding = false
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            clipToPadding = true
+            isVerticalScrollBarEnabled = false
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = View.OVER_SCROLL_NEVER
+            setPadding(0, dp(4), 0, dp(4))
             isClickable = true
-            setOnClickListener { /* Consume taps inside the card; buttons handle their own actions. */ }
-            addView(content)
+            setOnClickListener { /* Keep taps inside the card from closing the window. */ }
+            addView(content, ScrollView.LayoutParams(-1, -2))
         }
+
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(14), dp(12), dp(14), dp(10))
+            background = panelBackground
+            isClickable = true
+            setOnClickListener { /* Consume taps inside the card. */ }
+            addView(header, LinearLayout.LayoutParams(-1, -2))
+            addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        }
+
         val overlay = FrameLayout(this).apply {
             isClickable = true
             isFocusable = true
             setOnClickListener { if (activeGame) closeStationPanel() }
+            setBackgroundColor(if (activeGame) Color.argb(72, 3, 9, 10) else Color.rgb(8, 14, 15))
         }
-        if (activeGame) {
-            // The simulation and ambient audio continue while the interaction card is open.
-            // The interaction card is a compact HUD layer, not a replacement screen.
-            overlay.setBackgroundColor(Color.argb(72, 3, 9, 10))
-            val cardWidth = minOf(dp(520), (resources.displayMetrics.widthPixels * 0.58f).toInt())
-            val cardHeight = minOf(dp(680), (resources.displayMetrics.heightPixels * 0.90f).toInt())
-            overlay.addView(scroll, FrameLayout.LayoutParams(cardWidth, cardHeight, Gravity.CENTER))
-        } else {
-            overlay.setBackgroundColor(Color.rgb(8, 14, 15))
-            overlay.addView(scroll, FrameLayout.LayoutParams(dp(560), -1, Gravity.CENTER))
-        }
+
+        val availableWidth = (root.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels).coerceAtLeast(1)
+        val availableHeight = (root.height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels).coerceAtLeast(1)
+        val widthFraction = if (activeGame) 0.76f else 0.88f
+        val heightFraction = if (activeGame) 0.82f else 0.90f
+        val maxWidth = dp(if (activeGame) 720 else 760)
+        val maxHeight = dp(if (activeGame) 560 else 680)
+        val cardWidth = minOf(maxWidth, (availableWidth * widthFraction).toInt()).coerceAtLeast(dp(220))
+        val cardHeight = minOf(maxHeight, (availableHeight * heightFraction).toInt()).coerceAtLeast(dp(200))
+        overlay.addView(card, FrameLayout.LayoutParams(cardWidth, cardHeight, Gravity.CENTER))
+
         if (root.childCount > 1) root.removeViews(1, root.childCount - 1)
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1))
     }
