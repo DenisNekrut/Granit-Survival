@@ -128,6 +128,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
             Thread.currentThread().interrupt()
         }
         renderThread = null
+        if (!thread.isAlive) session.engine.releaseInputState()
         joystickPointerId = MotionEvent.INVALID_POINTER_ID
         actionPointerId = MotionEvent.INVALID_POINTER_ID
     }
