@@ -211,7 +211,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
      * new entry; fixed maps (bunker and first forest area) are reused unchanged.
      * Save/checkpoint restoration passes regenerate=false to rebuild the exact map.
      */
-    fun changeZone(target: WorldZone, regenerate: Boolean = true) {
+    fun changeZone(target: WorldZone, regenerate: Boolean = true, entryFrom: WorldZone? = null) {
         val previousZone = zone
         if (target != previousZone) psychology.onZoneChange(previousZone, target)
         val targetMap = if (regenerate && target.isProcedurallyGenerated) {
@@ -224,8 +224,11 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (target != previousZone) statistics.visitZone(target)
         lastDiscoveryTitle = null
         lastDiscoveryHudLabel = null
-        player.x = target.spawnX
-        player.y = target.spawnY
+        val arrival = entryFrom
+            ?.let { arrivalExitFor(it, target) }
+            ?.let(tileMap::spawnBesideExit)
+        player.x = arrival?.first ?: target.spawnX
+        player.y = arrival?.second ?: target.spawnY
         camera.follow(player.x, player.y, WORLD_WIDTH, WORLD_HEIGHT)
         wasInteracting = false
         isMoving = false
@@ -283,9 +286,22 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return true
     }
 
+    private fun arrivalExitFor(from: WorldZone, target: WorldZone): TileType? = when (target) {
+        WorldZone.BUNKER -> if (from == WorldZone.FOREST) TileType.EXIT_TO_FOREST else null
+        WorldZone.FOREST -> when (from) {
+            WorldZone.BUNKER -> TileType.EXIT_TO_BUNKER
+            WorldZone.RUINS -> TileType.EXIT_TO_RUINS
+            WorldZone.ROAD -> TileType.EXIT_TO_ROAD
+            WorldZone.FOREST -> null
+        }
+        WorldZone.RUINS, WorldZone.ROAD ->
+            if (from == WorldZone.FOREST) TileType.EXIT_TO_FOREST else null
+    }
+
     private fun travelToZone(target: WorldZone) {
         if (target == zone) return
-        changeZone(target)
+        val source = zone
+        changeZone(target, entryFrom = source)
         advanceGameMinutes(ZONE_TRAVEL_MINUTES)
     }
 
