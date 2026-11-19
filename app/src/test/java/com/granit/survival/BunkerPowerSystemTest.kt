@@ -39,7 +39,7 @@ class BunkerPowerSystemTest {
     @Test
     fun engineRefuelingUsesWoodAndConsumesTwoGameMinutes() {
         val engine = GameEngine()
-        engine.player.x = 14.5f
+        engine.player.x = 13.5f
         engine.player.y = 2.5f
         engine.inventory.add(ItemType.WOOD, 1)
         val startTime = engine.worldClock.totalMinutes
@@ -63,7 +63,7 @@ class BunkerPowerSystemTest {
     @Test
     fun wakeCheckpointRestoresGeneratorAndFuel() {
         val engine = GameEngine()
-        engine.player.x = 14.5f
+        engine.player.x = 13.5f
         engine.player.y = 2.5f
         assertTrue(engine.toggleGenerator())
         engine.bunkerPower.advanceMinutes(100)
@@ -76,14 +76,14 @@ class BunkerPowerSystemTest {
     @Test
     fun workbenchRequiresPowerButManualReadingDoesNot() {
         val engine = GameEngine()
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
         assertTrue(engine.canUseWorkbench())
 
-        engine.player.x = 14.5f
+        engine.player.x = 13.5f
         engine.player.y = 2.5f
         assertTrue(engine.toggleGenerator())
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
         assertFalse(engine.canUseWorkbench())
         engine.player.x = 7.5f
