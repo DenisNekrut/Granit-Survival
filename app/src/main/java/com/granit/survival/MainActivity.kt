@@ -561,21 +561,16 @@ class MainActivity : Activity() {
             setPadding(dp(8), dp(8), dp(8), dp(8))
             addView(content)
         }
-        val overlay = FrameLayout(this)
+        val overlay = FrameLayout(this).apply { isClickable = true; isFocusable = true }
         if (activeGame) {
             // Freeze simulation behind the card, but keep the last world frame visible.
             gameSurface.pauseEngine()
             session.audio.stop()
             // The interaction card is a compact HUD layer, not a replacement screen.
             overlay.setBackgroundColor(Color.argb(72, 3, 9, 10))
-            val cardWidth = minOf(dp(430), (resources.displayMetrics.widthPixels * 0.46f).toInt())
+            val cardWidth = minOf(dp(430), (resources.displayMetrics.widthPixels * 0.42f).toInt())
             val cardHeight = minOf(dp(560), (resources.displayMetrics.heightPixels * 0.82f).toInt())
-            overlay.addView(scroll, FrameLayout.LayoutParams(cardWidth, cardHeight,
-                Gravity.END or Gravity.CENTER_VERTICAL).apply {
-                marginEnd = dp(22)
-                topMargin = dp(12)
-                bottomMargin = dp(12)
-            })
+            overlay.addView(scroll, FrameLayout.LayoutParams(cardWidth, cardHeight, Gravity.CENTER))
         } else {
             overlay.setBackgroundColor(Color.rgb(8, 14, 15))
             overlay.addView(scroll, FrameLayout.LayoutParams(dp(560), -1, Gravity.CENTER))
