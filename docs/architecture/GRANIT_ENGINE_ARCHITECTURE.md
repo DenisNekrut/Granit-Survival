@@ -243,3 +243,6 @@ The renderer now collects zone obstacle sprites, furniture sprites and the playe
 ### Deterministic zone props and depth pass
 
 The atlas includes additional bunker crates, industrial barrels and a roadside vehicle wreck. Floor-tile decorations are emitted as `WorldSpriteCommand` records and share the same ground-contact Y sort as walls, furniture and the player. Placement is derived from tile coordinates and the active zone, so it is stable across save/load and does not alter world snapshots. Low-profile floor markings remain in the base tile pass.
+
+
+Decoration selection is isolated in the pure `ZonePropSelector` helper. It derives a zone-specific sprite ID from the zone and tile coordinates; unit tests cover determinism, zone-specific prop sets and the roadside wreck pattern. This keeps decoration placement reproducible without expanding checkpoint/save data.
