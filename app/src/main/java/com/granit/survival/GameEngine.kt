@@ -348,22 +348,22 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     /** Restore the complete wake-up state after a failed expedition. */
     fun respawnAtWakeCheckpoint(): Boolean = checkpointSystem.restore(this)
 
-    fun createSaveSnapshot(): EngineSaveSnapshot = EngineSaveSnapshot(
-        player = PlayerSnapshot(player.x, player.y, player.speed),
-        inventory = inventory.snapshot(),
-        bunkerStorage = bunkerStorage.snapshot(),
-        needs = needs.snapshot(),
-        psychology = psychology.snapshot(),
-        clock = worldClock.snapshot(),
-        remainingResources = tileMap.resourceSnapshot(),
+    fun createSaveSnapshot(): EngineSaveSnapshot = SaveSnapshotFactory.create(
+        player = player,
+        inventory = inventory,
+        bunkerStorage = bunkerStorage,
+        needs = needs,
+        psychology = psychology,
+        worldClock = worldClock,
+        tileMap = tileMap,
         zone = zone,
         zoneResources = zoneResourceSnapshot(),
-        bookLibrary = bookLibrary.snapshot(),
-        radio = radioSystem.snapshot(),
+        bookLibrary = bookLibrary,
+        radioSystem = radioSystem,
         discoveredPoiIds = discoveredPoiIds.toSet(),
-        equipment = equipment.snapshot(),
-        statistics = statistics.snapshot(),
-        bunkerPower = bunkerPower.snapshot(),
+        equipment = equipment,
+        statistics = statistics,
+        bunkerPower = bunkerPower,
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
