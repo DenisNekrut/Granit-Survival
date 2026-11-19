@@ -2,6 +2,12 @@
 
 The project currently publishes **debug APK** artifacts through GitHub Actions. There is no signed production release pipeline yet.
 
+## Minimum device requirements
+
+- Android 8.0 (API 26) or newer
+- OpenGL ES 2.0 support
+- Landscape display; the game locks to landscape orientation
+
 ## Download
 
 1. Open [GitHub Actions](https://github.com/DenisNekrut/Granit-Survival/actions).
