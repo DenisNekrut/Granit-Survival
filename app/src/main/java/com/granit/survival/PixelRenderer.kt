@@ -607,14 +607,14 @@ class PixelRenderer {
         }
     }
 
-    private fun rect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float) {
+    private fun rect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float, alpha: Float = 1f) {
         val viewX = currentCamera?.worldToViewX(x) ?: x
         val viewY = currentCamera?.worldToViewY(y) ?: y
         val left = worldOffsetX + viewX * worldScale
         val top = worldOffsetY + viewY * worldScale
         val right = worldOffsetX + (viewX + width) * worldScale
         val bottom = worldOffsetY + (viewY + height) * worldScale
-        appendQuad(left, top, right, bottom, r, g, b, 1f)
+        appendQuad(left, top, right, bottom, r, g, b, alpha.coerceIn(0f, 1f))
     }
 
     private fun screenRect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float, alpha: Float = 1f) {
