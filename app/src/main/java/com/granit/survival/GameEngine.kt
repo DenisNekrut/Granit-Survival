@@ -29,6 +29,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     }
 
     val player = PlayerState()
+    val equipment = PlayerEquipment()
     private val zoneMaps = mutableMapOf<WorldZone, TileMap>()
     var tileMap = TileMap().also { zoneMaps[WorldZone.BUNKER] = it }
         private set
@@ -196,13 +197,15 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
      * Save/checkpoint restoration passes regenerate=false to rebuild the exact map.
      */
     fun changeZone(target: WorldZone, regenerate: Boolean = true) {
-        if (target != zone) psychology.onZoneChange(zone, target)
+        val previousZone = zone
+        if (target != previousZone) psychology.onZoneChange(previousZone, target)
         val targetMap = if (regenerate && target.isProcedurallyGenerated) {
             TileMap(zone = target, seed = mapSeedGenerator()).also { zoneMaps[target] = it }
         } else {
             zoneMaps.getOrPut(target) { TileMap(zone = target) }
         }
         tileMap = targetMap
+        equipment.onZoneChanged(previousZone, target)
         lastDiscoveryTitle = null
         lastDiscoveryHudLabel = null
         player.x = target.spawnX
@@ -285,12 +288,14 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         bookLibrary = bookLibrary.snapshot(),
         radio = radioSystem.snapshot(),
         discoveredPoiIds = discoveredPoiIds.toSet(),
+        equipment = equipment.snapshot(),
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
     fun restoreSaveSnapshot(snapshot: EngineSaveSnapshot) {
         restoreZoneResources(snapshot.zoneResources)
         changeZone(snapshot.zone, regenerate = false)
+        equipment.restore(snapshot.equipment)
         restoreDiscoveredPointsOfInterest(snapshot.discoveredPoiIds)
         if (snapshot.zoneResources.isEmpty()) tileMap.restoreResources(snapshot.remainingResources)
         player.x = snapshot.player.x
