@@ -6,7 +6,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Button
 import android.widget.Toast
 
@@ -14,7 +13,6 @@ import android.widget.Toast
 internal class MenuCoordinator(
     private val activity: Activity,
     private val createPanel: (String, String) -> LinearLayout,
-    private val label: (String, Float, Int, Boolean) -> TextView,
     private val menuButton: (String, Boolean, () -> Unit) -> Button,
     private val showOverlay: (LinearLayout) -> Unit,
     private val hasSavedGame: () -> Boolean,
