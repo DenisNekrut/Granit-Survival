@@ -181,6 +181,67 @@ class TileMap(
         }
     }
 
+    /** Return the first walkable tile on a shortest four-way path to a destination. */
+    fun nextPathStep(startX: Float, startY: Float, targetX: Float, targetY: Float): Pair<Float, Float>? {
+        val sx = kotlin.math.floor(startX).toInt().coerceIn(0, width - 1)
+        val sy = kotlin.math.floor(startY).toInt().coerceIn(0, height - 1)
+        val tx = kotlin.math.floor(targetX).toInt().coerceIn(0, width - 1)
+        val ty = kotlin.math.floor(targetY).toInt().coerceIn(0, height - 1)
+        if (sx == tx && sy == ty) return targetX to targetY
+        if (!isWalkable(tx + 0.5f, ty + 0.5f)) return null
+        val parentX = Array(height) { IntArray(width) { -1 } }
+        val parentY = Array(height) { IntArray(width) { -1 } }
+        val queue = ArrayDeque<Pair<Int, Int>>()
+        queue.addLast(sx to sy)
+        parentX[sy][sx] = sx
+        parentY[sy][sx] = sy
+        val directions = arrayOf(0 to -1, 1 to 0, 0 to 1, -1 to 0)
+        while (queue.isNotEmpty()) {
+            val (x, y) = queue.removeFirst()
+            for ((dx, dy) in directions) {
+                val nx = x + dx
+                val ny = y + dy
+                if (nx !in 0 until width || ny !in 0 until height ||
+                    parentX[ny][nx] != -1 || !isWalkable(nx + 0.5f, ny + 0.5f)) continue
+                parentX[ny][nx] = x
+                parentY[ny][nx] = y
+                if (nx == tx && ny == ty) {
+                    var stepX = nx
+                    var stepY = ny
+                    while (parentX[stepY][stepX] != sx || parentY[stepY][stepX] != sy) {
+                        val px = parentX[stepY][stepX]
+                        val py = parentY[stepY][stepX]
+                        stepX = px
+                        stepY = py
+                    }
+                    return stepX + 0.5f to stepY + 0.5f
+                }
+                queue.addLast(nx to ny)
+            }
+        }
+        return null
+    }
+
+    /** Grid line-of-sight check; solid bunker/ruin walls hide anything behind them. */
+    fun hasLineOfSight(fromX: Float, fromY: Float, toX: Float, toY: Float): Boolean {
+        var x = kotlin.math.floor(fromX).toInt()
+        var y = kotlin.math.floor(fromY).toInt()
+        val endX = kotlin.math.floor(toX).toInt()
+        val endY = kotlin.math.floor(toY).toInt()
+        val dx = kotlin.math.abs(endX - x)
+        val dy = kotlin.math.abs(endY - y)
+        val stepX = if (x < endX) 1 else -1
+        val stepY = if (y < endY) 1 else -1
+        var error = dx - dy
+        while (x != endX || y != endY) {
+            val twiceError = error * 2
+            if (twiceError > -dy) { error -= dy; x += stepX }
+            if (twiceError < dx) { error += dx; y += stepY }
+            if ((x != endX || y != endY) && get(x, y) == TileType.WALL) return false
+        }
+        return true
+    }
+
     fun nearestResource(worldX: Float, worldY: Float, maxDistance: Float): ResourceLocation? {
         var nearest: ResourceLocation? = null
         var nearestDistanceSquared = maxDistance * maxDistance
