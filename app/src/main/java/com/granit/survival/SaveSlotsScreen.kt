@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.widget.LinearLayout
 import android.widget.Toast
-import android.widget.Button
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -56,22 +55,23 @@ internal class SaveSlotsScreen(
             }
             row.addView(label(info, 14f, Color.WHITE, false))
             val actions = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
-            lateinit var loadButton: Button
-            loadButton = menuButton("ЗАГРУЗИТЬ", slot.exists && !slot.corrupted) {
-                scope.launch {
-                    loadButton.isEnabled = false
-                    try {
-                        val loaded = withContext(Dispatchers.IO) { loadSlot(slot.slot) }
-                        if (loaded) onLoaded()
-                        else Toast.makeText(activity, "Слот ${slot.slot} не найден", Toast.LENGTH_LONG).show()
-                    } catch (failure: Exception) {
-                        Toast.makeText(activity, "Ошибка загрузки: ${failure.message}", Toast.LENGTH_LONG).show()
-                    } finally {
-                        loadButton.isEnabled = true
+            var isLoading = false
+            actions.addView(menuButton("ЗАГРУЗИТЬ", slot.exists && !slot.corrupted) {
+                if (!isLoading) {
+                    isLoading = true
+                    scope.launch {
+                        try {
+                            val loaded = withContext(Dispatchers.IO) { loadSlot(slot.slot) }
+                            if (loaded) onLoaded()
+                            else Toast.makeText(activity, "Слот ${slot.slot} не найден", Toast.LENGTH_LONG).show()
+                        } catch (failure: Exception) {
+                            Toast.makeText(activity, "Ошибка загрузки: ${failure.message}", Toast.LENGTH_LONG).show()
+                        } finally {
+                            isLoading = false
+                        }
                     }
                 }
-            }
-            actions.addView(loadButton, weightedParams())
+            }, weightedParams())
             actions.addView(menuButton("СОХРАНИТЬ", allowSave) {
                 AlertDialog.Builder(activity)
                     .setTitle("Перезаписать слот ${slot.slot}?")
