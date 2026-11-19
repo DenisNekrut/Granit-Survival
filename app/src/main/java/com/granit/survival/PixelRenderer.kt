@@ -264,6 +264,19 @@ class PixelRenderer {
             centerX = px, topY = py - 0.48f, pixelSize = 0.04f,
             frame = playerFrame, flipX = playerFlipX
         )
+        // Add fixed ceiling fixtures to the bunker room layout.
+        val bunkerLamps = listOf(
+            4.5f to 7.0f, 18.5f to 7.0f, 27.5f to 7.0f,
+            5.5f to 15.0f, 17.5f to 15.0f, 31.0f to 15.0f
+        )
+        if (engine.zone == WorldZone.BUNKER) {
+            bunkerLamps.forEach { (x, y) ->
+                worldSprites += WorldSpriteCommand(
+                    sortY = y + 0.18f, sortOrder = 2, spriteId = "ceiling_lamp",
+                    centerX = x, topY = y, pixelSize = 0.045f
+                )
+            }
+        }
         worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
         worldSprites.forEach { command ->
             if (command.contactShadow) {
@@ -275,6 +288,9 @@ class PixelRenderer {
                 command.frame, command.flipX
             )
         }
+
+        // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
+        drawWorldLighting(engine, bunkerLamps)
 
         // A small abstract signal emitter is shown in the character's hand while outside.
         if (engine.equipment.weaponDrawn) {
@@ -351,6 +367,64 @@ class PixelRenderer {
         flushBatch()
         GLES20.glDisableVertexAttribArray(positionLocation)
         GLES20.glDisableVertexAttribArray(vertexColorLocation)
+    }
+
+    private fun drawWorldLighting(engine: GameEngine, bunkerLamps: List<Pair<Float, Float>>) {
+        val minute = engine.worldClock.minuteOfDay
+        if (engine.zone != WorldZone.BUNKER) {
+            val darkness = when (minute) {
+                in 0..269 -> 0.62f
+                in 270..329 -> 0.62f - (minute - 270) / 60f * 0.30f
+                in 330..419 -> 0.32f - (minute - 330) / 90f * 0.22f
+                in 420..539 -> 0.10f - (minute - 420) / 120f * 0.10f
+                in 540..959 -> 0f
+                in 960..1079 -> (minute - 960) / 120f * 0.12f
+                in 1080..1199 -> 0.12f + (minute - 1080) / 120f * 0.25f
+                in 1200..1319 -> 0.37f + (minute - 1200) / 120f * 0.25f
+                else -> 0.62f
+            }.coerceIn(0f, 0.62f)
+            if (darkness > 0.001f) {
+                val nightBlue = minute < 360 || minute >= 1200
+                rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
+                    if (nightBlue) 0.035f else 0.12f,
+                    if (nightBlue) 0.055f else 0.075f,
+                    if (nightBlue) 0.12f else 0.055f,
+                    darkness)
+            }
+            // A faint warm band at sunrise and sunset gives the transition a natural hue.
+            val twilight = when (minute) {
+                in 330..419 -> 0.10f
+                in 1020..1139 -> 0.12f
+                else -> 0f
+            }
+            if (twilight > 0f) {
+                rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
+                    0.34f, 0.19f, 0.10f, twilight)
+            }
+            return
+        }
+
+        // Bunker ambient light remains steady regardless of the outside time.
+        rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
+            0.025f, 0.032f, 0.04f, 0.16f)
+        bunkerLamps.forEach { (x, y) ->
+            // Layered translucent rectangles create a soft, deliberately pixel-art light pool.
+            val layers = listOf(
+                floatArrayOf(5.8f, 3.7f, 0.025f),
+                floatArrayOf(4.9f, 3.1f, 0.030f),
+                floatArrayOf(4.0f, 2.5f, 0.035f),
+                floatArrayOf(3.1f, 1.9f, 0.045f),
+                floatArrayOf(2.2f, 1.35f, 0.055f),
+                floatArrayOf(1.3f, 0.8f, 0.070f)
+            )
+            layers.forEach { layer ->
+                val width = layer[0]
+                val height = layer[1]
+                rect(x - width * 0.5f, y + 0.10f, width, height,
+                    0.98f, 0.70f, 0.36f, layer[2])
+            }
+            rect(x - 0.18f, y + 0.18f, 0.36f, 0.05f, 1f, 0.79f, 0.48f, 0.18f)
+        }
     }
 
     private fun drawFloorDetail(x: Int, y: Int, zone: WorldZone) {
