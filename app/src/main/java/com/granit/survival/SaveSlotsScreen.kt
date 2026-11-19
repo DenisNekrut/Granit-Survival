@@ -51,9 +51,14 @@ internal class SaveSlotsScreen(
             row.addView(label(info, 14f, Color.WHITE, false))
             val actions = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
             actions.addView(menuButton("ЗАГРУЗИТЬ", slot.exists && !slot.corrupted) {
-                val loaded = runCatching { loadSlot(slot.slot) }.getOrDefault(false)
-                if (loaded) onLoaded()
-                else Toast.makeText(activity, "Не удалось загрузить слот", Toast.LENGTH_LONG).show()
+                runCatching { loadSlot(slot.slot) }
+                    .onSuccess { loaded ->
+                        if (loaded) onLoaded()
+                        else Toast.makeText(activity, "Слот ${slot.slot} не найден", Toast.LENGTH_LONG).show()
+                    }
+                    .onFailure {
+                        Toast.makeText(activity, "Ошибка загрузки: ${it.message}", Toast.LENGTH_LONG).show()
+                    }
             }, weightedParams())
             actions.addView(menuButton("СОХРАНИТЬ", allowSave) {
                 AlertDialog.Builder(activity)
