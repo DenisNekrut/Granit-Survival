@@ -26,7 +26,9 @@ data class PerformanceSnapshot(
 /** Rolling render telemetry. PSS includes process memory; GPU/vendor memory is not measured. */
 class PerformanceMonitor(private val windowCapacity: Int = 120) {
     private val frameTimesNanos = LongArray(windowCapacity.coerceAtLeast(1))
-    private var frameCount = 0
+    private var sampleCount = 0
+    private var totalFrames = 0L
+    private var totalFrameTimeNanos = 0L
     private var writeIndex = 0
     private var droppedFrames = 0
     private var drawCallsTotal = 0L
@@ -37,7 +39,9 @@ class PerformanceMonitor(private val windowCapacity: Int = 120) {
         val interval = frameIntervalNanos.coerceAtLeast(1L)
         frameTimesNanos[writeIndex] = interval
         writeIndex = (writeIndex + 1) % frameTimesNanos.size
-        frameCount = (frameCount + 1).coerceAtMost(frameTimesNanos.size)
+        sampleCount = (sampleCount + 1).coerceAtMost(frameTimesNanos.size)
+        totalFrames++
+        totalFrameTimeNanos += interval
         if (interval > FRAME_BUDGET_NANOS) droppedFrames++
         drawCallsTotal += drawCalls.coerceAtLeast(0)
     }
@@ -49,22 +53,24 @@ class PerformanceMonitor(private val windowCapacity: Int = 120) {
         nativeHeapAllocatedBytes: Long,
         pssKilobytes: Int
     ): PerformanceSnapshot? {
-        if (frameCount == 0 || windowDurationNanos <= 0L) return null
-        val sorted = frameTimesNanos.copyOf(frameCount).sortedArray()
+        if (totalFrames == 0L || sampleCount == 0 || windowDurationNanos <= 0L) return null
+        val sorted = frameTimesNanos.copyOf(sampleCount).sortedArray()
         val p95Index = (ceil(sorted.size * 0.95).toInt() - 1).coerceIn(0, sorted.lastIndex)
         val elapsedSeconds = windowDurationNanos / NANOS_PER_SECOND
         val result = PerformanceSnapshot(
-            fps = frameCount / elapsedSeconds,
-            averageFrameTimeMs = sorted.sum().toDouble() / frameCount / NANOS_PER_MILLISECOND,
+            fps = totalFrames / elapsedSeconds,
+            averageFrameTimeMs = totalFrameTimeNanos.toDouble() / totalFrames / NANOS_PER_MILLISECOND,
             p95FrameTimeMs = sorted[p95Index].toDouble() / NANOS_PER_MILLISECOND,
             droppedFrames = droppedFrames,
-            averageDrawCalls = drawCallsTotal.toDouble() / frameCount,
+            averageDrawCalls = drawCallsTotal.toDouble() / totalFrames,
             javaHeapUsedBytes = javaHeapUsedBytes.coerceAtLeast(0L),
             javaHeapMaxBytes = javaHeapMaxBytes.coerceAtLeast(0L),
             nativeHeapAllocatedBytes = nativeHeapAllocatedBytes.coerceAtLeast(0L),
             pssKilobytes = pssKilobytes.coerceAtLeast(0)
         )
-        frameCount = 0
+        sampleCount = 0
+        totalFrames = 0L
+        totalFrameTimeNanos = 0L
         writeIndex = 0
         droppedFrames = 0
         drawCallsTotal = 0L
