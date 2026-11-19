@@ -73,10 +73,6 @@ internal object GeneratedPixelSprites {
         "player_side" to base.getValue("player_side_right"),
         "storage" to base.getValue("locker"),
         "radio" to base.getValue("control_console"),
-        "bunker_panel" to base.getValue("vault_door"),
-        "road_barrier" to base.getValue("crate"),
-        "barrel" to base.getValue("generator"),
-        "wreck" to base.getValue("rubble"),
-        "debris" to base.getValue("rubble")
+        "bunker_panel" to base.getValue("vault_door")
     )
 }
