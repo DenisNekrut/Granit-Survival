@@ -155,7 +155,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun canUseWorkbench(): Boolean = canAccessWorkbench() && bunkerPower.hasPower
 
     fun canAccessBookshelf(): Boolean = zone == WorldZone.BUNKER &&
-        tileMap.isNearTile(TileType.BOOKSHELF, player.x, player.y, 1.5f)
+        tileMap.isNearTile(TileType.BOOKSHELF, player.x, player.y, 1.25f)
 
     fun canAccessDiningTable(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.DINING_TABLE, player.x, player.y, 1.5f)
