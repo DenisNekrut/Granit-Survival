@@ -238,3 +238,8 @@ The four zones also use deterministic floor-decoration sprites: bunker floor gra
 ### World sprite depth ordering
 
 The renderer now collects zone obstacle sprites, furniture sprites and the player into `WorldSpriteCommand` records and sorts them by ground-contact Y before drawing. A stable secondary order places the player after world objects at an equal depth. Zone obstacles receive a translucent contact shadow. Flat tile/floor details remain in the base pass, while tall sprites participate in the depth pass. This improves north/south occlusion without changing collision or save-state logic.
+
+
+### Deterministic zone props and depth pass
+
+The atlas includes additional bunker crates, industrial barrels and a roadside vehicle wreck. Floor-tile decorations are emitted as `WorldSpriteCommand` records and share the same ground-contact Y sort as walls, furniture and the player. Placement is derived from tile coordinates and the active zone, so it is stable across save/load and does not alter world snapshots. Low-profile floor markings remain in the base tile pass.
