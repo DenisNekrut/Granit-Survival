@@ -2,7 +2,7 @@ package com.granit.survival
 
 data class PlayerSnapshot(val x: Float, val y: Float, val speed: Float)
 
-/** Fictional non-lethal signal tool used as the player's starter equipment. */
+/** Fictional pulse carbine; SIGNAL_EMITTER remains readable for older saves. */
 enum class WeaponType { PULSE_CARBINE, SIGNAL_EMITTER }
 
 data class PlayerEquipmentSnapshot(
@@ -11,7 +11,7 @@ data class PlayerEquipmentSnapshot(
 )
 
 class PlayerEquipment {
-    var weapon: WeaponType? = WeaponType.SIGNAL_EMITTER
+    var weapon: WeaponType? = WeaponType.PULSE_CARBINE
         private set
     var weaponDrawn: Boolean = false
         private set
