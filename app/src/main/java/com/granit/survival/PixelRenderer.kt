@@ -313,6 +313,27 @@ class PixelRenderer {
         // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
         drawWorldLighting(engine, bunkerLamps)
 
+        // The reticle exists only while a living infected is visible within seven tiles.
+        engine.autoAimTarget?.let { target ->
+            val cx = target.x
+            val cy = target.y - 0.08f
+            val colorR = 0.96f
+            val colorG = 0.76f
+            val colorB = 0.30f
+            val arm = 0.22f
+            val gap = 0.13f
+            val thickness = 0.045f
+            // Four open corners make the selected actor readable without obscuring it.
+            rect(cx - gap - arm, cy - 0.40f, arm, thickness, colorR, colorG, colorB, 0.98f)
+            rect(cx - 0.40f, cy - gap - arm, thickness, arm, colorR, colorG, colorB, 0.98f)
+            rect(cx + gap, cy - 0.40f, arm, thickness, colorR, colorG, colorB, 0.98f)
+            rect(cx + 0.355f, cy - gap - arm, thickness, arm, colorR, colorG, colorB, 0.98f)
+            rect(cx - gap - arm, cy + 0.355f, arm, thickness, colorR, colorG, colorB, 0.98f)
+            rect(cx - 0.40f, cy + gap, thickness, arm, colorR, colorG, colorB, 0.98f)
+            rect(cx + gap, cy + 0.355f, arm, thickness, colorR, colorG, colorB, 0.98f)
+            rect(cx + 0.355f, cy + gap, thickness, arm, colorR, colorG, colorB, 0.98f)
+        }
+
         // Bright cyan pulse trace is a deliberately fictional energy effect.
         if (firing && engine.equipment.weaponDrawn) {
             when (engine.player.facing) {
