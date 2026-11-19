@@ -281,7 +281,7 @@ class WorldZoneTest {
         engine.tileMap.collectResource(ResourceLocation(7, 5, ItemType.WOOD))
         assertTrue(engine.respawnAtWakeCheckpoint())
         assertEquals(WorldZone.BUNKER, engine.zone)
-        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[3, 3])
+        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[1, 8])
         engine.changeZone(WorldZone.FOREST)
         assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 5])
     }
