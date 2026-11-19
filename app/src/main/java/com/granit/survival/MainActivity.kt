@@ -432,7 +432,7 @@ class MainActivity : Activity() {
             setPadding(0, dp(4), 0, dp(4))
             isClickable = true
             setOnClickListener { /* Keep taps inside the card from closing the window. */ }
-            addView(content, ScrollView.LayoutParams(-1, -2))
+            addView(content, ViewGroup.LayoutParams(-1, -2))
         }
 
         val card = LinearLayout(this).apply {
