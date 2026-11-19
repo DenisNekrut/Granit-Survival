@@ -9,8 +9,8 @@ data class EngineInput(val moveX: Float = 0f, val moveY: Float = 0f, val interac
 enum class PlayerFacing { DOWN, UP, LEFT, RIGHT }
 
 data class PlayerState(
-    var x: Float = 9.5f,
-    var y: Float = 7.0f,
+    var x: Float = 1.5f,
+    var y: Float = 1.5f,
     var speed: Float = 4.2f,
     var facing: PlayerFacing = PlayerFacing.DOWN
 )
@@ -417,8 +417,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         } else if (zone == WorldZone.BUNKER) {
             idleSeconds += delta
             if (idleSeconds >= 15f && wanderTarget == null) {
-                val rooms = listOf(2.5f to 2.5f, 7.5f to 2.5f, 14.5f to 2.5f,
-                    2.5f to 7.5f, 9.5f to 7.5f, 14.5f to 7.5f)
+                val rooms = listOf(1.5f to 1.5f, 9.5f to 2.5f, 12.5f to 1.5f,
+                    1.5f to 6.5f, 9.5f to 6.5f, 12.5f to 7.5f)
                 var checked = 0
                 while (checked < rooms.size && wanderTarget == null) {
                     wanderRoomIndex = (wanderRoomIndex + 1) % rooms.size
