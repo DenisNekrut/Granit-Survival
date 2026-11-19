@@ -151,6 +151,7 @@ class PixelRenderer {
         joystickY: Float,
         touching: Boolean,
         interacting: Boolean,
+        firing: Boolean = false,
         controlsOpacity: Float = 0.8f,
         joystickScale: Float = 1f
     ) {
@@ -379,7 +380,7 @@ class PixelRenderer {
             val fireDiameter = controlUnit * 0.13f * joystickScale
             val fireCenterY = screenHeight * 0.59f
             screenRectPx(actionCenterX - fireDiameter * 0.5f, fireCenterY - fireDiameter * 0.5f,
-                fireDiameter, fireDiameter, if (interacting) 0.58f else 0.36f, 0.25f, 0.20f, controlsOpacity)
+                fireDiameter, fireDiameter, if (firing) 0.78f else 0.36f, if (firing) 0.52f else 0.25f, 0.20f, controlsOpacity)
         }
 
         flushTextureBatch()
