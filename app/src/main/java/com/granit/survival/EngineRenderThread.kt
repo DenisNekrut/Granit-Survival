@@ -107,9 +107,9 @@ class EngineRenderThread(
                 renderer.resize(width, height, gameSettings.displayScale)
 
                 val active = joystickActive
-                val dx = touchX - width * 0.16f
-                val dy = touchY - height * 0.78f
-                val radius = (height * 0.19f * gameSettings.joystickScale).coerceAtLeast(72f)
+                val dx = touchX - width * 0.145f
+                val dy = touchY - height * 0.80f
+                val radius = (minOf(width, height) * 0.095f * gameSettings.joystickScale).coerceAtLeast(40f)
                 val distance = sqrt(dx * dx + dy * dy)
                 val input = if (active && distance > radius * 0.12f) {
                     val magnitude = ((distance / radius) * gameSettings.joystickSensitivity).coerceAtMost(1f)
