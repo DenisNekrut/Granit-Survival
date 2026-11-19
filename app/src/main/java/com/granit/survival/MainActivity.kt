@@ -55,16 +55,23 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        if (::gameSurface.isInitialized && activeGame) {\n            gameSurface.resumeEngine()\n            val audioSettings = session.settings.load()\n            session.audio.setVolumes(audioSettings.musicVolume, audioSettings.effectsVolume)\n            session.audio.start()\n        }
+        if (::gameSurface.isInitialized && activeGame) {
+            gameSurface.resumeEngine()
+            val audioSettings = session.settings.load()
+            session.audio.setVolumes(audioSettings.musicVolume, audioSettings.effectsVolume)
+            session.audio.start()
+        }
     }
 
     override fun onPause() {
-        if (::gameSurface.isInitialized) gameSurface.pauseEngine()\n        if (::session.isInitialized) session.audio.stop()
+        if (::gameSurface.isInitialized) gameSurface.pauseEngine()
+        if (::session.isInitialized) session.audio.stop()
         super.onPause()
     }
 
     override fun onDestroy() {
-        if (::gameSurface.isInitialized) gameSurface.releaseEngine()\n        if (::session.isInitialized) session.audio.stop()
+        if (::gameSurface.isInitialized) gameSurface.releaseEngine()
+        if (::session.isInitialized) session.audio.stop()
         super.onDestroy()
     }
 
@@ -80,7 +87,9 @@ class MainActivity : Activity() {
     private fun showMainMenu() {
         activeGame = false
         pausedGame = false
-        gameSurface.pauseEngine()\n        session.audio.stop()\n        gameSurface.visibility = View.GONE
+        gameSurface.pauseEngine()
+        session.audio.stop()
+        gameSurface.visibility = View.GONE
         val panel = createPanel("GRANIT SURVIVAL", "Тишина — тоже часть выживания")
         panel.addView(menuButton("НОВАЯ ИГРА") {
             if (session.saves.listSlots().any { it.exists && !it.corrupted }) {
@@ -113,7 +122,11 @@ class MainActivity : Activity() {
         pausedGame = false
         activeGame = true
         root.removeViewAt(root.childCount - 1)
-        gameSurface.visibility = View.VISIBLE\n        gameSurface.resumeEngine()\n        val audioSettings = session.settings.load()\n        session.audio.setVolumes(audioSettings.musicVolume, audioSettings.effectsVolume)\n        session.audio.start()
+        gameSurface.visibility = View.VISIBLE
+        gameSurface.resumeEngine()
+        val audioSettings = session.settings.load()
+        session.audio.setVolumes(audioSettings.musicVolume, audioSettings.effectsVolume)
+        session.audio.start()
     }
 
     private fun showPauseMenu() {
@@ -285,7 +298,8 @@ class MainActivity : Activity() {
                 else -> {
                     val time = "%02d:%02d".format(slot.hour ?: 0, slot.minute ?: 0)
                     val date = slot.savedAtMillis?.let { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it)) } ?: ""
-                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time\n$date"
+                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time
+$date"
                 }
             }
             row.addView(label(info, 14f, Color.WHITE))
@@ -351,12 +365,14 @@ class MainActivity : Activity() {
         var effects = current.effectsVolume
         var sensitivity = current.joystickSensitivity
         var scale = current.joystickScale
-        var opacity = current.controlsOpacity\n        var displayScale = current.displayScale
+        var opacity = current.controlsOpacity
+        var displayScale = current.displayScale
         addSetting("ГРОМКОСТЬ МУЗЫКИ", music * 100, 100, { "Уровень: $it%" }) { music = it / 100f }
         addSetting("ГРОМКОСТЬ ЭФФЕКТОВ", effects * 100, 100, { "Уровень: $it%" }) { effects = it / 100f }
         addSetting("ЧУВСТВИТЕЛЬНОСТЬ УПРАВЛЕНИЯ", (sensitivity * 50), 100, { "Множитель: ${(it / 50f).formatOneDecimal()}x" }) { sensitivity = it / 50f }
         addSetting("РАЗМЕР ДЖОЙСТИКА", ((scale - 0.8f) * 166.66f), 100, { "Размер: ${(0.8f + it / 166.66f).formatOneDecimal()}x" }) { scale = 0.8f + it / 166.66f }
-        addSetting("ПРОЗРАЧНОСТЬ КНОПОК", ((opacity - 0.35f) / 0.65f * 100), 100, { "Прозрачность: ${(35 + it * 0.65f).toInt()}%" }) { opacity = 0.35f + it / 100f * 0.65f }\n        addSetting("МАСШТАБ ИГРОВОГО ЭКРАНА", ((displayScale - 0.8f) * 250f), 100, { "Масштаб: ${80 + it / 100f * 40f}%" }) { displayScale = 0.8f + it / 250f }
+        addSetting("ПРОЗРАЧНОСТЬ КНОПОК", ((opacity - 0.35f) / 0.65f * 100), 100, { "Прозрачность: ${(35 + it * 0.65f).toInt()}%" }) { opacity = 0.35f + it / 100f * 0.65f }
+        addSetting("МАСШТАБ ИГРОВОГО ЭКРАНА", ((displayScale - 0.8f) * 250f), 100, { "Масштаб: ${80 + it / 100f * 40f}%" }) { displayScale = 0.8f + it / 250f }
         val quality = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, GraphicsQuality.values().map { it.name })
             setSelection(GraphicsQuality.values().indexOf(current.graphicsQuality).coerceAtLeast(0))
