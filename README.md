@@ -25,7 +25,7 @@
 - Dynamic outdoor lighting follows the in-game clock using smoothstep transitions: cold dark nights, gradual dawn, bright daytime, warm dusk and a smooth return to night. Unit tests cover every minute and adjacent-minute continuity.
 
 ### Bunker, knowledge and events
-- Main menu, pause menu with a prominent return-to-menu action, expedition journal, character statistics, save-slot manager and settings. Contextual station panels appear as compact in-game cards over the live world instead of replacing the game screen.
+- Main menu, pause menu with a prominent return-to-menu action, expedition journal, character statistics, save-slot manager and settings. Contextual station panels appear as compact in-game cards over the still-visible world instead of replacing the game screen; simulation and audio pause while a card is open.
 - Three manual save slots and a separate atomic autosave; JSON schema v8 reads older versions 1–7.
 - Workbench recipes for bandage and medical kit; medical kit recipe unlocks after reading a technical manual.
 - Bunker library with fiction, science, technical manuals, diaries and magazines. Reading consumes game time and may affect morale/stress.
