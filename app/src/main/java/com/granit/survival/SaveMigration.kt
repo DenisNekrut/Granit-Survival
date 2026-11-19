@@ -8,6 +8,10 @@ import org.json.JSONObject
  * Migration works on a copy; the source file is never modified by this class.
  */
 internal object SaveMigration {
+    private const val BACKPACK_SLOTS = 16
+    private const val STORAGE_SLOTS = 24
+    private const val STACK_LIMIT = 20
+
     fun migrate(source: JSONObject): JSONObject {
         val version = source.optInt("saveVersion", -1)
         require(SaveVersion.isSupported(version)) {
@@ -43,14 +47,18 @@ internal object SaveMigration {
         clock.put("totalMinutes", clock.optLong("totalMinutes", 420L).coerceAtLeast(0L))
         state.put("clock", clock)
 
-        state.put("inventory", validItemStacks(state.optJSONArray("inventory")))
-        state.put("bunkerStorage", validItemStacks(state.optJSONArray("bunkerStorage")))
+        state.put("inventory", validItemStacks(state.optJSONArray("inventory"), BACKPACK_SLOTS))
+        state.put("bunkerStorage", validItemStacks(state.optJSONArray("bunkerStorage"), STORAGE_SLOTS))
         state.put("remainingResources", validResources(state.optJSONArray("remainingResources")))
 
         val zone = state.optString("zone", WorldZone.BUNKER.name)
             .takeIf { candidate -> runCatching { WorldZone.valueOf(candidate) }.isSuccess }
             ?: WorldZone.BUNKER.name
         state.put("zone", zone)
+        val mapWidth = if (zone == WorldZone.BUNKER.name) 17.0 else GameEngine.WORLD_WIDTH.toDouble()
+        val mapHeight = if (zone == WorldZone.BUNKER.name) 10.0 else GameEngine.WORLD_HEIGHT.toDouble()
+        player.put("x", player.optDouble("x", 8.5).coerceIn(0.65, mapWidth - 0.65))
+        player.put("y", player.optDouble("y", 2.5).coerceIn(0.8, mapHeight - 0.8))
 
         if (state.optJSONObject("psychology") == null) state.put("psychology", JSONObject())
         if (state.optJSONObject("bookLibrary") == null) state.put("bookLibrary", JSONObject())
@@ -70,20 +78,21 @@ internal object SaveMigration {
         }
     }
 
-    private fun validItemStacks(source: JSONArray?): JSONArray {
+    private fun validItemStacks(source: JSONArray?, slotCount: Int): JSONArray {
         val result = JSONArray()
-        if (source == null) return result
-        for (index in 0 until source.length()) {
-            if (source.isNull(index)) {
+        for (index in 0 until slotCount) {
+            val item = source?.optJSONObject(index)
+            if (item == null) {
                 result.put(JSONObject.NULL)
                 continue
             }
-            val item = source.optJSONObject(index) ?: continue
             val type = item.optString("type")
             val quantity = item.optInt("quantity", 0)
             val validType = runCatching { ItemType.valueOf(type) }.isSuccess
             if (validType && quantity > 0) {
-                result.put(JSONObject().put("type", type).put("quantity", quantity))
+                result.put(JSONObject().put("type", type).put("quantity", quantity.coerceAtMost(STACK_LIMIT)))
+            } else {
+                result.put(JSONObject.NULL)
             }
         }
         return result
