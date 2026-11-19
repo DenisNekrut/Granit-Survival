@@ -16,20 +16,24 @@ data class BookDefinition(
     val readMinutes: Int,
     val moraleGain: Float = 0f,
     val stressRelief: Float = 0f
-)
+) {
+    init { require(readMinutes >= MIN_READING_MINUTES) { "A reading session must take at least eight in-game hours" } }
+
+    companion object { const val MIN_READING_MINUTES = 8 * 60 }
+}
 
 object BookCatalog {
     val all = listOf(
         BookDefinition("old_novel", "Старый роман", BookCategory.FICTION,
-            "История из мира до Катастрофы", 25, moraleGain = 2f),
+            "История из мира до Катастрофы", BookDefinition.MIN_READING_MINUTES, moraleGain = 2f),
         BookDefinition("field_atlas", "Атлас природы", BookCategory.SCIENCE,
-            "Наблюдения о растениях, погоде и местности", 30, moraleGain = 1f, stressRelief = 1f),
+            "Наблюдения о растениях, погоде и местности", BookDefinition.MIN_READING_MINUTES, moraleGain = 1f, stressRelief = 1f),
         BookDefinition("field_first_aid", "Первая помощь в полевых условиях", BookCategory.TECHNICAL,
-            "Практическое руководство по уходу за собой", 45),
+            "Практическое руководство по уходу за собой", BookDefinition.MIN_READING_MINUTES),
         BookDefinition("bunker_diary", "Дневник дежурного", BookCategory.DIARY,
-            "Записи человека, который жил в этом убежище", 20, stressRelief = 3f),
+            "Записи человека, который жил в этом убежище", BookDefinition.MIN_READING_MINUTES, stressRelief = 3f),
         BookDefinition("old_magazine", "Старый журнал", BookCategory.MAGAZINE,
-            "Короткие заметки и статьи прежних лет", 15, moraleGain = 1f)
+            "Короткие заметки и статьи прежних лет", BookDefinition.MIN_READING_MINUTES, moraleGain = 1f)
     )
     fun byId(id: String): BookDefinition? = all.firstOrNull { it.id == id }
 }
