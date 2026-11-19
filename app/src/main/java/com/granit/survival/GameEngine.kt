@@ -142,6 +142,15 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun canAccessBookshelf(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.BOOKSHELF, player.x, player.y, 1.5f)
 
+    fun canAccessDiningTable(): Boolean = zone == WorldZone.BUNKER &&
+        tileMap.isNearTile(TileType.DINING_TABLE, player.x, player.y, 1.5f)
+
+    fun canAccessGenerator(): Boolean = zone == WorldZone.BUNKER &&
+        tileMap.isNearTile(TileType.GENERATOR, player.x, player.y, 1.5f)
+
+    fun canAccessMedicalStation(): Boolean = zone == WorldZone.BUNKER &&
+        tileMap.isNearTile(TileType.MEDICAL_STATION, player.x, player.y, 1.5f)
+
     fun canUseRadio(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.RADIO, player.x, player.y, 1.5f) && radioSystem.canListen(worldClock.day)
 
@@ -408,7 +417,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
                 travelToZone(if (zone == WorldZone.BUNKER) WorldZone.FOREST else WorldZone.BUNKER)
                 interactionCount++
             }
-            TileType.BED, TileType.WORKBENCH, TileType.BOOKSHELF, TileType.RADIO -> interactionCount++
+            TileType.BED, TileType.WORKBENCH, TileType.BOOKSHELF, TileType.RADIO,
+            TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> interactionCount++
             else -> Unit
         }
     }
