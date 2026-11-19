@@ -261,7 +261,7 @@ object PixelSpriteAtlas {
         )), mapOf(
             'M' to floatArrayOf(0.35f, 0.39f, 0.37f),
             'B' to floatArrayOf(0.16f, 0.19f, 0.18f)
-        ))
+        )),
         "bush" to PixelSprite(listOf(listOf(
             "................",
             "................",
@@ -339,7 +339,7 @@ object PixelSpriteAtlas {
         )), mapOf(
             'M' to floatArrayOf(0.35f, 0.39f, 0.37f),
             'B' to floatArrayOf(0.12f, 0.15f, 0.14f)
-        ))
+        )),
         "water" to PixelSprite(listOf(listOf(
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
