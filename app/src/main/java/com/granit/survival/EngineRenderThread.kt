@@ -19,6 +19,7 @@ class EngineRenderThread(
     initialHeight: Int,
     private val session: GameSession,
     private val appContext: Context,
+    private val onInteractionProcessed: () -> Unit = {},
     private val onRenderFailure: (Throwable) -> Unit = {}
 ) : Thread("Granit-RenderThread") {
     private val running = AtomicBoolean(true)
@@ -28,6 +29,7 @@ class EngineRenderThread(
     @Volatile private var touchY = 0f
     @Volatile private var joystickActive = false
     @Volatile private var interacting = false
+    private val pendingInteraction = AtomicBoolean(false)
 
     fun requestStop() {
         running.set(false)
@@ -47,6 +49,11 @@ class EngineRenderThread(
 
     fun setInteracting(active: Boolean) {
         interacting = active
+    }
+
+    /** Latches a short tap until at least one fixed simulation step consumes it. */
+    fun requestInteraction() {
+        pendingInteraction.set(true)
     }
 
     override fun run() {
@@ -121,9 +128,17 @@ class EngineRenderThread(
                     EngineInput()
                 }
 
-                engine.updateFrame(deltaSeconds, input.copy(interact = interacting))
-                if (interacting && !wasInteracting) session.audio.playAction()
-                wasInteracting = interacting
+                val interactionRequested = pendingInteraction.get()
+                val interactionHeld = interacting
+                val fixedSteps = engine.updateFrame(
+                    deltaSeconds,
+                    input.copy(interact = interactionHeld || interactionRequested)
+                )
+                if (fixedSteps > 0 && interactionRequested && pendingInteraction.compareAndSet(true, false)) {
+                    runCatching { onInteractionProcessed() }
+                }
+                if (interactionHeld && !wasInteracting) session.audio.playAction()
+                wasInteracting = interactionHeld
                 session.audio.setMoving(engine.isMoving)
                 renderer?.render(
                     engine, touchX, touchY, active, interacting,
