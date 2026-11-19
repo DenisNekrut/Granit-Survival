@@ -50,6 +50,7 @@ class EngineRenderThread(
         var display: EGLDisplay = EGL14.EGL_NO_DISPLAY
         var context: EGLContext = EGL14.EGL_NO_CONTEXT
         var eglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
+        var renderer: PixelRenderer? = null
         try {
             display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             check(display != EGL14.EGL_NO_DISPLAY) { "Unable to get EGL display" }
@@ -81,7 +82,7 @@ class EngineRenderThread(
             }
 
             GLES20.glDisable(GLES20.GL_DEPTH_TEST)
-            val renderer = PixelRenderer()
+            renderer = PixelRenderer()
             renderer.create()
             renderer.resize(viewportWidth, viewportHeight)
             val engine = session.engine
@@ -116,7 +117,7 @@ class EngineRenderThread(
                 }
 
                 engine.updateFrame(deltaSeconds, input.copy(interact = interacting))
-                renderer.render(
+                renderer?.render(
                     engine, touchX, touchY, active, interacting,
                     controlsOpacity = gameSettings.controlsOpacity,
                     joystickScale = gameSettings.joystickScale
@@ -140,6 +141,10 @@ class EngineRenderThread(
             Log.e("GranitEngine", "Render thread failed", failure)
         } finally {
             if (display != EGL14.EGL_NO_DISPLAY) {
+                if (context != EGL14.EGL_NO_CONTEXT && eglSurface != EGL14.EGL_NO_SURFACE &&
+                    EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) {
+                    runCatching { renderer?.destroy() }
+                }
                 EGL14.eglMakeCurrent(
                     display, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT
                 )
