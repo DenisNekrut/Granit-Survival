@@ -1,5 +1,7 @@
 # Granit Survival
 
+[![Android Debug Build](https://github.com/DenisNekrut/Granit-Survival/actions/workflows/android-build.yml/badge.svg?branch=main)](https://github.com/DenisNekrut/Granit-Survival/actions/workflows/android-build.yml)
+
 2D pixel-art survival game for Android, built on **Granit Engine**, a custom engine developed specifically for this project.
 
 ## Technical direction
@@ -48,6 +50,10 @@
 ## Documentation
 - [Granit Engine architecture v2.0](docs/architecture/GRANIT_ENGINE_ARCHITECTURE.md)
 - [Project requirements and progress tracker](docs/PROJECT_BACKLOG.md)
+- [Android debug APK installation](docs/ANDROID_INSTALL.md)
+- [Android device smoke tests](docs/ANDROID_DEVICE_SMOKE_TEST.md)
+- [Contribution guide](../CONTRIBUTING.md)
+- [Security policy](../SECURITY.md)
 
 The older Unity-oriented plan is retained for historical reference and is superseded by the custom-engine architecture above.
 
@@ -123,13 +129,8 @@ Outdoor expeditions now feature three original infected archetypes: shamblers, r
 
 ## Android updates from GitHub
 
-The in-game **ОБНОВИТЬ** entry opens the latest GitHub Release. Download its APK and confirm Android's update prompt; the existing app is upgraded in place when the APK keeps the same application ID and is signed with the same release key.
+The in-game **ОБНОВИТЬ** entry opens the repository's latest GitHub Releases page. It is currently a navigation link only: signed production releases and automatic in-place APK updates are intentionally deferred.
 
-Release builds are published when a `v*` tag is pushed. Before the first release, configure these repository Actions secrets:
+For now, GitHub Actions builds a **Debug APK** for pull requests. Download and install it using the [Android installation guide](docs/ANDROID_INSTALL.md). A debug APK from a different CI runner may not be accepted as an in-place update because its debug signing certificate can differ; preserve local saves before uninstalling an older test build.
 
-- `ANDROID_KEYSTORE_BASE64` — Base64-encoded release keystore
-- `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS`
-- `ANDROID_KEY_PASSWORD`
-
-Keep a secure offline backup of the keystore. Never rotate or regenerate it for later releases: Android will reject an APK signed with a different key as an in-place update. The release workflow assigns increasing version codes and uploads the signed APK to GitHub Releases. The regular pull-request workflow continues to build a debug APK for testing.
+No keystore, passwords or GitHub Actions secrets are required for current development. The release-signing setup will be revisited later, when the project is ready for a stable production update path.
