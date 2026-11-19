@@ -2,6 +2,36 @@ package com.granit.survival
 
 data class PlayerSnapshot(val x: Float, val y: Float, val speed: Float)
 
+/** Fictional non-lethal signal tool used as the player's starter equipment. */
+enum class WeaponType { SIGNAL_EMITTER }
+
+data class PlayerEquipmentSnapshot(
+    val weapon: WeaponType? = WeaponType.SIGNAL_EMITTER,
+    val weaponDrawn: Boolean = false
+)
+
+class PlayerEquipment {
+    var weapon: WeaponType? = WeaponType.SIGNAL_EMITTER
+        private set
+    var weaponDrawn: Boolean = false
+        private set
+
+    fun onZoneChanged(from: WorldZone, to: WorldZone) {
+        weaponDrawn = when {
+            to == WorldZone.BUNKER -> false
+            from == WorldZone.BUNKER && weapon != null -> true
+            else -> weaponDrawn
+        }
+    }
+
+    fun snapshot() = PlayerEquipmentSnapshot(weapon, weaponDrawn)
+
+    fun restore(snapshot: PlayerEquipmentSnapshot) {
+        weapon = snapshot.weapon
+        weaponDrawn = snapshot.weaponDrawn && weapon != null
+    }
+}
+
 data class WakeCheckpoint(
     val player: PlayerSnapshot,
     val inventory: List<ItemStack?>,
@@ -14,7 +44,8 @@ data class WakeCheckpoint(
     val remainingResources: List<ResourceLocation>,
     val zone: WorldZone,
     val zoneResources: List<ZoneResourceSnapshot> = emptyList(),
-    val discoveredPoiIds: Set<String> = emptySet()
+    val discoveredPoiIds: Set<String> = emptySet(),
+    val equipment: PlayerEquipmentSnapshot = PlayerEquipmentSnapshot()
 )
 
 /** Captures the complete reversible run state at wake-up. */
@@ -34,7 +65,8 @@ class CheckpointSystem {
             remainingResources = engine.tileMap.resourceSnapshot(),
             zone = engine.zone,
             zoneResources = engine.zoneResourceSnapshot(),
-            discoveredPoiIds = engine.discoveredPointsOfInterest()
+            discoveredPoiIds = engine.discoveredPointsOfInterest(),
+            equipment = engine.equipment.snapshot()
         )
     }
 
@@ -50,6 +82,7 @@ class CheckpointSystem {
         val saved = checkpoint?.deepCopy() ?: return false
         engine.restoreZoneResources(saved.zoneResources)
         engine.changeZone(saved.zone, regenerate = false)
+        engine.equipment.restore(saved.equipment)
         if (saved.zoneResources.isEmpty()) engine.tileMap.restoreResources(saved.remainingResources)
         engine.player.x = saved.player.x
         engine.player.y = saved.player.y
