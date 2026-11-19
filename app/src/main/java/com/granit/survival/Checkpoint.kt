@@ -99,7 +99,7 @@ class CheckpointSystem {
         engine.restoreDiscoveredPointsOfInterest(saved.discoveredPoiIds)
         engine.worldClock.restore(saved.clock)
         engine.tileMap.restoreResources(saved.remainingResources)
-        engine.camera.follow(engine.player.x, engine.player.y, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT)
+        engine.camera.follow(engine.player.x, engine.player.y, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat())
         return true
     }
 
