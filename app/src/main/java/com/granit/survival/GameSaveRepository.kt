@@ -268,7 +268,7 @@ private fun JSONObject.toBunkerRadioSnapshot() = BunkerRadioSnapshot(
 )
 
 private fun JSONObject.toEquipmentSnapshot() = PlayerEquipmentSnapshot(
-    weapon = runCatching { optString("weapon").takeIf { it.isNotBlank() && it != "null" }?.let(WeaponType::valueOf) }.getOrNull(),
+    weapon = runCatching { optString("weapon").takeIf { it.isNotBlank() && it != "null" }?.let { value -> WeaponType.valueOf(value) } }.getOrNull(),
     weaponDrawn = optBoolean("weaponDrawn", false)
 )
 
