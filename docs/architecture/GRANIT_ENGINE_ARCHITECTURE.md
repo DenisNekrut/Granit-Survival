@@ -225,3 +225,8 @@ At renderer initialization, the EGL render thread passes the Android `AssetManag
 ### Sprite quad geometry tests
 
 Quad vertex and UV emission is extracted into the platform-independent `SpriteQuadGeometry` helper. It writes two triangles into caller-owned buffers, avoiding per-sprite allocation. Unit tests cover vertex ordering, top-left atlas UV mapping and horizontal mirroring. Renderer batching continues to own buffer lifecycle and draw submission.
+
+
+### Zone-specific environment sprite pass
+
+The generated atlas now includes distinct 16×16 environment props for bunker bulkhead panels, forest trees, ruin masonry rubble and roadside barriers. `PixelRenderer.drawZoneWall` selects the sprite by active `WorldZone`, with a small contact shadow. This replaces the previous generic colored wall blocks while keeping TileMap collision semantics unchanged. Atlas validation and unit tests enforce the generated 16×16 cell limit. These are procedural pixel-art placeholders; final authored art and device visual review remain open.
