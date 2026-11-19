@@ -269,13 +269,7 @@ class PixelRenderer {
             }
 
             if (type == TileType.FLOOR) {
-                val pattern = Math.floorMod(tileX * 7 + tileY * 11, 13)
-                val propSprite = when (engine.zone) {
-                    WorldZone.BUNKER -> if (pattern == 0) "crate" else null
-                    WorldZone.FOREST -> if (pattern == 0) "bush" else null
-                    WorldZone.RUINS -> if (pattern % 4 == 0) "debris" else if (pattern == 0) "barrel" else null
-                    WorldZone.ROAD -> if (pattern == 0) "streetlamp" else if (pattern == 6) "wreck" else null
-                }
+                val propSprite = ZonePropSelector.spriteFor(engine.zone, tileX, tileY)
                 if (propSprite != null) {
                     worldSprites += WorldSpriteCommand(
                         sortY = tileY + 0.96f, sortOrder = 0, spriteId = propSprite,
