@@ -7,18 +7,18 @@ package com.granit.survival
  */
 internal object GeneratedPixelSprites {
     private val palette = mapOf(
-        'A' to floatArrayOf(0.847f, 0.776f, 0.659f),
-        'B' to floatArrayOf(0.616f, 0.557f, 0.471f),
-        'C' to floatArrayOf(0.514f, 0.471f, 0.380f),
-        'D' to floatArrayOf(0.471f, 0.341f, 0.235f),
-        'E' to floatArrayOf(0.353f, 0.314f, 0.247f),
-        'F' to floatArrayOf(0.271f, 0.263f, 0.231f),
-        'G' to floatArrayOf(0.267f, 0.188f, 0.149f),
-        'H' to floatArrayOf(0.204f, 0.176f, 0.161f),
-        'I' to floatArrayOf(0.153f, 0.133f, 0.122f),
-        'J' to floatArrayOf(0.086f, 0.082f, 0.071f),
-        'K' to floatArrayOf(0.055f, 0.043f, 0.031f),
-        'L' to floatArrayOf(0.016f, 0.008f, 0.004f)
+        'A' to floatArrayOf(0.91f, 0.84f, 0.72f),
+        'B' to floatArrayOf(0.70f, 0.63f, 0.52f),
+        'C' to floatArrayOf(0.60f, 0.54f, 0.43f),
+        'D' to floatArrayOf(0.56f, 0.40f, 0.27f),
+        'E' to floatArrayOf(0.44f, 0.38f, 0.29f),
+        'F' to floatArrayOf(0.35f, 0.32f, 0.27f),
+        'G' to floatArrayOf(0.35f, 0.24f, 0.17f),
+        'H' to floatArrayOf(0.28f, 0.23f, 0.19f),
+        'I' to floatArrayOf(0.22f, 0.18f, 0.15f),
+        'J' to floatArrayOf(0.13f, 0.11f, 0.085f),
+        'K' to floatArrayOf(0.085f, 0.065f, 0.045f),
+        'L' to floatArrayOf(0.028f, 0.016f, 0.009f)
     )
 
     private fun sprite(vararg frames: String) = PixelSprite(
