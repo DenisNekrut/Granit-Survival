@@ -287,7 +287,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     }
 
     private fun arrivalExitFor(from: WorldZone, target: WorldZone): TileType? = when (target) {
-        WorldZone.BUNKER -> if (from == WorldZone.FOREST) TileType.EXIT_TO_FOREST else null
+        WorldZone.BUNKER -> if (from != WorldZone.BUNKER) TileType.EXIT_TO_FOREST else null
         WorldZone.FOREST -> when (from) {
             WorldZone.BUNKER -> TileType.EXIT_TO_BUNKER
             WorldZone.RUINS -> TileType.EXIT_TO_RUINS
