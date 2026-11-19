@@ -35,7 +35,8 @@ class MainActivity : Activity() {
             showOverlay = ::showOverlay,
             enterGame = ::enterGame,
             closeStationPanel = ::closeStationPanel,
-            showMessage = ::showMessageWindow
+            showMessage = ::showMessageWindow,
+            weightedParams = ::weightedParams
         )
     }
     private val stationPanelRouter by lazy {
@@ -368,61 +369,11 @@ class MainActivity : Activity() {
         showOverlay(panel)
     }
 
-    private fun showBookLibrary() {
-        val panel = createPanel("БИБЛИОТЕКА УБЕЖИЩА", "Чтение занимает игровое время. Новые знания закрепляются при следующем пробуждении.")
-        BookCatalog.all.forEach { book ->
-            val read = session.engine.bookLibrary.hasRead(book.id)
-            panel.addView(label(book.title + " · " + book.category.displayName, 15f, Color.WHITE))
-            panel.addView(label(book.description + " · " + book.readMinutes + " мин.", 12f, Color.LTGRAY))
-            panel.addView(menuButton(if (read) "ПРОЧИТАНО" else "ЧИТАТЬ", enabled = !read) {
-                if (session.engine.readBook(book.id)) {
-                    Toast.makeText(this, "Книга прочитана", Toast.LENGTH_SHORT).show()
-                    showBookLibrary()
-                } else Toast.makeText(this, "Не удалось прочитать книгу", Toast.LENGTH_SHORT).show()
-            })
-        }
-        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
-        showOverlay(panel)
-    }
+    private fun showBookLibrary() = bunkerStationPanels.showLibrary()
 
-    private fun showCrafting() {
-        val panel = createPanel("МАСТЕРСКАЯ", "Рецепты доступны рядом с верстаком")
-        if (!session.engine.bunkerPower.hasPower) panel.addView(label("Нет питания: генератор необходимо запустить.", 13f, Color.rgb(230, 165, 116)))
-        CraftingRecipe.all.forEach { recipe ->
-            val costs = recipe.ingredients.entries.joinToString(" · ") { entry -> entry.key.displayName + ": " + entry.value }
-            panel.addView(label(recipe.title + " — " + recipe.output.displayName, 16f, Color.WHITE))
-            panel.addView(label("Материалы: " + costs + " · Время: " + recipe.craftMinutes + " мин.", 13f, Color.LTGRAY))
-            panel.addView(menuButton("СОЗДАТЬ", enabled = session.engine.canUseWorkbench() && session.engine.canCraft(recipe.id)) {
-                if (session.engine.craft(recipe.id)) {
-                    Toast.makeText(this, recipe.title + ": готово", Toast.LENGTH_SHORT).show()
-                    showCrafting()
-                } else Toast.makeText(this, if (!session.engine.bunkerPower.hasPower) "Нет питания: запустите генератор" else "Не хватает материалов или места", Toast.LENGTH_SHORT).show()
-            })
-        }
-        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
-        showOverlay(panel)
-    }
+    private fun showCrafting() = bunkerStationPanels.showWorkshop()
 
-    private fun showStorage() {
-        val panel = createPanel("ХРАНИЛИЩЕ УБЕЖИЩА", "Перенос ресурсов между рюкзаком и контейнером")
-        ItemType.values().forEach { type ->
-            val backpack = session.engine.inventory.count(type)
-            val stored = session.engine.bunkerStorage.count(type)
-            panel.addView(label("${type.displayName}:  рюкзак $backpack  ·  хранилище $stored", 14f, Color.WHITE))
-            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            row.addView(menuButton("ПОЛОЖИТЬ ВСЁ", enabled = backpack > 0) {
-                if (session.transferToStorage(type)) showStorage()
-                else Toast.makeText(this, "Не удалось переместить предметы", Toast.LENGTH_SHORT).show()
-            }, weightedParams())
-            row.addView(menuButton("ЗАБРАТЬ ВСЁ", enabled = stored > 0) {
-                if (session.transferFromStorage(type)) showStorage()
-                else Toast.makeText(this, "В рюкзаке недостаточно места", Toast.LENGTH_SHORT).show()
-            }, weightedParams())
-            panel.addView(row)
-        }
-        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
-        showOverlay(panel)
-    }
+    private fun showStorage() = bunkerStationPanels.showStorage()
 
     private fun showSaveSlots(allowSave: Boolean) {
         activeGame = false
