@@ -749,7 +749,7 @@
 - [x] Выделить MenuCoordinator, SaveSlotsScreen, SettingsScreen, InventoryScreen и StationPanelRouter.
 - [x] Вынести панели кровати, радио, генератора, столовой и медчасти в BunkerStationPanels.
 - [x] Вынести панели мастерской, хранилища и библиотеки в BunkerStationPanels.
-- [ ] Упростить большой Pause Menu и перенести его UI в отдельный экран.
+- [x] Вынести Pause Menu в отдельный `PauseMenuScreen`; MainActivity управляет только жизненным циклом паузы и навигационными callbacks.
 - [x] Добавить unit-тесты маршрутизации панелей; дальнейшие извлечения выполнять небольшими проверяемыми шагами.
 
 **GS-070 — миграции сохранений**
@@ -797,9 +797,17 @@
 
 ### 2026-11-19 — декомпозиция UI, миграции сохранений и игровые системы
 
-- **GS-069 — выполнена основная декомпозиция MainActivity.** Вынесены `MenuCoordinator`, `SaveSlotsScreen`, `SettingsScreen`, `InventoryScreen`, `StationPanelRouter`; все панели бункера (кровать, радио, генератор, столовая, медчасть, мастерская, хранилище, библиотека) вынесены в `BunkerStationPanels`. MainActivity сокращён с 724 до 504 строк. Остался большой Pause Menu.
+- **GS-069 — декомпозиция MainActivity выполнена.** Вынесены `MenuCoordinator`, `PauseMenuScreen`, `SaveSlotsScreen`, `SettingsScreen`, `InventoryScreen`, `StationPanelRouter`; все панели бункера (кровать, радио, генератор, столовая, медчасть, мастерская, хранилище, библиотека) вынесены в `BunkerStationPanels`. MainActivity сокращён с 724 до 473 строк.
 - **GS-070 — реализована архитектура v9 в пакете `save/`.** Добавлены `SaveVersion`, `SaveCodec`, `SaveMigration`, `SaveValidator`. Старые версии 1–9 проходят нормализацию к v9, будущие версии отклоняются. Повреждённые элементы инвентаря/ресурсов отбрасываются, фиксированные размеры массивов восстанавливаются, координаты игрока ограничиваются границами зоны. При чтении исходный файл не перезаписывается. Добавлены unit-тесты миграции; остаётся проверить исторические реальные файлы v1–v8 и устройство Android.
 - **GS-071 — выполнен первый этап.** Добавлены `InventorySystem`, `ClockAndNeedsSystem`, `ZoneTransitionSystem`, `CombatSystem`, `SaveSnapshotFactory`; `CheckpointSystem` уже существовал. GameEngine делегирует этим системам операции; сохранён исходный порядок обновления и rollback. Добавлены unit-тесты.
 - **GS-073 — выполнен частично.** Добавлены CONTRIBUTING, SECURITY, инструкция установки Debug APK, build badge; README очищен от старых инструкций подписи; Android 8.0/API 26 и OpenGL ES 2.0 задокументированы и объявлены в manifest. LICENSE не добавляется без решения владельца; GitHub topics и скриншоты ещё не оформлены.
 - Проверка UI/save/engine refactor до переноса save-классов в отдельный пакет прошла: Actions run `44602945619`, SHA `add97c077d427ded07b756b571972cc35f29ab2d`, conclusion `success`.
 - После переноса классов в `save/` и добавления OpenGL ES 2.0 manifest requirement запущена повторная проверка на новом SHA; итог необходимо подтвердить отдельно.
+
+
+### 2026-11-19 — выделен PauseMenuScreen
+
+- Главное и паузное меню больше не формируются непосредственно в MainActivity: добавлен `PauseMenuScreen`, все переходы передаются через callbacks.
+- MainActivity сокращён до 473 строк и отвечает за Android lifecycle, состояние игровой сессии и маршрутизацию.
+- Проверка после переноса save-компонентов в пакет `save/` прошла: Actions run `44603505021`, SHA `972a2f764c1e174075df9fda9eb50e90ae7dc71e`, conclusion `success`.
+- Изменение PauseMenuScreen отправлено отдельным коммитом; ожидается CI на новом SHA.
