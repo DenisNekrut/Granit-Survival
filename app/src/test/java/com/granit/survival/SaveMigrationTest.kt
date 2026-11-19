@@ -19,7 +19,8 @@ class SaveMigrationTest {
                 .put("clock", JSONObject().put("day", 3))
                 .put("inventory", JSONArray()
                     .put(JSONObject().put("type", ItemType.WOOD.name).put("quantity", 2))
-                    .put(JSONObject().put("type", "UNKNOWN_ITEM").put("quantity", 9))))
+                    .put(JSONObject().put("type", "UNKNOWN_ITEM").put("quantity", 9))
+                    .put(JSONObject().put("type", ItemType.METAL.name).put("quantity", 99))))
 
         val decoded = SaveCodec.decode(legacy.toString())
         val state = decoded.getJSONObject("state")
@@ -35,6 +36,7 @@ class SaveMigrationTest {
         assertEquals(16, migratedInventory.length())
         assertEquals(ItemType.WOOD.name, migratedInventory.getJSONObject(0).getString("type"))
         assertTrue(migratedInventory.isNull(1))
+        assertEquals(20, migratedInventory.getJSONObject(2).getInt("quantity"))
         assertEquals(24, state.getJSONArray("bunkerStorage").length())
         assertEquals(1, legacy.getInt("saveVersion")) // migration never mutates the source object
     }
