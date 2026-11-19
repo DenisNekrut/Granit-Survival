@@ -69,7 +69,8 @@ class GameSaveRepository(context: Context) {
                 hour = clock.getInt("minuteOfDay") / 60,
                 minute = clock.getInt("minuteOfDay") % 60
             )
-        } catch (_: Exception) {
+        } catch (failure: Exception) {
+            Log.e(TAG, "Save slot $slot is unreadable: ${failure.message}", failure)
             SaveSlotInfo(slot = slot, exists = true, corrupted = true)
         }
     }
@@ -94,7 +95,7 @@ class GameSaveRepository(context: Context) {
         if (!file.exists()) null else SaveCodec.decode(
             AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
         ).getLong("savedAtMillis")
-    }.getOrNull()
+    }.onFailure { Log.e(TAG, "Unable to read autosave timestamp", it) }.getOrNull()
 
     fun loadAuto(engine: GameEngine): Boolean = loadFromFile(autoSaveFile(), engine)
 
