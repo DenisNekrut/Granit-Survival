@@ -23,6 +23,31 @@ class SpriteQuadGeometryTest {
         )
     }
 
+    @Test fun acceptsTopToBottomScreenCoordinatesConvertedToDescendingNdcY() {
+        val positions = FloatBuffer.allocate(12)
+        val uvs = FloatBuffer.allocate(12)
+        // In OpenGL NDC, the visual top is +1 and the visual bottom is -1.
+        SpriteQuadGeometry.append(
+            positions, uvs, -1f, 1f, 1f, -1f,
+            SpriteAtlasUvRect(0f, 0f, 1f, 1f)
+        )
+        assertArrayEquals(
+            floatArrayOf(-1f,1f, -1f,-1f, 1f,1f, 1f,1f, -1f,-1f, 1f,-1f),
+            positions.array(), 0.0001f
+        )
+    }
+
+    @Test fun rejectsInvertedHorizontalBounds() {
+        val positions = FloatBuffer.allocate(12)
+        val uvs = FloatBuffer.allocate(12)
+        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+            SpriteQuadGeometry.append(
+                positions, uvs, 1f, -1f, -1f, 1f,
+                SpriteAtlasUvRect(0f, 0f, 1f, 1f)
+            )
+        }
+    }
+
     @Test fun horizontalFlipSwapsOnlyHorizontalUvCoordinates() {
         val positions = FloatBuffer.allocate(12)
         val uvs = FloatBuffer.allocate(12)
