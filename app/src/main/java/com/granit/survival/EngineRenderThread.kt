@@ -29,6 +29,7 @@ class EngineRenderThread(
     @Volatile private var touchY = 0f
     @Volatile private var joystickActive = false
     @Volatile private var interacting = false
+    @Volatile private var firing = false
     private val pendingInteraction = AtomicBoolean(false)
 
     fun requestStop() {
@@ -49,6 +50,10 @@ class EngineRenderThread(
 
     fun setInteracting(active: Boolean) {
         interacting = active
+    }
+
+    fun setFiring(active: Boolean) {
+        firing = active
     }
 
     /** Latches a short tap until at least one fixed simulation step consumes it. */
@@ -132,7 +137,7 @@ class EngineRenderThread(
                 val interactionHeld = interacting
                 val fixedSteps = engine.updateFrame(
                     deltaSeconds,
-                    input.copy(interact = interactionHeld || interactionRequested)
+                    input.copy(interact = interactionHeld || interactionRequested, fire = firing)
                 )
                 if (fixedSteps > 0 && interactionRequested && pendingInteraction.compareAndSet(true, false)) {
                     runCatching { onInteractionProcessed() }
