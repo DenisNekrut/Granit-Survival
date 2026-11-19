@@ -188,3 +188,16 @@
 - Физическое Android-тестирование не подтверждено.
 - PR #2 открыт и не объединён на момент ревизии.
 - Старый файл `GRANIT_SURVIVAL_MASTER_PLAN` сохранён как исторический Unity-план; актуальные источники истины — этот документ и `docs/PROJECT_BACKLOG.md`.
+
+
+## Дополнение: внешний sprite-atlas pipeline (2026-11-19)
+
+Введена первая часть конвейера ресурсов:
+
+- `SpriteAtlasManifest` — platform-independent описание версии, размеров текстуры, фильтра, кадров и pivot.
+- Координаты кадров хранятся в пикселях с началом в левом верхнем углу; `uvRect` преобразует их в нормализованные координаты.
+- `SpriteAtlasManifestValidator` проверяет версию, путь к texture asset, размеры, уникальность идентификаторов, pivot и границы каждого кадра.
+- `AndroidSpriteAtlasLoader` читает JSON из Android assets и декодирует PNG в Bitmap, сверяя реальные размеры с manifest.
+- Пример формата находится в `app/src/main/assets/sprites/atlas-manifest.example.json`.
+
+Следующая часть должна выполняться в render thread: загрузка Bitmap в GLES2 texture, nearest/linear sampler, textured shader, UV batching и повторная загрузка после потери EGL context. До реализации этой части `PixelSpriteAtlas` остаётся действующим процедурным fallback; пример manifest не является готовым игровым PNG-атласом.
