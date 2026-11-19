@@ -402,7 +402,7 @@ object PixelSpriteAtlas {
         )), mapOf(
             'M' to floatArrayOf(0.34f, 0.37f, 0.35f),
             'B' to floatArrayOf(0.19f, 0.23f, 0.21f)
-        ))
+        )),
         "water" to PixelSprite(listOf(listOf(
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
