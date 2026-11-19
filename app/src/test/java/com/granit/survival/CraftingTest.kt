@@ -53,17 +53,14 @@ class CraftingTest {
         engine.player.y = 1.5f
         engine.player.x = 20.5f
         engine.player.y = 2.5f
-        engine.inventory.add(ItemType.FABRIC, 2)
-        engine.inventory.add(ItemType.METAL, 1)
         assertTrue(engine.readBook("field_first_aid"))
         engine.player.x = 9.5f
         engine.player.y = 1.5f
 
-        // Fill every remaining slot. Crafting consumes the fabric/metal stacks,
-        // so the result has room even though the backpack was full beforehand.
-        ItemType.values().filterNot { it == ItemType.FABRIC || it == ItemType.METAL }
-            .forEach { type -> engine.inventory.add(type, 20) }
-        engine.inventory.add(ItemType.WOOD, 20)
+        // Fourteen full wood stacks plus the two ingredient stacks fill all 16 slots.
+        repeat(14) { assertEquals(0, engine.inventory.add(ItemType.WOOD, 20)) }
+        assertEquals(0, engine.inventory.add(ItemType.FABRIC, 2))
+        assertEquals(0, engine.inventory.add(ItemType.METAL, 1))
         assertTrue(engine.inventory.slot(15) != null)
         assertTrue(engine.canCraft("medical_kit"))
         assertTrue(engine.craft("medical_kit"))
