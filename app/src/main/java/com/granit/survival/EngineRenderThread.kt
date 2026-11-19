@@ -18,7 +18,8 @@ class EngineRenderThread(
     initialWidth: Int,
     initialHeight: Int,
     private val session: GameSession,
-    private val appContext: Context
+    private val appContext: Context,
+    private val onRenderFailure: (Throwable) -> Unit = {}
 ) : Thread("Granit-RenderThread") {
     private val running = AtomicBoolean(true)
     @Volatile private var viewportWidth = initialWidth.coerceAtLeast(1)
@@ -141,6 +142,7 @@ class EngineRenderThread(
             }
         } catch (failure: Throwable) {
             Log.e("GranitEngine", "Render thread failed", failure)
+            runCatching { onRenderFailure(failure) }
         } finally {
             if (display != EGL14.EGL_NO_DISPLAY) {
                 if (context != EGL14.EGL_NO_CONTEXT && eglSurface != EGL14.EGL_NO_SURFACE &&
