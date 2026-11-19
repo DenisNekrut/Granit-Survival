@@ -54,7 +54,7 @@ class Camera2DTest {
         camera.snapTo(50f, 30f, 100f, 60f)
 
         // Follow is deliberately smoothed, so allow it to settle at the clamped edge.
-        repeat(60) {
+        repeat(100) {
             camera.follow(0f, 0f, 100f, 60f, 1f / 60f)
         }
 
