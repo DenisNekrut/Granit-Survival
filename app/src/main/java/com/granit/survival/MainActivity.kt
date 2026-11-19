@@ -125,9 +125,13 @@ class MainActivity : Activity() {
             engine.canAccessGenerator() -> showGeneratorPanel()
             engine.zone == WorldZone.BUNKER &&
                 engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f) -> {
-                val event = engine.listenToRadio()
-                if (event != null) showMessageWindow(event.title, event.description)
-                else showMessageWindow("РАДИОПРИЁМНИК", "Сегодня эфир остаётся пустым.")
+                if (!engine.bunkerPower.hasPower) {
+                    showMessageWindow("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
+                } else {
+                    val event = engine.listenToRadio()
+                    if (event != null) showMessageWindow(event.title, event.description)
+                    else showMessageWindow("РАДИОПРИЁМНИК", "Сегодня эфир остаётся пустым.")
+                }
             }
             engine.canSleep() -> {
                 val panel = createPanel("СПАЛЬНЯ", "Можно завершить день и восстановить силы")
