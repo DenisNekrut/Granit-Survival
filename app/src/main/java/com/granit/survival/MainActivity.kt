@@ -2,9 +2,7 @@ package com.granit.survival
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -224,34 +222,23 @@ class MainActivity : Activity() {
         gameSurface.pauseEngine()
         session.audio.stop()
         gameSurface.visibility = View.GONE
-        val panel = createPanel("GRANIT SURVIVAL", "Тишина — тоже часть выживания")
-        panel.addView(menuButton("НОВАЯ ИГРА") {
-            if (session.saves.listSlots().any { it.exists && !it.corrupted }) {
-                AlertDialog.Builder(this)
-                    .setTitle("Начать новую игру?")
-                    .setMessage("Текущие сохранения останутся в слотах, но начнётся новая игровая сессия.")
-                    .setNegativeButton("ОТМЕНА", null)
-                    .setPositiveButton("НАЧАТЬ") { _, _ -> startNewGame() }
-                    .show()
-            } else startNewGame()
-        })
-        val hasSave = session.saves.autoSaveTimestamp() != null ||
-            session.saves.listSlots().any { it.exists && !it.corrupted }
-        panel.addView(menuButton("ПРОДОЛЖИТЬ", enabled = hasSave) {
-            if (session.loadMostRecent()) enterGame()
-            else Toast.makeText(this, "Нет доступного сохранения", Toast.LENGTH_SHORT).show()
-        })
-        panel.addView(menuButton("СОХРАНЕНИЯ") { showSaveSlots(false) })
-        panel.addView(menuButton("НАСТРОЙКИ") { showSettings() })
-        panel.addView(menuButton("ОБНОВИТЬ") { openLatestUpdate() })
-        panel.addView(menuButton("ВЫХОД") { finish() })
-        showOverlay(panel)
-    }
-
-    private fun openLatestUpdate() {
-        val releasesUrl = "https://github.com/DenisNekrut/Granit-Survival/releases/latest"
-        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(releasesUrl))) }
-            .onFailure { Toast.makeText(this, "Не удалось открыть страницу обновлений", Toast.LENGTH_LONG).show() }
+        MenuCoordinator(
+            activity = this,
+            createPanel = ::createPanel,
+            label = ::label,
+            menuButton = ::menuButton,
+            showOverlay = ::showOverlay,
+            hasSavedGame = {
+                session.saves.autoSaveTimestamp() != null ||
+                    session.saves.listSlots().any { it.exists && !it.corrupted }
+            },
+            startNewGame = ::startNewGame,
+            loadMostRecent = session::loadMostRecent,
+            enterGame = ::enterGame,
+            showSaveSlots = { showSaveSlots(false) },
+            showSettings = ::showSettings,
+            exit = ::finish
+        ).showMainMenu()
     }
 
     private fun startNewGame() {
