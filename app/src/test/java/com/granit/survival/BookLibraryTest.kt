@@ -10,7 +10,7 @@ class BookLibraryTest {
     fun readingRequiresBookshelfAndUnlocksTechnicalRecipe() {
         val engine = GameEngine()
         assertFalse(engine.readBook("field_first_aid"))
-        engine.player.x = 22.5f
+        engine.player.x = 7.5f
         engine.player.y = 2.5f
         val before = engine.worldClock.totalMinutes
         assertTrue(engine.readBook("field_first_aid"))
@@ -18,14 +18,14 @@ class BookLibraryTest {
         assertTrue(CraftingRecipe.byId("medical_kit")!!.isUnlocked(engine.bookLibrary))
         assertEquals(before + 45, engine.worldClock.totalMinutes)
         engine.player.x = 9.5f
-        engine.player.y = 1.5f
+        engine.player.y = 7.5f
         assertFalse(engine.canCraft("medical_kit")) // unlocked, but ingredients are missing
     }
 
     @Test
     fun fictionAndDiaryReadingAffectMoraleAndStress() {
         val engine = GameEngine()
-        engine.player.x = 22.5f
+        engine.player.x = 7.5f
         engine.player.y = 2.5f
         val moraleBefore = engine.psychology.morale
         assertTrue(engine.readBook("old_novel"))
@@ -40,7 +40,7 @@ class BookLibraryTest {
     fun readingProgressRollsBackUntilNextWakeCheckpoint() {
         val engine = GameEngine()
         engine.sleepUntilMorning()
-        engine.player.x = 22.5f
+        engine.player.x = 7.5f
         engine.player.y = 2.5f
         assertTrue(engine.readBook("field_first_aid"))
         assertTrue(engine.bookLibrary.hasRead("field_first_aid"))
