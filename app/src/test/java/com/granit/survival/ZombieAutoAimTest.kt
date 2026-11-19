@@ -31,8 +31,8 @@ class ZombieAutoAimTest {
     @Test
     fun solidWallBlocksAutoAimEvenWhenInRange() {
         val map = TileMap(width = 40, height = 24, zone = WorldZone.BUNKER)
-        val player = PlayerState(x = 10.5f, y = 8.5f)
-        val infected = ZombieActor(x = 14.5f, y = 8.5f)
+        val player = PlayerState(x = 3.5f, y = 8.5f)
+        val infected = ZombieActor(x = 7.5f, y = 8.5f)
 
         assertFalse(map.hasLineOfSight(player.x, player.y, infected.x, infected.y))
         assertNull(ZombieSystem.findVisibleTarget(listOf(infected), player, map))
