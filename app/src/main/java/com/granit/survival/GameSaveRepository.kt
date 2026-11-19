@@ -126,7 +126,7 @@ class GameSaveRepository(context: Context) {
 
     companion object {
         const val MAX_SLOTS = 3
-        const val SAVE_VERSION = 6
+        const val SAVE_VERSION = 7
     }
 }
 
@@ -179,6 +179,7 @@ private fun List<ZoneResourceSnapshot>.toZoneResourcesJson(): JSONArray = JSONAr
     forEach { snapshot ->
         array.put(JSONObject()
             .put("zone", snapshot.zone.name)
+            .put("seed", snapshot.seed ?: JSONObject.NULL)
             .put("resources", snapshot.resources.toResourcesJson()))
     }
 }
@@ -274,7 +275,8 @@ private fun JSONArray.toZoneResources(): List<ZoneResourceSnapshot> = List(lengt
     getJSONObject(index).let { entry ->
         ZoneResourceSnapshot(
             zone = WorldZone.valueOf(entry.getString("zone")),
-            resources = entry.getJSONArray("resources").toResources()
+            resources = entry.getJSONArray("resources").toResources(),
+            seed = if (entry.isNull("seed")) null else entry.optLong("seed")
         )
     }
 }
