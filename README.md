@@ -102,3 +102,10 @@ Outdoor expeditions now feature three original infected archetypes: shamblers, r
 - Food, water, bandages and medical kits can be used directly from the backpack; resources and crafting materials remain stored there for other interactions.
 - The bunker map is 17×10 tiles, with six compact rooms joined by one-tile corridors. Each room has its own floor palette and material pattern; corridors use dark steel flooring.
 - After 15 seconds without movement, interaction or firing, the character begins a room-to-room walk inside the bunker. Any direct player input cancels the autonomous walk and resets the idle timer.
+
+## Auto-aim and interaction panels
+
+- In outdoor zones, the nearest infected actor within seven tiles is selected only when there is a clear line of sight. A small reticle is drawn over the selected actor and disappears when no valid target is visible.
+- The abstract pulse action prioritizes the currently selected visible target.
+- The context action routes to the nearest matching bunker station panel. The workshop remains inspectable without power, while crafting controls are disabled until power is restored.
+- During gameplay, tapping the dimmed area outside an open interaction card closes it. Taps inside the card remain available to its controls.
