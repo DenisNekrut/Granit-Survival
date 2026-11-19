@@ -66,7 +66,8 @@ internal object GeneratedPixelSprites {
         "tree" to sprite(".......FL......./.......CE......./.....FCEHEEJ..../.....LHFFIJ...../...JCCIFEKIJL.../...L.ICIEEEK..../..KFEFJHIIFKI.../...IKFDEKECFDHJ./..JCEICFLJHEH.../.JKIJLKHFEFJICI./..JFEEECEECEHIL./LHIJEEJFIHFHECF./..FJIHJKIJFEILL./EDEHKEFGGHEKIGD./EDFFGHIKDGIFEGE./....DDEEEDDCD..."),
         "bush" to sprite("........LFDCD.../......JFG...KFI./....LEI....ECACI/.....CJ.....IEH./.....CJ........./.....CJ........./.....CJ........./.....DI........./.....CI........./.....CI........./....KEH........./....LDFH......../...ELEGFE......./..EKLDJJDD....../.DJEFFBBFEDE..../...EDEEECE......"),
         "rubble" to sprite("................/.....BL........./....BBF........./...HBBF........./..KLBBFH.K.L..../...BBBFJFCLL..../...BCBFKCBBC..../.IGCCCKBBBBFL.G./..CHCBLEABFFFE../.FBBDHBCEFFFFHK./.EBELBBFKEBBBCE./.DBFLFEFICBBBFDE/ECFBBALBDIABFEJ./EDEEEFFEDBEEDBC./...EEFCEHCDED.../....E.D.ED......"),
-        "streetlamp" to sprite(".......L.L....../.....L.FDLL...../.....IFKDEJD..../..HKKDBCIKCEL.../..KCHIJFCEIJ..../..LIECHHKKFCJIK./.ECFCDJJCJDEECJ./.KHIDFCJCJFDFEHL/.CDHJECJJHCCJFJ./JFDJICICHIEHIHI./KKIFCCIGJIIJHFJ./..FKEJIHICCKEIF./..JKIHJDHHHHJJEE/.FEEFJHJKJIHEDE./...EEFEIFEEDDE../......E..DD.....")
+        "streetlamp" to sprite(".......L.L....../.....L.FDLL...../.....IFKDEJD..../..HKKDBCIKCEL.../..KCHIJFCEIJ..../..LIECHHKKFCJIK./.ECFCDJJCJDEECJ./.KHIDFCJCJFDFEHL/.CDHJECJJHCCJFJ./JFDJICICHIEHIHI./KKIFCCIGJIIJHFJ./..FKEJIHICCKEIF./..JKIHJDHHHHJJEE/.FEEFJHJKJIHEDE./...EEFEIFEEDDE../......E..DD....."),
+        "ceiling_lamp" to sprite("................/................/................/.......JJ......./......JAAJ....../.....JABBAJ...../....JABBBBAJ..../....JABBBBAJ..../.....JABBAJ...../......JAAJ....../.......JJ......./................/................/................/................/................")
     )
 
     val all: Map<String, PixelSprite> = base + mapOf(
