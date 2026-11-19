@@ -22,6 +22,7 @@ class EngineRenderThread(
     private val onInteractionProcessed: () -> Unit = {},
     private val onRenderFailure: (Throwable) -> Unit = {}
 ) : Thread("Granit-RenderThread") {
+    companion object { private const val TAG = "GranitEGL" }
     private val running = AtomicBoolean(true)
     @Volatile private var viewportWidth = initialWidth.coerceAtLeast(1)
     @Volatile private var viewportHeight = initialHeight.coerceAtLeast(1)
@@ -62,6 +63,7 @@ class EngineRenderThread(
     }
 
     override fun run() {
+        Log.i(TAG, "render thread started: requested viewport=${viewportWidth}x$viewportHeight surfaceValid=${surfaceHolder.surface.isValid}")
         var display: EGLDisplay = EGL14.EGL_NO_DISPLAY
         var context: EGLContext = EGL14.EGL_NO_CONTEXT
         var eglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
@@ -70,7 +72,8 @@ class EngineRenderThread(
             display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             check(display != EGL14.EGL_NO_DISPLAY) { "Unable to get EGL display" }
             val versions = IntArray(2)
-            check(EGL14.eglInitialize(display, versions, 0, versions, 1)) { "Unable to initialize EGL" }
+            check(EGL14.eglInitialize(display, versions, 0, versions, 1)) { "Unable to initialize EGL (error=${Integer.toHexString(EGL14.eglGetError())})" }
+            Log.i(TAG, "EGL initialized: ${versions[0]}.${versions[1]} vendor=${EGL14.eglQueryString(display, EGL14.EGL_VENDOR)} version=${EGL14.eglQueryString(display, EGL14.EGL_VERSION)} clientApis=${EGL14.eglQueryString(display, EGL14.EGL_CLIENT_APIS)}")
 
             val configAttributes = intArrayOf(
                 EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
@@ -84,6 +87,11 @@ class EngineRenderThread(
                 "No compatible EGL config"
             }
             val config = requireNotNull(configs[0])
+            fun configAttribute(attribute: Int): Int {
+                val value = IntArray(1)
+                return if (EGL14.eglGetConfigAttrib(display, config, attribute, value, 0)) value[0] else -1
+            }
+            Log.i(TAG, "EGL config: rgba=${configAttribute(EGL14.EGL_RED_SIZE)}/${configAttribute(EGL14.EGL_GREEN_SIZE)}/${configAttribute(EGL14.EGL_BLUE_SIZE)}/${configAttribute(EGL14.EGL_ALPHA_SIZE)} depth=${configAttribute(EGL14.EGL_DEPTH_SIZE)} stencil=${configAttribute(EGL14.EGL_STENCIL_SIZE)}")
             val contextAttributes = intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL14.EGL_NONE)
             context = EGL14.eglCreateContext(display, config, EGL14.EGL_NO_CONTEXT, contextAttributes, 0)
             check(context != EGL14.EGL_NO_CONTEXT) { "Unable to create GLES2 context" }
@@ -91,10 +99,17 @@ class EngineRenderThread(
             eglSurface = EGL14.eglCreateWindowSurface(
                 display, config, surfaceHolder, intArrayOf(EGL14.EGL_NONE), 0
             )
-            check(eglSurface != EGL14.EGL_NO_SURFACE) { "Unable to create EGL window surface" }
-            check(EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) {
-                "Unable to make EGL context current"
+            check(eglSurface != EGL14.EGL_NO_SURFACE) { "Unable to create EGL window surface (error=${Integer.toHexString(EGL14.eglGetError())})" }
+            val nativeFrame = surfaceHolder.surfaceFrame
+            Log.i(TAG, "EGL window surface created: holderFrame=${nativeFrame.width()}x${nativeFrame.height()} viewport=${viewportWidth}x$viewportHeight")
+            if (nativeFrame.width() > 0 && nativeFrame.height() > 0 &&
+                (nativeFrame.width() != viewportWidth || nativeFrame.height() != viewportHeight)) {
+                Log.w(TAG, "Surface/viewport size mismatch: native=${nativeFrame.width()}x${nativeFrame.height()} view=${viewportWidth}x$viewportHeight; surfaceChanged should synchronize these values")
             }
+            check(EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) {
+                "Unable to make EGL context current (error=${Integer.toHexString(EGL14.eglGetError())})"
+            }
+            Log.i(TAG, "GLES context current: renderer=${GLES20.glGetString(GLES20.GL_RENDERER)} version=${GLES20.glGetString(GLES20.GL_VERSION)} vendor=${GLES20.glGetString(GLES20.GL_VENDOR)}")
 
             GLES20.glDisable(GLES20.GL_DEPTH_TEST)
             renderer = PixelRenderer()
@@ -116,6 +131,8 @@ class EngineRenderThread(
                 val width = viewportWidth.coerceAtLeast(1)
                 val height = viewportHeight.coerceAtLeast(1)
                 GLES20.glViewport(0, 0, width, height)
+                val viewportError = GLES20.glGetError()
+                if (viewportError != GLES20.GL_NO_ERROR) Log.e(TAG, "glViewport failed for ${width}x$height: 0x${Integer.toHexString(viewportError)}")
                 renderer.resize(width, height, gameSettings.displayScale)
 
                 val active = joystickActive
@@ -166,9 +183,10 @@ class EngineRenderThread(
                 }
             }
         } catch (failure: Throwable) {
-            Log.e("GranitEngine", "Render thread failed", failure)
+            Log.e(TAG, "Render thread failed: viewport=${viewportWidth}x$viewportHeight surfaceValid=${surfaceHolder.surface.isValid} eglError=0x${Integer.toHexString(EGL14.eglGetError())}", failure)
             runCatching { onRenderFailure(failure) }
         } finally {
+            Log.i(TAG, "render thread stopping; running=${running.get()}")
             if (display != EGL14.EGL_NO_DISPLAY) {
                 if (context != EGL14.EGL_NO_CONTEXT && eglSurface != EGL14.EGL_NO_SURFACE &&
                     EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) {
@@ -180,6 +198,7 @@ class EngineRenderThread(
                 if (eglSurface != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(display, eglSurface)
                 if (context != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(display, context)
                 EGL14.eglTerminate(display)
+                Log.i(TAG, "EGL display terminated")
             }
         }
     }
