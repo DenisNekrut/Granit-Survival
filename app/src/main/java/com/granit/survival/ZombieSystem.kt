@@ -1,14 +1,27 @@
 package com.granit.survival
 
+import kotlin.math.abs
 import kotlin.math.sqrt
 
-/** Stylized fictional infected NPC; no real-world weapon or injury simulation. */
+/** Stylized fictional infected NPC; combat remains abstract and game-only. */
+enum class InfectedVariant(
+    val health: Float,
+    val moveSpeed: Float,
+    val contactDamage: Float,
+    val attackInterval: Float
+) {
+    SHAMBLER(8f, 0.72f, 3f, 1.8f),
+    RUNNER(6f, 1.08f, 2f, 1.35f),
+    BRUTE(12f, 0.48f, 4f, 2.2f)
+}
+
 data class ZombieActor(
     var x: Float,
     var y: Float,
     var health: Float = 8f,
     var attackCooldown: Float = 0f,
-    var hitFlash: Float = 0f
+    var hitFlash: Float = 0f,
+    val variant: InfectedVariant = InfectedVariant.SHAMBLER
 )
 
 object ZombieSystem {
@@ -27,8 +40,22 @@ object ZombieSystem {
                 if (dx * dx + dy * dy >= 36f) add(x + 0.5f to y + 0.5f)
             }
         }.sortedBy { (x, y) -> (x.toInt() * 31 + y.toInt() * 17 + zone.ordinal * 13) % 97 }
-        val count = if (zone == WorldZone.FOREST) 2 else 3
-        return candidates.take(count).map { ZombieActor(it.first, it.second) }.toMutableList()
+        val count = when (zone) {
+            WorldZone.FOREST -> 3
+            WorldZone.RUINS -> 4
+            WorldZone.ROAD -> 3
+            WorldZone.BUNKER -> 0
+        }
+        val variants = when (zone) {
+            WorldZone.FOREST -> listOf(InfectedVariant.SHAMBLER, InfectedVariant.RUNNER, InfectedVariant.SHAMBLER)
+            WorldZone.RUINS -> listOf(InfectedVariant.SHAMBLER, InfectedVariant.BRUTE, InfectedVariant.RUNNER, InfectedVariant.SHAMBLER)
+            WorldZone.ROAD -> listOf(InfectedVariant.RUNNER, InfectedVariant.SHAMBLER, InfectedVariant.BRUTE)
+            WorldZone.BUNKER -> emptyList()
+        }
+        return candidates.take(count).mapIndexed { index, point ->
+            val variant = variants[index % variants.size]
+            ZombieActor(point.first, point.second, health = variant.health, variant = variant)
+        }.toMutableList()
     }
 
     fun update(
@@ -45,14 +72,21 @@ object ZombieSystem {
             val dy = player.y - zombie.y
             val distance = sqrt(dx * dx + dy * dy).coerceAtLeast(0.001f)
             if (distance > CONTACT_DISTANCE) {
-                val step = MOVE_SPEED * deltaSeconds
-                val nextX = zombie.x + dx / distance * step
-                val nextY = zombie.y + dy / distance * step
-                if (map.isWalkable(nextX, zombie.y)) zombie.x = nextX
-                if (map.isWalkable(zombie.x, nextY)) zombie.y = nextY
+                val step = zombie.variant.moveSpeed * deltaSeconds
+                val stepX = dx / distance * step
+                val stepY = dy / distance * step
+                // Try the dominant axis first, then the other axis; this avoids many
+                // corner-sticking cases without introducing expensive pathfinding.
+                if (abs(dx) >= abs(dy)) {
+                    if (map.isWalkable(zombie.x + stepX, zombie.y)) zombie.x += stepX
+                    else if (map.isWalkable(zombie.x, zombie.y + stepY)) zombie.y += stepY
+                } else {
+                    if (map.isWalkable(zombie.x, zombie.y + stepY)) zombie.y += stepY
+                    else if (map.isWalkable(zombie.x + stepX, zombie.y)) zombie.x += stepX
+                }
             } else if (zombie.attackCooldown <= 0f) {
-                zombie.attackCooldown = ATTACK_INTERVAL_SECONDS
-                contactDamage += CONTACT_DAMAGE
+                zombie.attackCooldown = zombie.variant.attackInterval
+                contactDamage += zombie.variant.contactDamage
             }
         }
         return contactDamage
@@ -70,7 +104,7 @@ object ZombieSystem {
             val dy = zombie.y - player.y
             val distanceSquared = dx * dx + dy * dy
             val forward = dx * direction.first + dy * direction.second
-            val side = kotlin.math.abs(dx * direction.second - dy * direction.first)
+            val side = abs(dx * direction.second - dy * direction.first)
             if (forward in 0f..5f && side <= 0.85f) zombie to distanceSquared else null
         }.minByOrNull { it.second }?.first ?: return null
         target.health -= 4f
