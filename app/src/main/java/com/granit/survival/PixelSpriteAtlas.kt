@@ -515,7 +515,51 @@ object PixelSpriteAtlas {
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
         )), mapOf('W' to floatArrayOf(0.27f, 0.59f, 0.78f)))
-    ) + GeneratedPixelSprites.all
+    ) + GeneratedPixelSprites.all + mapOf(
+        "grass_patch" to PixelSprite(listOf(listOf(
+            "................", "................", "................", "......GG........",
+            "...GGGGGG.......", "..GGGGGGGG......", ".GGGGGGGGGG.....", "..GGGGGGGG......",
+            "...GGGGGG.......", ".....GG..........", "................", "................",
+            "................", "................", "................", "................"
+        )), mapOf(
+            'G' to floatArrayOf(0.30f, 0.39f, 0.22f)
+        )),
+        "fallen_log" to PixelSprite(listOf(listOf(
+            "................", "................", "................", "................",
+            "....BBBB........", "...BBBBBB.......", "..BBBBBBBB......", ".BBBBBBBBBB.....",
+            ".BBWWWWWWBB.....", "..BBBBBBBB......", "...BBBBBB.......", "....BBBB........",
+            "................", "................", "................", "................"
+        )), mapOf(
+            'B' to floatArrayOf(0.32f, 0.23f, 0.15f),
+            'W' to floatArrayOf(0.48f, 0.36f, 0.24f)
+        )),
+        "metal_scrap" to PixelSprite(listOf(listOf(
+            "................", "................", "...MMMM.........", "..MMMMMM........",
+            ".MMBBMMMM.......", "..MMMMMMMM......", "...MMMMBBMM.....", "....MMMMMMM.....",
+            "..MMBBMMMM......", ".MMMMMMMM.......", "..MMMM..........", "................",
+            "................", "................", "................", "................"
+        )), mapOf(
+            'M' to floatArrayOf(0.43f, 0.47f, 0.45f),
+            'B' to floatArrayOf(0.22f, 0.27f, 0.25f)
+        )),
+        "puddle" to PixelSprite(listOf(listOf(
+            "................", "................", "................", "................",
+            ".....WWWW.......", "...WWWWWWWW.....", "..WWWWWWWWWW....", ".WWWWWWWWWWWW...",
+            "..WWWWWWWWWW....", "...WWWWWWWW.....", ".....WWWW.......", "................",
+            "................", "................", "................", "................"
+        )), mapOf(
+            'W' to floatArrayOf(0.24f, 0.43f, 0.49f)
+        )),
+        "road_sign" to PixelSprite(listOf(listOf(
+            "................", ".....MMMMMM.....", ".....MWWWWM.....", ".....MWWWWM.....",
+            ".....MMMMMM.....", "........M.......", "........M.......", "........M.......",
+            "........M.......", "........M.......", ".......MMM......", "......MMMMM.....",
+            "................", "................", "................", "................"
+        )), mapOf(
+            'M' to floatArrayOf(0.38f, 0.40f, 0.37f),
+            'W' to floatArrayOf(0.63f, 0.59f, 0.43f)
+        ))
+    )
 
     fun sprite(id: String): PixelSprite? = sprites[id]
 
