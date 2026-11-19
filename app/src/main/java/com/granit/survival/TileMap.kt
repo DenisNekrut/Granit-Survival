@@ -70,7 +70,7 @@ class TileMap(
         set(width / 2, 1, TileType.EXIT_TO_FOREST)
 
         // A small starter supply cache remains accessible inside the bunker.
-        set(2, 8, TileType.RESOURCE_WOOD)
+        set(1, 8, TileType.RESOURCE_WOOD)
         set(4, 7, TileType.RESOURCE_METAL)
         set(7, 8, TileType.RESOURCE_FABRIC)
         set(10, 7, TileType.RESOURCE_FOOD)
