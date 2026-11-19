@@ -515,7 +515,7 @@ object PixelSpriteAtlas {
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
         )), mapOf('W' to floatArrayOf(0.27f, 0.59f, 0.78f)))
-    )
+    ) + GeneratedPixelSprites.all
 
     fun sprite(id: String): PixelSprite? = sprites[id]
 
