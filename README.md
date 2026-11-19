@@ -94,3 +94,11 @@ Outdoor expeditions now feature three original infected archetypes: shamblers, r
 - Manual bandage and medical-kit use remains available during a generator outage.
 - Timed medical actions advance world time and survival needs before consuming supplies or applying healing, so a checkpoint rollback does not silently spend an item.
 - Medical treatment is covered by unit tests for power requirements, inventory, time/fuel cost and rollback behavior.
+
+
+## Backpack and bunker layout
+
+- The character inventory is a 4×4 backpack. Its contents are hidden during normal play and open from the on-screen backpack icon.
+- Food, water, bandages and medical kits can be used directly from the backpack; resources and crafting materials remain stored there for other interactions.
+- The bunker map is 17×10 tiles, with six compact rooms joined by one-tile corridors. Each room has its own floor palette and material pattern; corridors use dark steel flooring.
+- After 15 seconds without movement, interaction or firing, the character begins a room-to-room walk inside the bunker. Any direct player input cancels the autonomous walk and resets the idle timer.
