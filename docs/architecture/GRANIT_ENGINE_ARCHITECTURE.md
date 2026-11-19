@@ -233,3 +233,8 @@ The generated atlas now includes distinct 16×16 environment props for bunker bu
 
 
 The four zones also use deterministic floor-decoration sprites: bunker floor grates, forest bushes, ruin debris and roadside lamps. Placement is derived from tile coordinates, so decorations remain stable across save/load without introducing additional mutable world state.
+
+
+### World sprite depth ordering
+
+The renderer now collects zone obstacle sprites, furniture sprites and the player into `WorldSpriteCommand` records and sorts them by ground-contact Y before drawing. A stable secondary order places the player after world objects at an equal depth. Zone obstacles receive a translucent contact shadow. Flat tile/floor details remain in the base pass, while tall sprites participate in the depth pass. This improves north/south occlusion without changing collision or save-state logic.
