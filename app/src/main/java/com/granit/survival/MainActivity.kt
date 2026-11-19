@@ -518,54 +518,21 @@ class MainActivity : Activity() {
         session.audio.stop()
         gameSurface.visibility = View.GONE
         canSaveFromSlots = allowSave
-        val panel = createPanel("СОХРАНЕНИЯ", "Три независимых слота на устройстве")
-        session.saves.listSlots().forEach { slot ->
-            val row = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(dp(12), dp(8), dp(12), dp(8))
-                background = GradientDrawable().apply { setColor(Color.rgb(34, 47, 43)); cornerRadius = dp(9).toFloat(); setStroke(dp(1), Color.rgb(77, 100, 84)) }
-            }
-            val info = when {
-                slot.corrupted -> "СЛОТ ${slot.slot}  ·  ФАЙЛ ПОВРЕЖДЁН"
-                !slot.exists -> "СЛОТ ${slot.slot}  ·  ПУСТО"
-                else -> {
-                    val time = "%02d:%02d".format(slot.hour ?: 0, slot.minute ?: 0)
-                    val date = slot.savedAtMillis?.let { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it)) } ?: ""
-                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time\\n$date"
-                }
-            }
-            row.addView(label(info, 14f, Color.WHITE))
-            val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-            actions.addView(menuButton("ЗАГРУЗИТЬ", enabled = slot.exists && !slot.corrupted) {
-                val loaded = runCatching { session.loadSlot(slot.slot) }.getOrDefault(false)
-                if (loaded) enterGame() else Toast.makeText(this@MainActivity, "Не удалось загрузить слот", Toast.LENGTH_LONG).show()
-            }, weightedParams())
-            actions.addView(menuButton("СОХРАНИТЬ", enabled = allowSave) {
-                AlertDialog.Builder(this)
-                    .setTitle("Перезаписать слот ${slot.slot}?")
-                    .setMessage("Старое сохранение в этом слоте будет заменено.")
-                    .setNegativeButton("ОТМЕНА", null)
-                    .setPositiveButton("СОХРАНИТЬ") { _, _ ->
-                        runCatching { session.saveSlot(slot.slot) }
-                            .onSuccess { Toast.makeText(this, "Игра сохранена", Toast.LENGTH_SHORT).show(); if (pausedGame) showPauseMenu() else showMainMenu() }
-                            .onFailure { Toast.makeText(this, "Ошибка сохранения: ${it.message}", Toast.LENGTH_LONG).show() }
-                    }.show()
-            }, weightedParams())
-            actions.addView(menuButton("УДАЛИТЬ", enabled = slot.exists) {
-                AlertDialog.Builder(this)
-                    .setTitle("Удалить слот ${slot.slot}?")
-                    .setMessage("Это действие нельзя отменить.")
-                    .setNegativeButton("ОТМЕНА", null)
-                    .setPositiveButton("УДАЛИТЬ") { _, _ ->
-                        session.saves.delete(slot.slot)
-                        showSaveSlots(allowSave)
-                    }.show()
-            }, weightedParams())
-            row.addView(actions)
-            panel.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
-        }
-        panel.addView(menuButton("НАЗАД") { if (pausedGame || allowSave) showPauseMenu() else showMainMenu() })
-        showOverlay(panel)
+        SaveSlotsScreen(
+            activity = this,
+            saves = session.saves,
+            createPanel = ::createPanel,
+            label = ::label,
+            menuButton = ::menuButton,
+            showOverlay = ::showOverlay,
+            weightedParams = ::weightedParams,
+            dp = ::dp,
+            loadSlot = session::loadSlot,
+            saveSlot = { slot -> session.saveSlot(slot) },
+            onLoaded = ::enterGame,
+            onSaved = { if (pausedGame) showPauseMenu() else showMainMenu() },
+            onBack = { if (pausedGame || allowSave) showPauseMenu() else showMainMenu() }
+        ).show(allowSave)
     }
 
     private fun showSettings() {
