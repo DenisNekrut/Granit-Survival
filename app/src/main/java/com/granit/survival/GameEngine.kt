@@ -351,7 +351,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
         val nextY = (player.y + stepY).coerceIn(0.8f, WORLD_HEIGHT - 0.8f)
         if (tileMap.isWalkable(player.x, nextY)) player.y = nextY
-        statistics.recordDistance(kotlin.math.hypot(player.x - previousX, player.y - previousY))
+        val movedX = player.x - previousX
+        val movedY = player.y - previousY
+        statistics.recordDistance(sqrt(movedX * movedX + movedY * movedY))
 
         scanNearbyPointsOfInterest()
 
