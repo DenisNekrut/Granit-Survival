@@ -109,3 +109,13 @@ Outdoor expeditions now feature three original infected archetypes: shamblers, r
 - The abstract pulse action prioritizes the currently selected visible target.
 - The context action routes to the nearest matching bunker station panel. The workshop remains inspectable without power, while crafting controls are disabled until power is restored.
 - During gameplay, tapping the dimmed area outside an open interaction card closes it. Taps inside the card remain available to its controls.
+
+
+## Environmental art pass
+
+- Zone dressing is deterministic and sparse, so a saved coordinate keeps the same visual details on every visit.
+- The forest adds grass patches and fallen logs alongside trees and bushes.
+- Ruins add scattered metal scrap and small puddles alongside barrels and debris.
+- Roads add signs and puddles alongside streetlights and wreckage silhouettes.
+- The bunker uses occasional floor grates and supply crates; decorations are drawn only on floor tiles and do not alter collision or navigation.
+- Atlas regression tests verify every selected prop has a renderable sprite entry.
