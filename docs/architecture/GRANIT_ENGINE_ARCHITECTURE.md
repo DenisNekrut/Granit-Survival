@@ -220,3 +220,8 @@ Consecutive textured quads from the active atlas are now accumulated in reusable
 ### External atlas runtime selection
 
 At renderer initialization, the EGL render thread passes the Android `AssetManager` to `PixelRenderer.create`. The renderer attempts to load `sprites/atlas-manifest.json` and its referenced PNG through `AndroidSpriteAtlasLoader`, validates dimensions and frame bounds, then uploads the bitmap to GLES2. If the external manifest/PNG is not yet present or fails validation/decoding, the renderer logs the reason and builds the existing code-defined atlas as a fallback. The production art PNG and manifest still need to be authored and added to app assets.
+
+
+### Sprite quad geometry tests
+
+Quad vertex and UV emission is extracted into the platform-independent `SpriteQuadGeometry` helper. It writes two triangles into caller-owned buffers, avoiding per-sprite allocation. Unit tests cover vertex ordering, top-left atlas UV mapping and horizontal mirroring. Renderer batching continues to own buffer lifecycle and draw submission.
