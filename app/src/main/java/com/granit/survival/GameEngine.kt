@@ -448,8 +448,11 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val scale = if (length > 1f) 1f / length else 1f
         val effectiveSpeed = player.speed * needs.movementSpeedMultiplier *
             psychology.movementSpeedMultiplier * weatherMovementMultiplier
-        val stepX = moveX * scale * effectiveSpeed * delta
-        val stepY = moveY * scale * effectiveSpeed * delta
+        val autoStep = manualLength <= 0.08f && autoDirection != null
+        val stepX = if (autoStep) (autoDirection!!.first - player.x).coerceIn(-effectiveSpeed * delta, effectiveSpeed * delta)
+            else moveX * scale * effectiveSpeed * delta
+        val stepY = if (autoStep) (autoDirection!!.second - player.y).coerceIn(-effectiveSpeed * delta, effectiveSpeed * delta)
+            else moveY * scale * effectiveSpeed * delta
         isMoving = kotlin.math.abs(stepX) > 0.0001f || kotlin.math.abs(stepY) > 0.0001f
         if (isMoving) {
             player.facing = if (kotlin.math.abs(moveX) > kotlin.math.abs(moveY)) {
