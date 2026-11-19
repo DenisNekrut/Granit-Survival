@@ -30,6 +30,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
     val player = PlayerState()
     val equipment = PlayerEquipment()
+    val statistics = CharacterStatistics()
     private val zoneMaps = mutableMapOf<WorldZone, TileMap>()
     var tileMap = TileMap().also { zoneMaps[WorldZone.BUNKER] = it }
         private set
@@ -93,6 +94,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     }
 
     init {
+        statistics.visitZone(zone)
         // The initial safe state acts as the first wake-up checkpoint.
         checkpointSystem.capture(this)
     }
@@ -119,6 +121,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val sleptMinutes = worldClock.sleepUntilMorning()
         needs.sleep(sleptMinutes)
         psychology.sleep(sleptMinutes)
+        statistics.recordMinutes(sleptMinutes, WorldZone.BUNKER, worldClock.day)
         gameMinuteAccumulator = 0f
         if (needs.health <= 0f) {
             checkpointSystem.restore(this)
@@ -159,6 +162,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val book = BookCatalog.byId(bookId) ?: return false
         if (!bookLibrary.markRead(book.id)) return false
         if (!advanceGameMinutes(book.readMinutes)) return false
+        statistics.recordBookRead()
         psychology.applyReading(book.moraleGain, book.stressRelief)
         return true
     }
@@ -176,7 +180,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         check(inventory.add(recipe.output, recipe.outputAmount) == 0) {
             "Crafting output did not fit after ingredient validation"
         }
-        return advanceGameMinutes(recipe.craftMinutes)
+        if (!advanceGameMinutes(recipe.craftMinutes)) return false
+        statistics.recordCrafted(recipe.outputAmount)
+        return true
     }
 
     fun useBandage(): Boolean {
@@ -206,6 +212,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         }
         tileMap = targetMap
         equipment.onZoneChanged(previousZone, target)
+        if (target != previousZone) statistics.visitZone(target)
         lastDiscoveryTitle = null
         lastDiscoveryHudLabel = null
         player.x = target.spawnX
@@ -256,6 +263,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     private fun advanceGameMinutes(minutes: Int): Boolean {
         if (minutes <= 0) return true
         worldClock.advanceMinutes(minutes)
+        statistics.recordMinutes(minutes, zone, worldClock.day)
         needs.advanceAwake(minutes)
         psychology.advanceAwake(minutes, isMoving, zone)
         if (needs.health <= 0f) {
@@ -289,6 +297,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         radio = radioSystem.snapshot(),
         discoveredPoiIds = discoveredPoiIds.toSet(),
         equipment = equipment.snapshot(),
+        statistics = statistics.snapshot(),
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
@@ -296,6 +305,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         restoreZoneResources(snapshot.zoneResources)
         changeZone(snapshot.zone, regenerate = false)
         equipment.restore(snapshot.equipment)
+        statistics.restore(snapshot.statistics)
         restoreDiscoveredPointsOfInterest(snapshot.discoveredPoiIds)
         if (snapshot.zoneResources.isEmpty()) tileMap.restoreResources(snapshot.remainingResources)
         player.x = snapshot.player.x
@@ -319,6 +329,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     }
 
     private fun fixedUpdate(delta: Float, input: EngineInput) {
+        val previousX = player.x
+        val previousY = player.y
         val length = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
         val scale = if (length > 1f) 1f / length else 1f
         val effectiveSpeed = player.speed * needs.movementSpeedMultiplier *
@@ -339,6 +351,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
         val nextY = (player.y + stepY).coerceIn(0.8f, WORLD_HEIGHT - 0.8f)
         if (tileMap.isWalkable(player.x, nextY)) player.y = nextY
+        statistics.recordDistance(kotlin.math.hypot(player.x - previousX, player.y - previousY))
 
         scanNearbyPointsOfInterest()
 
@@ -348,6 +361,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         gameMinuteAccumulator += delta
         while (gameMinuteAccumulator >= GAME_MINUTE_REAL_SECONDS) {
             worldClock.advanceMinutes(1)
+            statistics.recordMinutes(1, zone, worldClock.day)
             needs.advanceAwake(1)
             psychology.advanceAwake(1, isMoving, zone)
             gameMinuteAccumulator -= GAME_MINUTE_REAL_SECONDS
@@ -368,6 +382,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             // Remove the world node only after the inventory accepted the item.
             if (inventory.add(resource.type, 1) == 0 && tileMap.collectResource(resource)) {
                 collectedResourceCount++
+                statistics.recordResourceCollected()
                 lastCollectedItem = resource.type
                 interactionCount++
                 advanceGameMinutes(RESOURCE_GATHER_MINUTES)
