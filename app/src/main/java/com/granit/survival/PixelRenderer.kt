@@ -6,6 +6,18 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 
+private data class WorldSpriteCommand(
+    val sortY: Float,
+    val sortOrder: Int,
+    val spriteId: String,
+    val centerX: Float,
+    val topY: Float,
+    val pixelSize: Float,
+    val frame: Int = 0,
+    val flipX: Boolean = false,
+    val contactShadow: Boolean = false
+)
+
 /** Small GLES2 renderer for flat, deliberately pixel-like scene geometry. */
 class PixelRenderer {
     private var program = 0
@@ -173,7 +185,7 @@ class PixelRenderer {
         engine.tileMap.forEachTile { tileX, tileY, type ->
             when (type) {
                 TileType.FLOOR -> drawFloorDetail(tileX, tileY, engine.zone)
-                TileType.WALL -> drawZoneWall(tileX, tileY, engine.zone)
+                TileType.WALL -> Unit
                 TileType.BED -> {
                     rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.31f, 0.25f, 0.18f)
                     rect(tileX + 0.08f, tileY + 0.12f, 0.84f, 0.18f, 0.43f, 0.35f, 0.23f)
@@ -223,9 +235,24 @@ class PixelRenderer {
             }
         }
 
-        // Furniture sprites use the shared pixel atlas for a consistent art style.
+        // Sort tall world sprites and the player by their ground-contact Y coordinate.
+        // This keeps the player behind objects to the south and in front of objects to the north.
+        val worldSprites = mutableListOf<WorldSpriteCommand>()
         engine.tileMap.forEachTile { tileX, tileY, type ->
-            val spriteId = when (type) {
+            val wallSprite = if (type == TileType.WALL) when (engine.zone) {
+                WorldZone.BUNKER -> "bunker_panel"
+                WorldZone.FOREST -> "tree"
+                WorldZone.RUINS -> "rubble"
+                WorldZone.ROAD -> "road_barrier"
+            } else null
+            if (wallSprite != null) {
+                worldSprites += WorldSpriteCommand(
+                    sortY = tileY + 1f, sortOrder = 0, spriteId = wallSprite,
+                    centerX = tileX + 0.5f, topY = tileY.toFloat(),
+                    pixelSize = 0.0625f, contactShadow = true
+                )
+            }
+            val furnitureSprite = when (type) {
                 TileType.BED -> "bed"
                 TileType.WORKBENCH -> "workbench"
                 TileType.STORAGE -> "storage"
@@ -233,18 +260,39 @@ class PixelRenderer {
                 TileType.RADIO -> "radio"
                 else -> null
             }
-            if (spriteId != null) drawAtlasSprite(spriteId, tileX + 0.5f, tileY + 0.12f, 0.052f)
+            if (furnitureSprite != null) {
+                worldSprites += WorldSpriteCommand(
+                    sortY = tileY + 1.07f, sortOrder = 0, spriteId = furnitureSprite,
+                    centerX = tileX + 0.5f, topY = tileY + 0.12f,
+                    pixelSize = 0.052f
+                )
+            }
         }
 
-        // Animated pixel-art character sprite selected from the logical atlas.
         val px = engine.player.x
         val py = engine.player.y
         val playerFrame = if (engine.isMoving) (engine.simulationTimeSeconds * 4.0).toInt() else 0
-        when (engine.player.facing) {
-            PlayerFacing.DOWN -> drawAtlasSprite("player", px, py - 0.48f, 0.06f, playerFrame)
-            PlayerFacing.UP -> drawAtlasSprite("player_back", px, py - 0.48f, 0.06f, playerFrame)
-            PlayerFacing.RIGHT -> drawAtlasSprite("player_side", px, py - 0.48f, 0.06f, playerFrame)
-            PlayerFacing.LEFT -> drawAtlasSprite("player_side", px, py - 0.48f, 0.06f, playerFrame, flipX = true)
+        val (playerSprite, playerFlipX) = when (engine.player.facing) {
+            PlayerFacing.DOWN -> "player" to false
+            PlayerFacing.UP -> "player_back" to false
+            PlayerFacing.RIGHT -> "player_side" to false
+            PlayerFacing.LEFT -> "player_side" to true
+        }
+        worldSprites += WorldSpriteCommand(
+            sortY = py + 0.48f, sortOrder = 1, spriteId = playerSprite,
+            centerX = px, topY = py - 0.48f, pixelSize = 0.06f,
+            frame = playerFrame, flipX = playerFlipX
+        )
+        worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
+        worldSprites.forEach { command ->
+            if (command.contactShadow) {
+                rect(command.centerX - 0.38f, command.topY + 0.82f, 0.76f, 0.08f,
+                    0.035f, 0.045f, 0.04f, 0.65f)
+            }
+            drawAtlasSprite(
+                command.spriteId, command.centerX, command.topY, command.pixelSize,
+                command.frame, command.flipX
+            )
         }
 
         // Screen-space HUD reads the live simulation values.
@@ -330,19 +378,6 @@ class PixelRenderer {
                 }
             }
         }
-    }
-
-    private fun drawZoneWall(x: Int, y: Int, zone: WorldZone) {
-        // Collision tiles double as visual anchors for zone-specific pixel props.
-        // The atlas sprites are transparent, so their silhouette integrates with the floor.
-        rect(x + 0.12f, y + 0.82f, 0.76f, 0.08f, 0.035f, 0.045f, 0.04f, 0.65f)
-        val spriteId = when (zone) {
-            WorldZone.BUNKER -> "bunker_panel"
-            WorldZone.FOREST -> "tree"
-            WorldZone.RUINS -> "rubble"
-            WorldZone.ROAD -> "road_barrier"
-        }
-        drawAtlasSprite(spriteId, x + 0.5f, y, 0.0625f)
     }
 
     private fun drawExitTile(x: Int, y: Int) {
