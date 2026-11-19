@@ -7,8 +7,8 @@ import org.junit.Test
 
 class MedicalStationTest {
     private fun placeAtMedicalStation(engine: GameEngine) {
-        engine.player.x = 5.5f
-        engine.player.y = 17.5f
+        engine.player.x = 2.5f
+        engine.player.y = 7.5f
     }
 
     @Test
