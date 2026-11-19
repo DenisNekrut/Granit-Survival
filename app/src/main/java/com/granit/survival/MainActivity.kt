@@ -459,8 +459,10 @@ class MainActivity : Activity() {
         val heightFraction = if (activeGame) 0.82f else 0.90f
         val maxWidth = dp(if (activeGame) 720 else 760)
         val maxHeight = dp(if (activeGame) 560 else 680)
-        val cardWidth = minOf(maxWidth, (availableWidth * widthFraction).toInt()).coerceAtLeast(dp(220))
-        val cardHeight = minOf(maxHeight, (availableHeight * heightFraction).toInt()).coerceAtLeast(dp(200))
+        val minimumWidth = minOf(dp(220), availableWidth)
+        val minimumHeight = minOf(dp(200), availableHeight)
+        val cardWidth = minOf(availableWidth, maxWidth, (availableWidth * widthFraction).toInt().coerceAtLeast(minimumWidth))
+        val cardHeight = minOf(availableHeight, maxHeight, (availableHeight * heightFraction).toInt().coerceAtLeast(minimumHeight))
         overlay.addView(card, FrameLayout.LayoutParams(cardWidth, cardHeight, Gravity.CENTER))
 
         if (root.childCount > 1) root.removeViews(1, root.childCount - 1)
