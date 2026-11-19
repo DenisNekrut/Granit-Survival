@@ -1,5 +1,8 @@
 package com.granit.survival
 
+import kotlin.math.abs
+import kotlin.random.Random
+
 enum class TileType {
     FLOOR, WALL, BED, WORKBENCH, STORAGE, BOOKSHELF, RADIO, EXIT,
     EXIT_TO_BUNKER, EXIT_TO_FOREST, EXIT_TO_RUINS, EXIT_TO_ROAD,
@@ -11,8 +14,10 @@ data class ResourceLocation(val x: Int, val y: Int, val type: ItemType)
 class TileMap(
     val width: Int = 40,
     val height: Int = 24,
-    val zone: WorldZone = WorldZone.BUNKER
+    val zone: WorldZone = WorldZone.BUNKER,
+    val seed: Long? = null
 ) {
+    val layoutSeed: Long? = seed
     private val tiles = Array(height) { Array(width) { TileType.FLOOR } }
 
     init {
@@ -24,6 +29,7 @@ class TileMap(
             WorldZone.RUINS -> buildRuins()
             WorldZone.ROAD -> buildRoad()
         }
+        if (seed != null && zone.isProcedurallyGenerated) buildProceduralLayout(seed)
     }
 
     private fun buildBunker() {
@@ -70,6 +76,56 @@ class TileMap(
         set(6, 7, TileType.RESOURCE_METAL); set(13, 17, TileType.RESOURCE_METAL)
         set(24, 5, TileType.RESOURCE_FABRIC); set(27, 16, TileType.RESOURCE_FOOD)
         set(34, 11, TileType.RESOURCE_WATER); set(15, 4, TileType.RESOURCE_WOOD)
+    }
+
+    /**
+     * Builds a deterministic expedition layout from a seed. A clear central corridor
+     * always connects the spawn to the exit; obstacles and resources vary around it.
+     */
+    private fun buildProceduralLayout(seed: Long) {
+        for (y in 1 until height - 1) for (x in 1 until width - 1) set(x, y, TileType.FLOOR)
+
+        val exitX = if (zone == WorldZone.RUINS) width - 2 else 1
+        set(exitX, height / 2, TileType.EXIT_TO_FOREST)
+
+        val random = Random(seed)
+        val spawnX = zone.spawnX.toInt()
+        val spawnY = zone.spawnY.toInt()
+        val reserved = height / 2 - 1..height / 2 + 1
+
+        fun validPlacement(x: Int, y: Int): Boolean {
+            if (x <= 1 || x >= width - 2 || y <= 1 || y >= height - 2) return false
+            if (y in reserved) return false
+            if (abs(x - spawnX) <= 3 && abs(y - spawnY) <= 3) return false
+            if (x == exitX && abs(y - height / 2) <= 2) return false
+            return get(x, y) == TileType.FLOOR
+        }
+
+        // Scattered cover and debris, deliberately kept away from the guaranteed route.
+        repeat(18) {
+            val x = random.nextInt(2, width - 2)
+            val y = random.nextInt(2, height - 2)
+            if (validPlacement(x, y)) set(x, y, TileType.WALL)
+        }
+
+        val resourceTiles = listOf(
+            TileType.RESOURCE_WOOD,
+            TileType.RESOURCE_METAL,
+            TileType.RESOURCE_FABRIC,
+            TileType.RESOURCE_FOOD,
+            TileType.RESOURCE_WATER
+        )
+        var placed = 0
+        var attempts = 0
+        while (placed < 18 && attempts < 240) {
+            attempts++
+            val x = random.nextInt(2, width - 2)
+            val y = random.nextInt(2, height - 2)
+            if (validPlacement(x, y)) {
+                set(x, y, resourceTiles[random.nextInt(resourceTiles.size)])
+                placed++
+            }
+        }
     }
 
     operator fun get(x: Int, y: Int): TileType =
