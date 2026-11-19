@@ -86,7 +86,7 @@ class BunkerPowerSystemTest {
         engine.player.x = 8.5f
         engine.player.y = 7.5f
         assertFalse(engine.canUseWorkbench())
-        engine.player.x = 7.5f
+        engine.player.x = 9.5f
         engine.player.y = 2.5f
         assertTrue(engine.canAccessBookshelf())
     }
