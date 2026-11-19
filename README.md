@@ -25,25 +25,25 @@
 - Dynamic outdoor lighting follows the in-game clock using smoothstep transitions: cold dark nights, gradual dawn, bright daytime, warm dusk and a smooth return to night. Unit tests cover every minute and adjacent-minute continuity.
 
 ### Bunker, knowledge and events
-- Main menu, pause menu with a prominent return-to-menu action, expedition journal, character statistics, save-slot manager and settings. Contextual station panels appear as compact in-game cards over the still-visible world instead of replacing the game screen; simulation and audio pause while a card is open.
-- Three manual save slots and a separate atomic autosave; JSON schema v8 reads older versions 1–7.
+- Main menu, pause menu with a prominent return-to-menu action, expedition journal, character statistics, save-slot manager and settings. Contextual station panels appear as compact in-game cards over the still-visible world instead of replacing the game screen; simulation and ambient audio continue while a card is open.
+- Three manual save slots and a separate atomic autosave; JSON schema v9 reads older versions 1–8.
 - Workbench recipes for bandage and medical kit; medical kit recipe unlocks after reading a technical manual.
 - Bunker library with fiction, science, technical manuals, diaries and magazines. Reading consumes game time and may affect morale/stress.
 - Bunker radio with one daily broadcast: weather, maintenance notes, archival broadcast or weak signal. Listening consumes 10 in-game minutes.
 - Six discoverable landmarks in forest, ruins and road. Full Russian descriptions are recorded in the expedition journal.
 - Read books, discovered landmarks, radio state, equipment and psychological indicators are included in save/checkpoint rollback.
 - Character statistics track survived days, expedition minutes, distance travelled, collected resources, crafted items, books read and visited zones; they are displayed in a dedicated screen and revert with the wake checkpoint.
-- A fictional non-lethal signal emitter is automatically drawn outside the bunker, holstered on return, and shown beside the character/HUD. A wider equipment/combat system is not yet implemented.
+- A fictional pulse carbine is automatically drawn outside the bunker, holstered on return, and shown beside the character/HUD. Its effect and hit rules are abstract game mechanics.
 - Psychological indicators: stress, loneliness, fatigue and morale. Sleep/return aid recovery; fatigue and stress gently reduce movement speed.
 
 ### Graphics and settings
 - PixelSpriteAtlas + GeneratedPixelSprites with original project artwork: 16×24 character frames in four directions (four walk frames per direction), plus 16×16 hatches, bunker furniture, control console, generator, medical station, trees, bushes, rubble, streetlamp and crate.
 - Distinct hatch artwork for bunker ladder entry and outdoor transitions; hatch sprites are used in the world renderer.
 - Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
-- Time-of-day lighting is applied to outdoor zones with smooth interpolation. In the bunker, ceiling fixtures are hidden; only warm floor/object light pools are visible, with darker unlit areas between them. Generator-linked power and emergency lighting are the next planned systems.
+- Time-of-day lighting is applied to outdoor zones with smooth interpolation. In the bunker, ceiling fixtures are hidden; only warm floor/object light pools are visible, with darker unlit areas between them. Generator-linked power, abstract fuel consumption and dim emergency lighting are implemented; the generator panel supports switching and refueling with wood.
 - Bunker is divided into connected bedroom, dining room, generator room, medical room, workshop and utility storage room; the bunker footprint is compact (34×20 tiles) while expedition zones remain 40×24. Each room has contextual access.
 - HUD displays live survival meters, day/time, current zone and weather.
-- Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored but still need integration.
+- Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored; further device-level tuning is still needed.
 
 ## Documentation
 - [Granit Engine architecture v2.0](docs/architecture/GRANIT_ENGINE_ARCHITECTURE.md)
@@ -53,7 +53,7 @@ The older Unity-oriented plan is retained for historical reference and is supers
 
 ## Remaining work
 
-This is still a playable prototype, not a finished game. The next work includes visual refinement of light falloff and shadows, a full art pass for remaining tiles, richer environment animations and visual QA on Android, richer procedural map variety and points of interest, a fully functional generator/medical/dining system, more recipes and bunker upgrades, richer weather/story events, NPCs and expedition objectives, a broader equipment system, and physical Android device testing.
+This is still a playable prototype, not a finished game. The next work includes visual refinement of light falloff and shadows, a full art pass for remaining tiles, richer environment animations and visual QA on Android, richer procedural map variety and points of interest, a expanded generator-powered stations, medical and dining systems, more recipes and bunker upgrades, richer weather/story events, NPCs and expedition objectives, a broader equipment system, and physical Android device testing.
 
 ## Downloading a test APK
 
