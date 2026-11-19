@@ -49,7 +49,7 @@ class CheckpointSystem {
     fun restore(engine: GameEngine): Boolean {
         val saved = checkpoint?.deepCopy() ?: return false
         engine.restoreZoneResources(saved.zoneResources)
-        engine.changeZone(saved.zone)
+        engine.changeZone(saved.zone, regenerate = false)
         if (saved.zoneResources.isEmpty()) engine.tileMap.restoreResources(saved.remainingResources)
         engine.player.x = saved.player.x
         engine.player.y = saved.player.y
