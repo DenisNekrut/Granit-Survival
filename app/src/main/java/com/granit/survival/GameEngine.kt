@@ -421,8 +421,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         } else if (zone == WorldZone.BUNKER) {
             idleSeconds += delta
             if (idleSeconds >= 15f && wanderTarget == null) {
-                val rooms = listOf(1.5f to 1.5f, 9.5f to 2.5f, 12.5f to 1.5f,
-                    1.5f to 6.5f, 9.5f to 6.5f, 12.5f to 7.5f)
+                val rooms = listOf(1.5f to 1.5f, 8.5f to 2.5f, 13.5f to 1.5f,
+                    1.5f to 6.5f, 8.5f to 6.5f, 13.5f to 7.5f)
                 var checked = 0
                 while (checked < rooms.size && wanderTarget == null) {
                     wanderRoomIndex = (wanderRoomIndex + 1) % rooms.size
