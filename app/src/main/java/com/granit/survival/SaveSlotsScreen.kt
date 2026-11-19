@@ -45,7 +45,7 @@ internal class SaveSlotsScreen(
                     val date = slot.savedAtMillis?.let {
                         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it))
                     } ?: ""
-                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time\\n$date"
+                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time\n$date"
                 }
             }
             row.addView(label(info, 14f, Color.WHITE, false))
