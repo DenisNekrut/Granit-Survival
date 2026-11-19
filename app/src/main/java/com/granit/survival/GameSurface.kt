@@ -148,8 +148,12 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
             Thread.currentThread().interrupt()
         }
         Log.i(TAG, "stopThread: joined ${thread.name}, alive=${thread.isAlive}")
-        renderThread = null
-        if (!thread.isAlive) session.engine.releaseInputState()
+        if (!thread.isAlive) {
+            renderThread = null
+            session.engine.releaseInputState()
+        } else {
+            Log.e(TAG, "render thread did not stop within timeout; keeping reference to prevent duplicate EGL threads")
+        }
         joystickPointerId = MotionEvent.INVALID_POINTER_ID
         actionPointerId = MotionEvent.INVALID_POINTER_ID
         firePointerId = MotionEvent.INVALID_POINTER_ID
