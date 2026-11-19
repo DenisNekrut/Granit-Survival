@@ -245,12 +245,70 @@ class MainActivity : Activity() {
     private fun enterGame() {
         pausedGame = false
         activeGame = true
-        root.removeViewAt(root.childCount - 1)
+        if (root.childCount > 1) root.removeViewAt(root.childCount - 1)
         gameSurface.visibility = View.VISIBLE
+        addBackpackButton()
         gameSurface.resumeEngine()
         val audioSettings = session.settings.load()
         session.audio.setVolumes(audioSettings.musicVolume, audioSettings.effectsVolume)
         session.audio.start()
+    }
+
+    private fun addBackpackButton() {
+        if (root.childCount > 1) root.removeViewAt(1)
+        val button = menuButton("🎒", action = { showBackpack() }).apply {
+            textSize = 23f
+            minWidth = dp(58)
+            minHeight = dp(54)
+            setPadding(dp(8), dp(2), dp(8), dp(2))
+            background = GradientDrawable().apply {
+                setColor(Color.argb(220, 28, 43, 39))
+                cornerRadius = dp(12).toFloat()
+                setStroke(dp(2), Color.rgb(170, 153, 111))
+            }
+        }
+        root.addView(button, FrameLayout.LayoutParams(dp(62), dp(58), Gravity.TOP or Gravity.END).apply {
+            topMargin = dp(14)
+            marginEnd = dp(14)
+        })
+    }
+
+    private fun showBackpack() {
+        val engine = session.engine
+        val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · 4 × 4 ячейки")
+        for (index in 0 until engine.inventory.columns * engine.inventory.rows) {
+            val stack = engine.inventory.slot(index)
+            if (stack == null) {
+                panel.addView(label("Ячейка " + (index + 1) + " · пусто", 12f, Color.rgb(126, 139, 132)))
+                continue
+            }
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(6), dp(3), dp(6), dp(3))
+            }
+            row.addView(label(stack.type.displayName + " × " + stack.quantity, 13f, Color.WHITE).apply {
+                gravity = Gravity.CENTER_VERTICAL
+            }, LinearLayout.LayoutParams(0, -2, 1f))
+            val useAction: (() -> Unit)? = when (stack.type) {
+                ItemType.CANNED_FOOD -> ({ if (session.consumeFood()) showBackpack() })
+                ItemType.WATER -> ({ if (session.drinkWater()) showBackpack() })
+                ItemType.BANDAGE -> ({ if (engine.useBandage()) showBackpack() })
+                ItemType.MEDICAL_KIT -> ({ if (engine.useMedicalKit()) showBackpack() })
+                else -> null
+            }
+            if (useAction != null) {
+                row.addView(menuButton("ИСПОЛЬЗОВАТЬ", enabled = when (stack.type) {
+                    ItemType.BANDAGE, ItemType.MEDICAL_KIT -> engine.needs.health < 100f
+                    else -> true
+                }) { useAction.invoke() }, LinearLayout.LayoutParams(dp(142), -2))
+            } else {
+                row.addView(label("ПАССИВНЫЙ ПРЕДМЕТ", 10f, Color.rgb(145, 160, 149)))
+            }
+            panel.addView(row)
+        }
+        panel.addView(menuButton("ЗАКРЫТЬ РЮКЗАК") { enterGame() })
+        showOverlay(panel)
     }
 
     private fun showPauseMenu() {
@@ -585,8 +643,8 @@ class MainActivity : Activity() {
             // The simulation and ambient audio continue while the interaction card is open.
             // The interaction card is a compact HUD layer, not a replacement screen.
             overlay.setBackgroundColor(Color.argb(72, 3, 9, 10))
-            val cardWidth = minOf(dp(430), (resources.displayMetrics.widthPixels * 0.42f).toInt())
-            val cardHeight = minOf(dp(560), (resources.displayMetrics.heightPixels * 0.82f).toInt())
+            val cardWidth = minOf(dp(520), (resources.displayMetrics.widthPixels * 0.58f).toInt())
+            val cardHeight = minOf(dp(680), (resources.displayMetrics.heightPixels * 0.90f).toInt())
             overlay.addView(scroll, FrameLayout.LayoutParams(cardWidth, cardHeight, Gravity.CENTER))
         } else {
             overlay.setBackgroundColor(Color.rgb(8, 14, 15))
