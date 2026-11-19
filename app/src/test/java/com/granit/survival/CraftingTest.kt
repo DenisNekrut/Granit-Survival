@@ -29,6 +29,8 @@ class CraftingTest {
         assertEquals(0, engine.inventory.count(ItemType.METAL))
         assertEquals(1, engine.inventory.count(ItemType.MEDICAL_KIT))
         assertEquals(startTime + 15, engine.worldClock.totalMinutes)
+        assertEquals(1, engine.statistics.snapshot().booksRead)
+        assertEquals(1, engine.statistics.snapshot().itemsCrafted)
     }
 
     @Test
