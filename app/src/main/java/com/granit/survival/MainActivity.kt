@@ -373,7 +373,7 @@ class MainActivity : Activity() {
                 } else Toast.makeText(this, "Не удалось прочитать книгу", Toast.LENGTH_SHORT).show()
             })
         }
-        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
         showOverlay(panel)
     }
 
@@ -390,7 +390,7 @@ class MainActivity : Activity() {
                 } else Toast.makeText(this, "Не хватает материалов или места", Toast.LENGTH_SHORT).show()
             })
         }
-        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
         showOverlay(panel)
     }
 
@@ -411,7 +411,7 @@ class MainActivity : Activity() {
             }, weightedParams())
             panel.addView(row)
         }
-        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
         showOverlay(panel)
     }
 
