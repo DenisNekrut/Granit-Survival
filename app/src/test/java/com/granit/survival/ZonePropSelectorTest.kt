@@ -18,7 +18,7 @@ class ZonePropSelectorTest {
     }
 
     @Test
-    fun eachZoneHasA variedSparseDecorationSet() {
+    fun eachZoneHasAVariedSparseDecorationSet() {
         val expected = mapOf(
             WorldZone.BUNKER to setOf("crate"),
             WorldZone.FOREST to setOf("bush", "tree"),
