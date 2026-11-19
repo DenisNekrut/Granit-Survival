@@ -27,6 +27,22 @@ class GameEngineInteractionTest {
     }
 
     @Test
+    fun interactionCanBeTriggeredAgainAfterTheSurfaceReleasesInput() {
+        val engine = GameEngine()
+        engine.player.x = 7.5f
+        engine.player.y = 8.5f
+        engine.updateFrame(1f / 60f, EngineInput(interact = true))
+        assertEquals(1, engine.inventory.count(ItemType.WOOD))
+
+        engine.releaseInputState()
+        engine.player.x = 12.5f
+        engine.player.y = 8.5f
+        engine.updateFrame(1f / 60f, EngineInput(interact = true))
+
+        assertEquals(1, engine.inventory.count(ItemType.METAL))
+    }
+
+    @Test
     fun storageCanOnlyBeUsedNearbyAndTransfersItemsSafely() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.WOOD, 6)
