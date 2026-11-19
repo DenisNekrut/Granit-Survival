@@ -6,6 +6,15 @@ import org.junit.Test
 
 class WorldZoneTest {
     @Test
+    fun bunkerUsesCompactDimensionsAndCenteredExit() {
+        val engine = GameEngine()
+        assertEquals(34, engine.tileMap.width)
+        assertEquals(20, engine.tileMap.height)
+        assertEquals(TileType.EXIT_TO_FOREST, engine.tileMap[17, 1])
+        assertEquals(17.5f, engine.tileMap.spawnBesideExit(TileType.EXIT_TO_FOREST)!!.first, 0.01f)
+    }
+
+    @Test
     fun bunkerHasFiveRoomsWithReachableEquipmentStations() {
         val engine = GameEngine()
         val types = mutableSetOf<TileType>()
