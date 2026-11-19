@@ -6,6 +6,27 @@ import org.junit.Test
 
 class GameSaveSnapshotTest {
     @Test
+    fun saveSnapshotRestoresEquipmentAndCharacterStatistics() {
+        val original = GameEngine { 808L }
+        original.changeZone(WorldZone.RUINS)
+        original.statistics.recordMinutes(75, WorldZone.RUINS, 2)
+        original.statistics.recordDistance(42.5f)
+        original.statistics.recordResourceCollected(6)
+        original.statistics.recordCrafted(2)
+        original.statistics.recordBookRead()
+        val expectedStatistics = original.statistics.snapshot()
+        val expectedEquipment = original.equipment.snapshot()
+        val snapshot = original.createSaveSnapshot()
+
+        val restored = GameEngine { 909L }
+        restored.restoreSaveSnapshot(snapshot)
+
+        assertEquals(expectedEquipment, restored.equipment.snapshot())
+        assertEquals(expectedStatistics, restored.statistics.snapshot())
+        assertEquals(808L, restored.tileMap.layoutSeed)
+    }
+
+    @Test
     fun restoringSnapshotReturnsCurrentStateAndWakeCheckpoint() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.WOOD, 4)
