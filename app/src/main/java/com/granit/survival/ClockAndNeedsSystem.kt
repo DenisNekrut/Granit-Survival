@@ -18,12 +18,14 @@ internal class ClockAndNeedsSystem(
         onDeath: () -> Unit
     ): Boolean {
         if (minutes <= 0) return true
-        repeat(minutes) {
-            advanceOneMinute(zone, isMoving)
-            if (needs.health <= 0f) {
-                onDeath()
-                return false
-            }
+        clock.advanceMinutes(minutes)
+        bunkerPower.advanceMinutes(minutes)
+        statistics.recordMinutes(minutes, zone, clock.day)
+        needs.advanceAwake(minutes)
+        psychology.advanceAwake(minutes, isMoving, zone)
+        if (needs.health <= 0f) {
+            onDeath()
+            return false
         }
         return true
     }
