@@ -1,6 +1,7 @@
 package com.granit.survival
 
 import android.content.Context
+import android.graphics.PixelFormat
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -8,12 +9,17 @@ import android.view.SurfaceView
 class GameSurface(context: Context, private val session: GameSession) : SurfaceView(context), SurfaceHolder.Callback {
     @Volatile private var renderThread: EngineRenderThread? = null
     @Volatile private var resumed = false
-    @Volatile private var surfaceWidth = 1
-    @Volatile private var surfaceHeight = 1
+    @Volatile private var surfaceWidth = 0
+    @Volatile private var surfaceHeight = 0
+    @Volatile private var surfaceReady = false
     private var joystickPointerId: Int = MotionEvent.INVALID_POINTER_ID
     private var actionPointerId: Int = MotionEvent.INVALID_POINTER_ID
 
     init {
+        // Match the RGBA_8888 EGL config selected by EngineRenderThread.
+        // Without an explicit native-window format, some Android devices reject or
+        // silently fail to present the GLES surface after entering a new session.
+        holder.setFormat(PixelFormat.RGBA_8888)
         holder.addCallback(this)
         isFocusable = true
         isFocusableInTouchMode = true
@@ -42,10 +48,13 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         surfaceWidth = width.coerceAtLeast(1)
         surfaceHeight = height.coerceAtLeast(1)
+        surfaceReady = true
         renderThread?.setViewport(surfaceWidth, surfaceHeight)
+        startIfReady()
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
+        surfaceReady = false
         stopThread()
     }
 
@@ -90,7 +99,8 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
 
     @Synchronized
     private fun startIfReady() {
-        if (!resumed || !holder.surface.isValid || renderThread?.isAlive == true) return
+        if (!resumed || !surfaceReady || surfaceWidth <= 1 || surfaceHeight <= 1 ||
+            !holder.surface.isValid || renderThread?.isAlive == true) return
         val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight, session, context.applicationContext)
         renderThread = thread
         thread.start()
