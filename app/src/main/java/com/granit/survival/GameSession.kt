@@ -41,10 +41,17 @@ class GameSession(context: Context) {
 
     fun loadMostRecent(): Boolean {
         lastLoadError = null
-        val candidate = saves.listSlots()
+        val slots = saves.listSlots()
+        val candidate = slots
             .filter { it.exists && !it.corrupted && it.savedAtMillis != null }
             .maxByOrNull { it.savedAtMillis ?: 0L }
+        if (candidate == null && slots.any { it.exists && it.corrupted }) {
+            lastLoadError = "Файл сохранения повреждён. Открой список слотов и проверьте его."
+        }
         val autoTimestamp = saves.autoSaveTimestamp()
+        if (autoTimestamp == null && saves.hasAutoSaveFile() && lastLoadError == null) {
+            lastLoadError = "Файл автосохранения повреждён или не читается."
+        }
         if (autoTimestamp != null && autoTimestamp > (candidate?.savedAtMillis ?: 0L)) {
             try {
                 if (saves.loadAuto(engine)) return true
