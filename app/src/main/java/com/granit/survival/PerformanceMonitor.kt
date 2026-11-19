@@ -51,7 +51,7 @@ class PerformanceMonitor(private val windowCapacity: Int = 120) {
         javaHeapUsedBytes: Long,
         javaHeapMaxBytes: Long,
         nativeHeapAllocatedBytes: Long,
-        pssKilobytes: Int
+        pssKilobytes: Long
     ): PerformanceSnapshot? {
         if (totalFrames == 0L || sampleCount == 0 || windowDurationNanos <= 0L) return null
         val sorted = frameTimesNanos.copyOf(sampleCount).sortedArray()
