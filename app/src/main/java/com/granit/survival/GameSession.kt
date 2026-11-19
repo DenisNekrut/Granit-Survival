@@ -36,14 +36,29 @@ class GameSession(context: Context) {
 
     fun drinkWater(): Boolean = engine.drinkWater()
 
+    var lastLoadError: String? = null
+        private set
+
     fun loadMostRecent(): Boolean {
+        lastLoadError = null
         val candidate = saves.listSlots()
             .filter { it.exists && !it.corrupted && it.savedAtMillis != null }
             .maxByOrNull { it.savedAtMillis ?: 0L }
         val autoTimestamp = saves.autoSaveTimestamp()
         if (autoTimestamp != null && autoTimestamp > (candidate?.savedAtMillis ?: 0L)) {
-            if (runCatching { saves.loadAuto(engine) }.getOrDefault(false)) return true
+            try {
+                if (saves.loadAuto(engine)) return true
+            } catch (failure: Exception) {
+                lastLoadError = failure.message ?: "Не удалось загрузить автосохранение"
+            }
         }
-        return candidate?.let { runCatching { loadSlot(it.slot) }.getOrDefault(false) } ?: false
+        if (candidate != null) {
+            try {
+                return loadSlot(candidate.slot)
+            } catch (failure: Exception) {
+                lastLoadError = failure.message ?: "Не удалось загрузить слот ${candidate.slot}"
+            }
+        }
+        return false
     }
 }
