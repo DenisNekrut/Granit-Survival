@@ -29,14 +29,14 @@ class GameEngineInteractionTest {
     @Test
     fun interactionCanBeTriggeredAgainAfterTheSurfaceReleasesInput() {
         val engine = GameEngine()
-        engine.player.x = 3.5f
-        engine.player.y = 3.5f
+        engine.player.x = 2.5f
+        engine.player.y = 8.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(1, engine.inventory.count(ItemType.WOOD))
 
         engine.releaseInputState()
         engine.player.x = 4.5f
-        engine.player.y = 3.5f
+        engine.player.y = 7.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
 
         assertEquals(1, engine.inventory.count(ItemType.METAL))
@@ -45,8 +45,8 @@ class GameEngineInteractionTest {
     @Test
     fun characterStatisticsTrackCollectionMovementTimeAndVisitedZones() {
         val engine = GameEngine()
-        engine.player.x = 3.5f
-        engine.player.y = 3.5f
+        engine.player.x = 2.5f
+        engine.player.y = 8.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(1, engine.statistics.snapshot().resourcesCollected)
 
@@ -68,8 +68,8 @@ class GameEngineInteractionTest {
         assertFalse(engine.canAccessStorage())
         assertFalse(engine.transferToStorage(ItemType.WOOD))
 
-        engine.player.x = 14.5f
-        engine.player.y = 7.5f
+        engine.player.x = 13.5f
+        engine.player.y = 6.5f
         assertTrue(engine.canAccessStorage())
         assertTrue(engine.transferToStorage(ItemType.WOOD))
         assertEquals(0, engine.inventory.count(ItemType.WOOD))
@@ -82,15 +82,15 @@ class GameEngineInteractionTest {
         assertFalse(engine.canSleep())
 
         engine.player.x = 2.5f
-        engine.player.y = 3.5f
+        engine.player.y = 2.5f
         assertTrue(engine.canSleep())
     }
 
     @Test
     fun collectingResourcesAndChangingZonesConsumeGameTime() {
         val engine = GameEngine()
-        engine.player.x = 3.5f
-        engine.player.y = 3.5f
+        engine.player.x = 2.5f
+        engine.player.y = 8.5f
         val start = engine.worldClock.totalMinutes
 
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
@@ -139,9 +139,9 @@ class GameEngineInteractionTest {
     @Test
     fun craftedItemsCannotBeCollectedAsWorldResourceNodes() {
         val map = TileMap()
-        assertFalse(map.collectResource(ResourceLocation(3, 3, ItemType.MEDICAL_KIT)))
-        assertFalse(map.collectResource(ResourceLocation(3, 3, ItemType.BANDAGE)))
-        assertEquals(TileType.RESOURCE_WOOD, map[3, 3])
+        assertFalse(map.collectResource(ResourceLocation(2, 8, ItemType.MEDICAL_KIT)))
+        assertFalse(map.collectResource(ResourceLocation(2, 8, ItemType.BANDAGE)))
+        assertEquals(TileType.RESOURCE_WOOD, map[2, 8])
     }
 
     @Test
