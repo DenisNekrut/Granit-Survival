@@ -11,14 +11,16 @@ class GameSettingsTest {
             effectsVolume = -0.2f,
             joystickSensitivity = 3f,
             joystickScale = 0.1f,
-            controlsOpacity = 2f,\n            displayScale = 1.8f
+            controlsOpacity = 2f,
+            displayScale = 1.8f
         ).normalized()
 
         assertEquals(1f, settings.musicVolume, 0.001f)
         assertEquals(0f, settings.effectsVolume, 0.001f)
         assertEquals(2f, settings.joystickSensitivity, 0.001f)
         assertEquals(0.8f, settings.joystickScale, 0.001f)
-        assertEquals(1f, settings.controlsOpacity, 0.001f)\n        assertEquals(1.2f, settings.displayScale, 0.001f)
+        assertEquals(1f, settings.controlsOpacity, 0.001f)
+        assertEquals(1.2f, settings.displayScale, 0.001f)
     }
 
     @Test
@@ -26,6 +28,7 @@ class GameSettingsTest {
         val settings = GameSettings().normalized()
         assertEquals(0.7f, settings.musicVolume, 0.001f)
         assertEquals(GraphicsQuality.MEDIUM, settings.graphicsQuality)
-        assertEquals(true, settings.vibrationEnabled)\n        assertEquals(1f, settings.displayScale, 0.001f)
+        assertEquals(true, settings.vibrationEnabled)
+        assertEquals(1f, settings.displayScale, 0.001f)
     }
 }
