@@ -92,7 +92,8 @@ class EngineRenderThread(
             session.audio.setVolumes(gameSettings.musicVolume, gameSettings.effectsVolume)
             renderer.resize(viewportWidth, viewportHeight, gameSettings.displayScale)
             val fixedFrameDelayNanos = 16_000_000L
-            var previousFrame = System.nanoTime()\n            var wasInteracting = false
+            var previousFrame = System.nanoTime()
+            var wasInteracting = false
 
             while (running.get() && surfaceHolder.surface.isValid) {
                 val frameStart = System.nanoTime()
@@ -120,7 +121,11 @@ class EngineRenderThread(
                     EngineInput()
                 }
 
-                engine.updateFrame(deltaSeconds, input.copy(interact = interacting))\n                if (interacting && !wasInteracting) session.audio.playAction()\n                wasInteracting = interacting\n                session.audio.setMoving(engine.isMoving)\n                renderer?.render(
+                engine.updateFrame(deltaSeconds, input.copy(interact = interacting))
+                if (interacting && !wasInteracting) session.audio.playAction()
+                wasInteracting = interacting
+                session.audio.setMoving(engine.isMoving)
+                renderer?.render(
                     engine, touchX, touchY, active, interacting,
                     controlsOpacity = gameSettings.controlsOpacity,
                     joystickScale = gameSettings.joystickScale
