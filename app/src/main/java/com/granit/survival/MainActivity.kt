@@ -300,8 +300,7 @@ class MainActivity : Activity() {
                 else -> {
                     val time = "%02d:%02d".format(slot.hour ?: 0, slot.minute ?: 0)
                     val date = slot.savedAtMillis?.let { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it)) } ?: ""
-                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time
-$date"
+                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time\\n$date"
                 }
             }
             row.addView(label(info, 14f, Color.WHITE))
