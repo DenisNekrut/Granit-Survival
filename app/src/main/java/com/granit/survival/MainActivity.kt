@@ -105,6 +105,22 @@ class MainActivity : Activity() {
                 showPauseMenu()
                 showBookLibrary()
             }
+            engine.canAccessDiningTable() -> {
+                showPauseMenu()
+                Toast.makeText(this, "Столовая: еда и вода доступны в меню паузы.", Toast.LENGTH_SHORT).show()
+            }
+            engine.canAccessMedicalStation() -> {
+                showPauseMenu()
+                Toast.makeText(this, "Медчасть: используй бинт или аптечку в меню паузы.", Toast.LENGTH_SHORT).show()
+            }
+            engine.canAccessGenerator() -> {
+                showPauseMenu()
+                AlertDialog.Builder(this)
+                    .setTitle("ГЕНЕРАТОРНАЯ")
+                    .setMessage("Энергосистема убежища исправна. Управление питанием и ремонт генератора будут добавлены отдельным этапом.")
+                    .setPositiveButton("ПОНЯТНО") { _, _ -> showPauseMenu() }
+                    .show()
+            }
             engine.zone == WorldZone.BUNKER &&
                 engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f) -> {
                 showPauseMenu()
