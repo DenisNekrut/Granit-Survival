@@ -484,8 +484,10 @@ class PixelRenderer {
 
     private fun drawBunkerFloor(x: Int, y: Int) {
         // Individual materials for all six rooms; corridors use dark steel.
+        val corridor = (y == 4 && x in setOf(2, 8, 14)) ||
+            (x == 5 && y in setOf(2, 7)) || (x == 11 && y in setOf(2, 7))
         val (r, g, b) = when {
-            x == 8 || y == 4 -> Triple(0.12f, 0.15f, 0.15f)
+            corridor -> Triple(0.12f, 0.15f, 0.15f)
             y < 4 && x < 5 -> Triple(0.20f, 0.24f, 0.27f)
             y < 4 && x < 11 -> Triple(0.29f, 0.25f, 0.18f)
             y < 4 -> Triple(0.22f, 0.25f, 0.19f)
@@ -494,7 +496,7 @@ class PixelRenderer {
             else -> Triple(0.28f, 0.22f, 0.16f)
         }
         rect(x + 0.02f, y + 0.02f, 0.96f, 0.96f, r, g, b)
-        val seam = if (y == 4 || x == 8) 0.08f else 0.12f
+        val seam = if (corridor) 0.08f else 0.12f
         if ((x + y) % 2 == 0) rect(x + 0.12f, y + 0.88f, 0.76f, 0.025f, seam, seam + 0.015f, seam + 0.01f)
         if ((x * 3 + y * 5) % 11 == 0) rect(x + 0.22f, y + 0.28f, 0.12f, 0.06f, r + 0.045f, g + 0.04f, b + 0.035f)
     }
