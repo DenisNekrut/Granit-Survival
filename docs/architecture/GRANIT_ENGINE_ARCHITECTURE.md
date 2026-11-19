@@ -215,3 +215,8 @@ Current limitation: the GPU path is live, but the atlas source is generated from
 ### Textured sprite batching update
 
 Consecutive textured quads from the active atlas are now accumulated in reusable position and UV buffers and submitted together with one `glDrawArrays`. The renderer flushes pending flat geometry before adding textured quads, and flushes pending textured quads before appending flat geometry. This boundary-based approach preserves painter's order for overlapping scene objects. It batches only adjacent textured draws; interleaved flat geometry intentionally splits batches.
+
+
+### External atlas runtime selection
+
+At renderer initialization, the EGL render thread passes the Android `AssetManager` to `PixelRenderer.create`. The renderer attempts to load `sprites/atlas-manifest.json` and its referenced PNG through `AndroidSpriteAtlasLoader`, validates dimensions and frame bounds, then uploads the bitmap to GLES2. If the external manifest/PNG is not yet present or fails validation/decoding, the renderer logs the reason and builds the existing code-defined atlas as a fallback. The production art PNG and manifest still need to be authored and added to app assets.
