@@ -405,6 +405,9 @@ class PixelRenderer {
         GLES20.glDisableVertexAttribArray(texturePositionLocation)
         GLES20.glDisableVertexAttribArray(textureUvLocation)
         GLES20.glUseProgram(program)
+        // Texture and flat programs may reuse the same attribute indices.
+        GLES20.glEnableVertexAttribArray(positionLocation)
+        GLES20.glEnableVertexAttribArray(vertexColorLocation)
     }
 
     private fun drawPixelSprite(
