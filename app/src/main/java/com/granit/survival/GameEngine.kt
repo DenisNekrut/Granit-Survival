@@ -111,6 +111,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
     init {
         statistics.visitZone(zone)
+        camera.snapTo(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         // The initial safe state acts as the first wake-up checkpoint.
         checkpointSystem.capture(this)
     }
@@ -278,7 +279,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             ?.let(tileMap::spawnBesideExit)
         player.x = arrival?.first ?: target.spawnX
         player.y = arrival?.second ?: target.spawnY
-        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+        camera.snapTo(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         zombies.clear()
         zombies += CombatSystem.spawn(target, tileMap, player.x, player.y)
         pulseCooldownSeconds = 0f
@@ -387,7 +388,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         worldClock.restore(snapshot.clock)
         tileMap.restoreResources(snapshot.remainingResources)
         checkpointSystem.restoreSnapshot(snapshot.wakeCheckpoint)
-        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+        camera.snapTo(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         accumulator = 0f
         gameMinuteAccumulator = 0f
         wasInteracting = false
@@ -488,7 +489,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
                 break
             }
         }
-        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat(), delta)
         simulationTimeSeconds += delta.toDouble()
     }
 
