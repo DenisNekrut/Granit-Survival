@@ -454,11 +454,11 @@ class MainActivity : Activity() {
             val costs = recipe.ingredients.entries.joinToString(" · ") { entry -> entry.key.displayName + ": " + entry.value }
             panel.addView(label(recipe.title + " — " + recipe.output.displayName, 16f, Color.WHITE))
             panel.addView(label("Материалы: " + costs + " · Время: " + recipe.craftMinutes + " мин.", 13f, Color.LTGRAY))
-            panel.addView(menuButton("СОЗДАТЬ", enabled = session.engine.canCraft(recipe.id)) {
+            panel.addView(menuButton("СОЗДАТЬ", enabled = session.engine.canUseWorkbench() && session.engine.canCraft(recipe.id)) {
                 if (session.engine.craft(recipe.id)) {
                     Toast.makeText(this, recipe.title + ": готово", Toast.LENGTH_SHORT).show()
                     showCrafting()
-                } else Toast.makeText(this, "Не хватает материалов или места", Toast.LENGTH_SHORT).show()
+                } else Toast.makeText(this, if (!session.engine.bunkerPower.hasPower) "Нет питания: запустите генератор" else "Не хватает материалов или места", Toast.LENGTH_SHORT).show()
             })
         }
         panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
