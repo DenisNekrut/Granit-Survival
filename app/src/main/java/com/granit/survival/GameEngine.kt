@@ -442,10 +442,12 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
         when (tileMap.nearestInteractable(player.x, player.y, 1.35f)) {
             TileType.STORAGE -> {
+                var transferred = false
                 ItemType.values().forEach { type ->
                     val amount = inventory.count(type)
-                    if (amount > 0) bunkerStorage.deposit(inventory, type, amount)
+                    if (amount > 0 && bunkerStorage.deposit(inventory, type, amount)) transferred = true
                 }
+                if (transferred) advanceGameMinutes(1)
                 interactionCount++
             }
             TileType.EXIT_TO_BUNKER -> { travelToZone(WorldZone.BUNKER); interactionCount++ }
