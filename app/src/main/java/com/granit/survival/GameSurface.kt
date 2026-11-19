@@ -1,6 +1,8 @@
 package com.granit.survival
 
 import android.content.Context
+import android.graphics.PixelFormat
+import android.util.Log
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -14,6 +16,10 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     private var actionPointerId: Int = MotionEvent.INVALID_POINTER_ID
 
     init {
+        // Match the RGBA_8888 EGL config requested by EngineRenderThread.
+        // Without an explicit native Surface format, eglCreateWindowSurface may fail on devices
+        // whose SurfaceView default format does not match the selected EGLConfig.
+        holder.setFormat(PixelFormat.RGBA_8888)
         holder.addCallback(this)
         isFocusable = true
         isFocusableInTouchMode = true
@@ -36,6 +42,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        Log.i("GranitSurface", "Surface created: ${holder.surface.isValid}")
         startIfReady()
     }
 
@@ -105,7 +112,9 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
-        renderThread = null
+        // Do not lose the reference if EGL shutdown is still in progress; this prevents
+        // starting a second render thread against the same native Surface.
+        renderThread = thread.takeIf { it.isAlive }
         joystickPointerId = MotionEvent.INVALID_POINTER_ID
         actionPointerId = MotionEvent.INVALID_POINTER_ID
     }
