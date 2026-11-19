@@ -235,10 +235,23 @@ class PixelRenderer {
                 else -> null
             }
             if (furnitureSprite != null) {
+                // Snap the sprite's visible edge to the nearest adjacent wall, not just its tile center.
+                val furniturePixelSize = 0.052f
+                val furnitureExtent = 16f * furniturePixelSize
+                val anchoredX = when {
+                    engine.tileMap[tileX - 1, tileY] == TileType.WALL -> tileX + furnitureExtent * 0.5f
+                    engine.tileMap[tileX + 1, tileY] == TileType.WALL -> tileX + 1f - furnitureExtent * 0.5f
+                    else -> tileX + 0.5f
+                }
+                val anchoredTopY = when {
+                    engine.tileMap[tileX, tileY - 1] == TileType.WALL -> tileY.toFloat()
+                    engine.tileMap[tileX, tileY + 1] == TileType.WALL -> tileY + 1f - furnitureExtent
+                    else -> tileY + (1f - furnitureExtent) * 0.5f
+                }
                 worldSprites += WorldSpriteCommand(
                     sortY = tileY + 1.07f, sortOrder = 0, spriteId = furnitureSprite,
-                    centerX = tileX + 0.5f, topY = tileY + 0.12f,
-                    pixelSize = 0.052f
+                    centerX = anchoredX, topY = anchoredTopY,
+                    pixelSize = furniturePixelSize
                 )
             }
 
