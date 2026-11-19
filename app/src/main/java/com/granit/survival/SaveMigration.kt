@@ -14,7 +14,8 @@ internal object SaveMigration {
             "Unsupported save version: $version (current ${SaveVersion.CURRENT})"
         }
         val root = JSONObject(source.toString())
-        val state = root.optJSONObject("state") ?: JSONObject()
+        val state = root.optJSONObject("state")
+            ?: throw IllegalArgumentException("Save is missing its state object")
         normalizeSnapshot(state)
         root.put("state", state)
         root.put("saveVersion", SaveVersion.CURRENT)
@@ -57,7 +58,7 @@ internal object SaveMigration {
         if (state.optJSONObject("equipment") == null) state.put("equipment", JSONObject())
         if (state.optJSONObject("statistics") == null) state.put("statistics", JSONObject())
         if (state.optJSONObject("bunkerPower") == null) state.put("bunkerPower", JSONObject())
-        if (state.optJSONArray("zoneResources") == null) state.put("zoneResources", JSONArray())
+        state.put("zoneResources", validZoneResources(state.optJSONArray("zoneResources")))
         if (state.optJSONArray("discoveredPoiIds") == null) state.put("discoveredPoiIds", JSONArray())
 
         val checkpoint = state.optJSONObject("wakeCheckpoint")
@@ -100,6 +101,27 @@ internal object SaveMigration {
             if (validType && x != Int.MIN_VALUE && y != Int.MIN_VALUE) {
                 result.put(JSONObject().put("x", x).put("y", y).put("type", type))
             }
+        }
+        return result
+    }
+
+
+    private fun validZoneResources(source: JSONArray?): JSONArray {
+        val result = JSONArray()
+        if (source == null) return result
+        for (index in 0 until source.length()) {
+            val entry = source.optJSONObject(index) ?: continue
+            val zone = entry.optString("zone")
+            if (runCatching { WorldZone.valueOf(zone) }.isFailure) continue
+            val normalized = JSONObject()
+                .put("zone", zone)
+                .put("resources", validResources(entry.optJSONArray("resources")))
+            if (!entry.isNull("seed") && entry.has("seed")) {
+                normalized.put("seed", entry.optLong("seed"))
+            } else {
+                normalized.put("seed", JSONObject.NULL)
+            }
+            result.put(normalized)
         }
         return result
     }
