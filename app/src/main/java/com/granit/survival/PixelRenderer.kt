@@ -305,7 +305,17 @@ class PixelRenderer {
         // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
         drawWorldLighting(engine, bunkerLamps)
 
-        // A small abstract signal emitter is shown in the character's hand while outside.
+        // Bright cyan pulse trace is a deliberately fictional energy effect.
+        if (firing && engine.equipment.weaponDrawn) {
+            when (engine.player.facing) {
+                PlayerFacing.DOWN -> rect(px - 0.045f, py + 0.28f, 0.09f, 3.6f, 0.16f, 0.78f, 0.88f, 0.52f)
+                PlayerFacing.UP -> rect(px - 0.045f, py - 3.75f, 0.09f, 3.6f, 0.16f, 0.78f, 0.88f, 0.52f)
+                PlayerFacing.RIGHT -> rect(px + 0.28f, py - 0.045f, 3.6f, 0.09f, 0.16f, 0.78f, 0.88f, 0.52f)
+                PlayerFacing.LEFT -> rect(px - 3.88f, py - 0.045f, 3.6f, 0.09f, 0.16f, 0.78f, 0.88f, 0.52f)
+            }
+        }
+
+        // The pulse carbine is shown as a compact cyan device while outside.
         if (engine.equipment.weaponDrawn) {
             when (engine.player.facing) {
                 PlayerFacing.DOWN -> {
