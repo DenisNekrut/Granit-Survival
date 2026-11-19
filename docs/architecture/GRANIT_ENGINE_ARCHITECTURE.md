@@ -201,3 +201,12 @@
 - Пример формата находится в `app/src/main/assets/sprites/atlas-manifest.example.json`.
 
 Следующая часть должна выполняться в render thread: загрузка Bitmap в GLES2 texture, nearest/linear sampler, textured shader, UV batching и повторная загрузка после потери EGL context. До реализации этой части `PixelSpriteAtlas` остаётся действующим процедурным fallback; пример manifest не является готовым игровым PNG-атласом.
+
+
+## GLES2 textured sprite rendering (2026-11-19)
+
+`PixelRenderer` now owns two shader programs: the original flat-color shader and a textured shader using position, UV and `sampler2D`. `PixelSpriteTextureAtlas` packs the existing pixel-art definitions into a transparent RGBA bitmap and produces a matching `SpriteAtlasManifest`. The bitmap is uploaded on the EGL render thread through `GlesTexture` with nearest-neighbour sampling.
+
+Atlas sprite calls resolve their manifest frame, convert pixel coordinates to normalized UVs and draw a textured quad. Horizontal facing is implemented by reversing the U coordinates. Pending flat geometry is flushed before a textured quad, preserving painter's order; the flat shader is restored after each sprite. Small direct buffers are reused instead of allocating new ones per sprite. Renderer GPU resources are released while the EGL context is still current.
+
+Current limitation: the GPU path is live, but the atlas source is generated from the existing code-defined sprites. The Android JSON/PNG loader is implemented but not yet selected as the production source. Per-sprite textured draws are also still immediate; a future UV batcher must preserve interleaved flat/textured painter order before it can reduce those calls.
