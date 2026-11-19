@@ -35,6 +35,49 @@ class WorldZoneTest {
     }
 
     @Test
+    fun everyZoneTransitionPlacesPlayerBesideTheMatchingDestinationHatch() {
+        val engine = GameEngine()
+
+        fun interactAt(x: Float, y: Float) {
+            engine.updateFrame(1f / 60f, EngineInput(interact = false))
+            engine.player.x = x
+            engine.player.y = y
+            engine.updateFrame(1f / 60f, EngineInput(interact = true))
+        }
+
+        interactAt(20.5f, 1.5f)
+        assertEquals(WorldZone.FOREST, engine.zone)
+        assertEquals(20.5f, engine.player.x, 0.01f)
+        assertEquals(21.5f, engine.player.y, 0.01f)
+
+        interactAt(20.5f, 22.5f)
+        assertEquals(WorldZone.BUNKER, engine.zone)
+        assertEquals(20.5f, engine.player.x, 0.01f)
+        assertEquals(2.5f, engine.player.y, 0.01f)
+
+        engine.changeZone(WorldZone.FOREST)
+        interactAt(1.5f, 12.5f)
+        assertEquals(WorldZone.RUINS, engine.zone)
+        assertEquals(37.5f, engine.player.x, 0.01f)
+        assertEquals(12.5f, engine.player.y, 0.01f)
+
+        interactAt(38.5f, 12.5f)
+        assertEquals(WorldZone.FOREST, engine.zone)
+        assertEquals(2.5f, engine.player.x, 0.01f)
+        assertEquals(12.5f, engine.player.y, 0.01f)
+
+        interactAt(38.5f, 12.5f)
+        assertEquals(WorldZone.ROAD, engine.zone)
+        assertEquals(2.5f, engine.player.x, 0.01f)
+        assertEquals(12.5f, engine.player.y, 0.01f)
+
+        interactAt(1.5f, 12.5f)
+        assertEquals(WorldZone.FOREST, engine.zone)
+        assertEquals(37.5f, engine.player.x, 0.01f)
+        assertEquals(12.5f, engine.player.y, 0.01f)
+    }
+
+    @Test
     fun playerCanTravelFromBunkerToForestAndBack() {
         val engine = GameEngine()
         engine.player.x = 20.5f
