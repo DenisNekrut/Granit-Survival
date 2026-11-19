@@ -37,6 +37,17 @@ class MainActivity : Activity() {
         session = GameSession(this)
         root = FrameLayout(this)
         gameSurface = GameSurface(this, session)
+        gameSurface.onRenderFailure = { failure ->
+            if (activeGame && !isFinishing) {
+                activeGame = false
+                AlertDialog.Builder(this)
+                    .setTitle("Не удалось запустить игровой экран")
+                    .setMessage("Рендер остановился: ${failure.javaClass.simpleName}: ${failure.message ?: "без подробностей"}\\n\\nПодробности доступны в Android Logcat по тегу GranitEngine.")
+                    .setPositiveButton("В ГЛАВНОЕ МЕНЮ") { _, _ -> showMainMenu() }
+                    .setCancelable(false)
+                    .show()
+            }
+        }
         root.addView(gameSurface, FrameLayout.LayoutParams(-1, -1))
         setContentView(root)
         showMainMenu()
