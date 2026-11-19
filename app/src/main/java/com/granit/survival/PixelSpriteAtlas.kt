@@ -262,6 +262,84 @@ object PixelSpriteAtlas {
             'M' to floatArrayOf(0.35f, 0.39f, 0.37f),
             'B' to floatArrayOf(0.16f, 0.19f, 0.18f)
         ))
+        "bush" to PixelSprite(listOf(listOf(
+            "................",
+            "................",
+            ".....GGGG.......",
+            "...GGGGGGGG.....",
+            "..GGGGGGGGGG....",
+            ".GGGGDDGGGGGG...",
+            ".GGGGGGGGGGGG...",
+            "..GGGGGGGGGG....",
+            "...GGGGGGGG.....",
+            ".....GGGG.......",
+            "................",
+            "................",
+            "................",
+            "................",
+            "................",
+            "................"
+        )), mapOf(
+            'G' to floatArrayOf(0.22f, 0.34f, 0.19f),
+            'D' to floatArrayOf(0.14f, 0.25f, 0.15f)
+        )),
+        "debris" to PixelSprite(listOf(listOf(
+            "................",
+            "................",
+            "...MM...........",
+            "..MMMM..........",
+            ".MMMMM....MM....",
+            "..MMMM...MMMM...",
+            "...MM...MMMMM...",
+            "........MMMM....",
+            "....MM...MM......",
+            "...MMMM..........",
+            "..MMMMM..........",
+            "...MMM...........",
+            "................",
+            "................",
+            "................",
+            "................"
+        )), mapOf('M' to floatArrayOf(0.43f, 0.41f, 0.37f))),
+        "streetlamp" to PixelSprite(listOf(listOf(
+            "......MMMM......",
+            ".....MMMMMM.....",
+            "......MMMM......",
+            ".........M......",
+            ".........M......",
+            ".........M......",
+            ".........M......",
+            ".........M......",
+            ".........M......",
+            ".........M......",
+            ".........M......",
+            "........MMM.....",
+            ".......MMMMM....",
+            "................",
+            "................",
+            "................"
+        )), mapOf('M' to floatArrayOf(0.48f, 0.48f, 0.42f))),
+        "floor_grate" to PixelSprite(listOf(listOf(
+            "................",
+            "................",
+            "..MMMMMMMMMMMM..",
+            "..MBBMBBMBBMBBM..",
+            "..MBBMBBMBBMBBM..",
+            "..MMMMMMMMMMMM..",
+            "..MBBMBBMBBMBBM..",
+            "..MBBMBBMBBMBBM..",
+            "..MMMMMMMMMMMM..",
+            "..MBBMBBMBBMBBM..",
+            "..MBBMBBMBBMBBM..",
+            "..MMMMMMMMMMMM..",
+            "................",
+            "................",
+            "................",
+            "................"
+        )), mapOf(
+            'M' to floatArrayOf(0.35f, 0.39f, 0.37f),
+            'B' to floatArrayOf(0.12f, 0.15f, 0.14f)
+        ))
         "water" to PixelSprite(listOf(listOf(
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
