@@ -30,6 +30,7 @@ class MainActivity : Activity() {
             activity = this,
             session = session,
             createPanel = ::createPanel,
+            label = ::label,
             menuButton = ::menuButton,
             showOverlay = ::showOverlay,
             enterGame = ::enterGame,
@@ -158,7 +159,6 @@ class MainActivity : Activity() {
         MenuCoordinator(
             activity = this,
             createPanel = ::createPanel,
-            label = ::label,
             menuButton = ::menuButton,
             showOverlay = ::showOverlay,
             hasSavedGame = {
@@ -459,7 +459,6 @@ class MainActivity : Activity() {
             label = ::label,
             menuButton = ::menuButton,
             showOverlay = ::showOverlay,
-            dp = ::dp,
             onSaved = { if (pausedGame) showPauseMenu() else showMainMenu() },
             onCancel = { if (pausedGame) showPauseMenu() else showMainMenu() }
         ).show()
