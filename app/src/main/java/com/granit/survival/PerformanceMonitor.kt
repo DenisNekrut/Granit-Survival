@@ -11,7 +11,7 @@ data class PerformanceSnapshot(
     val javaHeapUsedBytes: Long,
     val javaHeapMaxBytes: Long,
     val nativeHeapAllocatedBytes: Long,
-    val pssKilobytes: Int
+    val pssKilobytes: Long
 ) {
     fun toLogLine(): String =
         "fps=%.1f frameAvg=%.2fms frameP95=%.2fms dropped=%d drawCallsAvg=%.1f javaHeap=%d/%dMB nativeHeap=%dMB pss=%dMB".format(
@@ -66,7 +66,7 @@ class PerformanceMonitor(private val windowCapacity: Int = 120) {
             javaHeapUsedBytes = javaHeapUsedBytes.coerceAtLeast(0L),
             javaHeapMaxBytes = javaHeapMaxBytes.coerceAtLeast(0L),
             nativeHeapAllocatedBytes = nativeHeapAllocatedBytes.coerceAtLeast(0L),
-            pssKilobytes = pssKilobytes.coerceAtLeast(0)
+            pssKilobytes = pssKilobytes.coerceAtLeast(0L)
         )
         sampleCount = 0
         totalFrames = 0L
