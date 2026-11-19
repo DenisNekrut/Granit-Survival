@@ -133,12 +133,15 @@ class PixelRenderer {
         textureProgram = 0
     }
 
-    fun resize(width: Int, height: Int) {
+    fun resize(width: Int, height: Int, displayScale: Float = 1f) {
         screenWidth = width.coerceAtLeast(1)
         screenHeight = height.coerceAtLeast(1)
-        worldScale = minOf(screenWidth / 20f, screenHeight / 12f)
-        worldOffsetX = (screenWidth - 20f * worldScale) * 0.5f
-        worldOffsetY = (screenHeight - 12f * worldScale) * 0.5f
+        // Fill the complete landscape display. The camera viewport expands/contracts
+        // with the real aspect ratio instead of stretching the world or adding side bars.
+        worldScale = (screenHeight / 12f) * displayScale.coerceIn(0.8f, 1.2f)
+        worldOffsetX = 0f
+        worldOffsetY = 0f
+        currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
     }
 
@@ -158,6 +161,7 @@ class PixelRenderer {
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         currentCamera = engine.camera
+        currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
         queuedVertexCount = 0
         queuedTextureVertexCount = 0
         textureVertexBuffer.clear()
@@ -331,23 +335,22 @@ class PixelRenderer {
         }
 
         // Virtual joystick and interaction button.
-        val joystickVisualSize = 2.4f * joystickScale
-        screenRect(3.2f - joystickVisualSize * 0.5f, 9.4f - joystickVisualSize * 0.5f,
-            joystickVisualSize, joystickVisualSize, 0.22f, 0.25f, 0.24f, controlsOpacity)
+        val controlUnit = minOf(screenWidth, screenHeight).toFloat()
+        val joystickDiameter = controlUnit * 0.19f * joystickScale
+        val joystickCenterX = screenWidth * 0.145f
+        val controlCenterY = screenHeight * 0.80f
+        screenRectPx(joystickCenterX - joystickDiameter * 0.5f,
+            controlCenterY - joystickDiameter * 0.5f, joystickDiameter, joystickDiameter,
+            0.22f, 0.25f, 0.24f, controlsOpacity)
         if (touching) {
-            val radiusPx = (screenHeight * 0.19f * joystickScale).coerceAtLeast(72f)
-            val thumbX = (joystickX - worldOffsetX) / worldScale
-            val thumbY = (joystickY - worldOffsetY) / worldScale
-            val thumbSize = (radiusPx * 0.36f) / worldScale
-            screenRect(
-                thumbX - thumbSize * 0.5f,
-                thumbY - thumbSize * 0.5f,
-                thumbSize,
-                thumbSize,
-                0.67f, 0.65f, 0.55f, controlsOpacity
-            )
+            val thumbDiameter = joystickDiameter * 0.34f
+            screenRectPx(joystickX - thumbDiameter * 0.5f, joystickY - thumbDiameter * 0.5f,
+                thumbDiameter, thumbDiameter, 0.67f, 0.65f, 0.55f, controlsOpacity)
         }
-        screenRect(16.8f, 9.2f, 2.2f, 2.2f,
+        val actionDiameter = controlUnit * 0.16f * joystickScale
+        val actionCenterX = screenWidth * 0.855f
+        screenRectPx(actionCenterX - actionDiameter * 0.5f,
+            controlCenterY - actionDiameter * 0.5f, actionDiameter, actionDiameter,
             if (interacting) 0.48f else 0.28f,
             if (interacting) 0.55f else 0.32f,
             if (interacting) 0.42f else 0.30f, controlsOpacity)
@@ -625,7 +628,7 @@ class PixelRenderer {
         appendQuad(left, top, right, bottom, r, g, b, alpha.coerceIn(0f, 1f))
     }
 
-    private fun screenRect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float, alpha: Float = 1f) {
+    private fun screenRectPx(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float, alpha: Float = 1f) {\n        appendQuad(x, y, x + width, y + height, r, g, b, alpha.coerceIn(0f, 1f))\n    }\n\n    private fun screenRect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float, alpha: Float = 1f) {
         val left = worldOffsetX + x * worldScale
         val top = worldOffsetY + y * worldScale
         val right = worldOffsetX + (x + width) * worldScale
