@@ -104,6 +104,46 @@ class WorldZoneTest {
     }
 
     @Test
+    fun proceduralMapSpawnAndExitRemainConnectedForManySeeds() {
+        listOf(WorldZone.RUINS, WorldZone.ROAD).forEach { zone ->
+            (1L..25L).forEach { seed ->
+                val map = TileMap(zone = zone, seed = seed)
+                val start = zone.spawnX.toInt() to zone.spawnY.toInt()
+                val exit = (if (zone == WorldZone.RUINS) map.width - 2 else 1) to map.height / 2
+                val visited = mutableSetOf(start)
+                val queue = ArrayDeque<Pair<Int, Int>>()
+                queue.add(start)
+                while (queue.isNotEmpty()) {
+                    val (x, y) = queue.removeFirst()
+                    listOf(x + 1 to y, x - 1 to y, x to y + 1, x to y - 1).forEach { next ->
+                        if (next !in visited && map.isWalkable(next.first + 0.5f, next.second + 0.5f)) {
+                            visited.add(next)
+                            queue.add(next)
+                        }
+                    }
+                }
+                assertTrue("$zone seed=$seed must preserve route to exit", exit in visited)
+            }
+        }
+    }
+
+    @Test
+    fun weaponIsDrawnAutomaticallyOutsideAndHolsteredInBunker() {
+        val engine = GameEngine()
+        assertEquals(false, engine.equipment.weaponDrawn)
+        assertEquals(WeaponType.SIGNAL_EMITTER, engine.equipment.weapon)
+
+        engine.changeZone(WorldZone.FOREST)
+        assertEquals(true, engine.equipment.weaponDrawn)
+        engine.changeZone(WorldZone.RUINS)
+        assertEquals(true, engine.equipment.weaponDrawn)
+        engine.changeZone(WorldZone.BUNKER)
+        assertEquals(false, engine.equipment.weaponDrawn)
+        engine.changeZone(WorldZone.ROAD)
+        assertEquals(true, engine.equipment.weaponDrawn)
+    }
+
+    @Test
     fun proceduralZoneRegeneratesOnEveryEntryButForestRemainsFixed() {
         val seeds = listOf(101L, 202L)
         var nextSeed = 0
