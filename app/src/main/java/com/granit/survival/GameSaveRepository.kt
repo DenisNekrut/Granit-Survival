@@ -158,7 +158,7 @@ class GameSaveRepository(context: Context) {
     }
 }
 
-private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
+internal fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("player", player.toJson())
     .put("inventory", inventory.toItemStacksJson())
     .put("bunkerStorage", bunkerStorage.toItemStacksJson())
@@ -258,7 +258,7 @@ private fun WakeCheckpoint.toJson() = JSONObject()
     .put("statistics", statistics.toJson())
     .put("bunkerPower", bunkerPower.toJson())
 
-private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveSnapshot {
+internal fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveSnapshot {
     val checkpointJson = json.optJSONObject("wakeCheckpoint")
     val restoredZone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }
         .getOrDefault(WorldZone.BUNKER)
