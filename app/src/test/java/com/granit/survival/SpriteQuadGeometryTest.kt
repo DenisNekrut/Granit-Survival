@@ -1,6 +1,7 @@
 package com.granit.survival
 
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.fail
 import org.junit.Test
 import java.nio.FloatBuffer
 
@@ -40,11 +41,14 @@ class SpriteQuadGeometryTest {
     @Test fun rejectsInvertedHorizontalBounds() {
         val positions = FloatBuffer.allocate(12)
         val uvs = FloatBuffer.allocate(12)
-        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+        try {
             SpriteQuadGeometry.append(
                 positions, uvs, 1f, -1f, -1f, 1f,
                 SpriteAtlasUvRect(0f, 0f, 1f, 1f)
             )
+            fail("Expected inverted horizontal bounds to be rejected")
+        } catch (_: IllegalArgumentException) {
+            // Expected: left must not exceed right.
         }
     }
 
