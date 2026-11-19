@@ -407,13 +407,10 @@ class PixelRenderer {
         val x1 = toNdcX(left); val y1 = toNdcY(top)
         val x2 = toNdcX(right); val y2 = toNdcY(bottom)
         val uv = manifest.uvRect(frame)
-        val uvLeft = if (flipX) uv.right else uv.left
-        val uvRight = if (flipX) uv.left else uv.right
-
-        textureVertexBuffer.put(x1).put(y1).put(x1).put(y2).put(x2).put(y1)
-        textureVertexBuffer.put(x2).put(y1).put(x1).put(y2).put(x2).put(y2)
-        textureUvBuffer.put(uvLeft).put(uv.top).put(uvLeft).put(uv.bottom).put(uvRight).put(uv.top)
-        textureUvBuffer.put(uvRight).put(uv.top).put(uvLeft).put(uv.bottom).put(uvRight).put(uv.bottom)
+        SpriteQuadGeometry.append(
+            textureVertexBuffer, textureUvBuffer,
+            x1, y1, x2, y2, uv, flipX
+        )
         queuedTextureVertexCount += 6
     }
 
