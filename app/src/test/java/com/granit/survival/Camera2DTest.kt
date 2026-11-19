@@ -53,7 +53,10 @@ class Camera2DTest {
         val camera = Camera2D(10f, 6f)
         camera.snapTo(50f, 30f, 100f, 60f)
 
-        camera.follow(0f, 0f, 100f, 60f, 0.25f)
+        // Follow is deliberately smoothed, so allow it to settle at the clamped edge.
+        repeat(60) {
+            camera.follow(0f, 0f, 100f, 60f, 1f / 60f)
+        }
 
         assertEquals(5f, camera.x, 0.001f)
         assertEquals(3f, camera.y, 0.001f)
@@ -79,6 +82,7 @@ class Camera2DTest {
         assertEquals(8f, camera.x, 0.001f)
         assertEquals(4f, camera.y, 0.001f)
     }
+
     @Test
     fun followSmoothingIsIndependentOfUpdateFrequency() {
         val thirtyFps = Camera2D(10f, 6f)
@@ -92,5 +96,4 @@ class Camera2DTest {
         assertEquals(thirtyFps.x, sixtyFps.x, 0.001f)
         assertEquals(thirtyFps.y, sixtyFps.y, 0.001f)
     }
-
 }
