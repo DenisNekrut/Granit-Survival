@@ -95,6 +95,12 @@ class GameEngine {
         checkpointSystem.capture(this)
     }
 
+    /** Clear latched touch state when the render surface is paused or recreated. */
+    fun releaseInputState() {
+        wasInteracting = false
+        isMoving = false
+    }
+
     fun updateFrame(frameDeltaSeconds: Float, input: EngineInput): Int {
         accumulator += frameDeltaSeconds.coerceIn(0f, MAX_FRAME_SECONDS)
         var steps = 0
