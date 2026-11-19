@@ -50,6 +50,22 @@ class BunkerLayoutTest {
     }
 
     @Test
+    fun bunkerFurnitureIsWallAnchoredAndBedroomRouteRemainsClear() {
+        val map = createZoneMap(WorldZone.BUNKER)
+        assertEquals(TileType.BED, map[2, 1])
+        assertEquals(TileType.STORAGE, map[4, 1])
+        assertEquals(TileType.DINING_TABLE, map[7, 1])
+        assertEquals(TileType.BOOKSHELF, map[10, 1])
+        assertEquals(TileType.GENERATOR, map[13, 1])
+        assertEquals(TileType.RADIO, map[15, 1])
+        assertEquals(TileType.MEDICAL_STATION, map[2, 8])
+        assertEquals(TileType.WORKBENCH, map[8, 8])
+        assertEquals(TileType.STORAGE, map[14, 8])
+        assertTrue(map.isWalkable(2.5f, 3.5f))
+        assertNotNull(map.nextPathStep(8.5f, 2.5f, 2.5f, 3.5f))
+    }
+
+    @Test
     fun engineUsesHalfSizeBunkerAfterZoneTransitions() {
         val engine = GameEngine()
         assertEquals(17, engine.tileMap.width)
