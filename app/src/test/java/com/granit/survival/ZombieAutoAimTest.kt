@@ -15,8 +15,8 @@ class ZombieAutoAimTest {
         val nearer = ZombieActor(x = 6.5f, y = 2.5f)
         val farther = ZombieActor(x = 9.5f, y = 2.5f)
 
-        assertSame(nearer, ZombieSystem.findVisibleTarget(listOf(farther, nearer), player, map))
-        assertSame(farther, ZombieSystem.findVisibleTarget(listOf(farther), player, map))
+        assertSame(nearer, CombatSystem.findAutoAimTarget(WorldZone.FOREST, listOf(farther, nearer), player, map))
+        assertSame(farther, CombatSystem.findAutoAimTarget(WorldZone.FOREST, listOf(farther), player, map))
     }
 
     @Test
@@ -60,7 +60,7 @@ class ZombieAutoAimTest {
         val other = ZombieActor(x = 7.5f, y = 2.5f)
         val group = mutableListOf(selected, other)
 
-        assertSame(selected, ZombieSystem.pulseHitTarget(group, selected))
+        CombatSystem.firePulse(group, selected, PlayerState(x = 1.5f, y = 1.5f))
         assertEquals(4f, selected.health, 0.001f)
         assertEquals(8f, other.health, 0.001f)
         assertFalse(group.isEmpty())
