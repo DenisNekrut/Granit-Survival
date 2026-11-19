@@ -7,6 +7,26 @@ import org.junit.Test
 
 class GameEngineInteractionTest {
     @Test
+    fun playerFacingTracksFourMovementDirectionsAndKeepsLastDirectionWhenIdle() {
+        val engine = GameEngine()
+
+        engine.updateFrame(1f / 60f, EngineInput(moveX = 1f))
+        assertEquals(PlayerFacing.RIGHT, engine.player.facing)
+
+        engine.updateFrame(1f / 60f, EngineInput(moveY = -1f))
+        assertEquals(PlayerFacing.UP, engine.player.facing)
+
+        engine.updateFrame(1f / 60f, EngineInput(moveX = -1f))
+        assertEquals(PlayerFacing.LEFT, engine.player.facing)
+
+        engine.updateFrame(1f / 60f, EngineInput(moveY = 1f))
+        assertEquals(PlayerFacing.DOWN, engine.player.facing)
+
+        engine.updateFrame(1f / 60f, EngineInput())
+        assertEquals(PlayerFacing.DOWN, engine.player.facing)
+    }
+
+    @Test
     fun storageCanOnlyBeUsedNearbyAndTransfersItemsSafely() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.WOOD, 6)
