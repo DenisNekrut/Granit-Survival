@@ -51,7 +51,7 @@ class GameSaveSnapshotTest {
         assertEquals(saved.bookLibrary, engine.bookLibrary.snapshot())
         assertEquals(saved.radio, engine.radioSystem.snapshot())
         assertEquals(saved.psychology, engine.psychology.snapshot())
-        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 8])
+        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[1, 8])
         assertTrue(engine.checkpointSystem.hasCheckpoint())
         assertTrue(engine.respawnAtWakeCheckpoint())
         assertEquals(4, engine.inventory.count(ItemType.WOOD))
