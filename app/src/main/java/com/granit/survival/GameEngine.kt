@@ -4,7 +4,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 /** Platform-independent simulation state for Granit Survival. */
-data class EngineInput(val moveX: Float = 0f, val moveY: Float = 0f, val interact: Boolean = false)
+data class EngineInput(val moveX: Float = 0f, val moveY: Float = 0f, val interact: Boolean = false, val fire: Boolean = false)
 
 enum class PlayerFacing { DOWN, UP, LEFT, RIGHT }
 
@@ -61,6 +61,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     var isMoving: Boolean = false
         private set
     private var wasInteracting = false
+    val zombies = mutableListOf<ZombieActor>()
+    private var pulseCooldownSeconds = 0f
     private val discoveredPoiIds = linkedSetOf<String>()
     var lastDiscoveryTitle: String? = null
         private set
@@ -231,6 +233,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         player.x = arrival?.first ?: target.spawnX
         player.y = arrival?.second ?: target.spawnY
         camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+        zombies.clear()
+        zombies += ZombieSystem.spawn(target, tileMap, player.x, player.y)
+        pulseCooldownSeconds = 0f
         wasInteracting = false
         isMoving = false
     }
@@ -388,6 +393,18 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         scanNearbyPointsOfInterest()
 
         if (input.interact && !wasInteracting) interact()
+        if (input.fire && pulseCooldownSeconds <= 0f && zone != WorldZone.BUNKER && equipment.weaponDrawn) {
+            pulseCooldownSeconds = 0.55f
+            ZombieSystem.pulseHit(zombies, player, player.facing)
+        }
+        pulseCooldownSeconds = (pulseCooldownSeconds - delta).coerceAtLeast(0f)
+        ZombieSystem.update(zombies, player, tileMap, delta) { damage ->
+            needs.applyDamage(damage)
+            if (needs.health <= 0f) {
+                checkpointSystem.restore(this)
+                gameMinuteAccumulator = 0f
+            }
+        }
         wasInteracting = input.interact
 
         gameMinuteAccumulator += delta
