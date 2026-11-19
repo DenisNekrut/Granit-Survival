@@ -29,8 +29,9 @@ class ActivityTimeAndZombieTest {
     @Test
     fun storageTransfersConsumeTimeOnlyWhenTransferSucceeds() {
         val engine = GameEngine()
-        engine.player.x = 4.5f
-        engine.player.y = 2.5f
+        // Storage moved to the lower-right bunker room in the wall-anchor pass.
+        engine.player.x = 13.5f
+        engine.player.y = 5.5f
         engine.inventory.add(ItemType.WOOD, 2)
         val start = engine.worldClock.totalMinutes
 

@@ -2,6 +2,8 @@ package com.granit.survival
 
 import android.content.Context
 import android.util.AtomicFile
+import com.granit.survival.save.SaveCodec
+import com.granit.survival.save.SaveVersion
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -49,8 +51,9 @@ class GameSaveRepository(context: Context) {
         val file = saveFile(slot)
         if (!file.exists()) return@map SaveSlotInfo(slot = slot, exists = false)
         try {
-            val root = JSONObject(AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() })
-            require(root.getInt("saveVersion") in 1..SAVE_VERSION)
+            val root = SaveCodec.decode(
+                AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
+            )
             val clock = root.getJSONObject("state").getJSONObject("clock")
             SaveSlotInfo(
                 slot = slot,
@@ -77,7 +80,7 @@ class GameSaveRepository(context: Context) {
 
     fun autoSaveTimestamp(): Long? = runCatching {
         val file = autoSaveFile()
-        if (!file.exists()) null else JSONObject(
+        if (!file.exists()) null else SaveCodec.decode(
             AtomicFile(file).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
         ).getLong("savedAtMillis")
     }.getOrNull()
@@ -87,15 +90,12 @@ class GameSaveRepository(context: Context) {
     fun load(slot: Int, engine: GameEngine): Boolean = loadFromFile(saveFile(slot), engine)
 
     private fun writeSnapshot(target: File, engine: GameEngine) {
-        val root = JSONObject()
-            .put("saveVersion", SAVE_VERSION)
-            .put("savedAtMillis", System.currentTimeMillis())
-            .put("state", engine.createSaveSnapshot().toJson())
+        val serialized = SaveCodec.encode(engine.createSaveSnapshot().toJson(), System.currentTimeMillis())
         val atomicFile = AtomicFile(target)
         var stream: java.io.FileOutputStream? = null
         try {
             stream = atomicFile.startWrite()
-            stream.write(root.toString().toByteArray(Charsets.UTF_8))
+            stream.write(serialized.toByteArray(Charsets.UTF_8))
             atomicFile.finishWrite(stream)
             stream = null
         } catch (failure: Exception) {
@@ -106,11 +106,11 @@ class GameSaveRepository(context: Context) {
 
     private fun loadFromFile(target: File, engine: GameEngine): Boolean {
         if (!target.exists()) return false
-        val root = JSONObject(AtomicFile(target).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() })
-        require(root.getInt("saveVersion") in 1..SAVE_VERSION) {
-            "Unsupported save version: ${root.optInt("saveVersion", -1)}"
-        }
-        engine.restoreSaveSnapshot(EngineSaveSnapshot.fromJson(root.getJSONObject("state")))
+        val root = SaveCodec.decode(
+            AtomicFile(target).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
+        )
+        val snapshot = EngineSaveSnapshot.fromJson(root.getJSONObject("state"))
+        engine.restoreSaveSnapshot(snapshot)
         return true
     }
 
@@ -129,7 +129,7 @@ class GameSaveRepository(context: Context) {
 
     companion object {
         const val MAX_SLOTS = 3
-        const val SAVE_VERSION = 9
+        const val SAVE_VERSION = SaveVersion.CURRENT
     }
 }
 

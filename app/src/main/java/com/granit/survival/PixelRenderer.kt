@@ -28,6 +28,7 @@ class PixelRenderer {
     private var worldScale = 1f
     private var worldOffsetX = 0f
     private var worldOffsetY = 0f
+    private var displayScale = 1f
     private var currentCamera: Camera2D? = null
     private var vertexBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_VERTEX_CAPACITY * 2)
     private var colorBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_VERTEX_CAPACITY * 4)
@@ -136,9 +137,8 @@ class PixelRenderer {
     fun resize(width: Int, height: Int, displayScale: Float = 1f) {
         screenWidth = width.coerceAtLeast(1)
         screenHeight = height.coerceAtLeast(1)
-        // Fill the complete landscape display. The camera viewport expands/contracts
-        // with the real aspect ratio instead of stretching the world or adding side bars.
-        worldScale = (screenHeight / 12f) * displayScale.coerceIn(0.8f, 1.2f)
+        this.displayScale = displayScale.coerceIn(0.8f, 1.2f)
+        worldScale = (screenHeight / 12f) * this.displayScale
         worldOffsetX = 0f
         worldOffsetY = 0f
         currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
@@ -158,6 +158,11 @@ class PixelRenderer {
         GLES20.glClearColor(0.055f, 0.065f, 0.067f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (program == 0) return
+        val cameraHeight = if (engine.zone == WorldZone.BUNKER) {
+            // The bunker is compact, but the camera must still have room to track the player.
+            minOf(8.2f, 16.5f * screenHeight / screenWidth)
+        } else 9.5f
+        worldScale = (screenHeight / cameraHeight) * displayScale
         GLES20.glUseProgram(program)
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
@@ -233,10 +238,23 @@ class PixelRenderer {
                 else -> null
             }
             if (furnitureSprite != null) {
+                // Snap the sprite's visible edge to the nearest adjacent wall, not just its tile center.
+                val furniturePixelSize = 0.052f
+                val furnitureExtent = 16f * furniturePixelSize
+                val anchoredX = when {
+                    engine.tileMap[tileX - 1, tileY] == TileType.WALL -> tileX + furnitureExtent * 0.5f
+                    engine.tileMap[tileX + 1, tileY] == TileType.WALL -> tileX + 1f - furnitureExtent * 0.5f
+                    else -> tileX + 0.5f
+                }
+                val anchoredTopY = when {
+                    engine.tileMap[tileX, tileY - 1] == TileType.WALL -> tileY.toFloat()
+                    engine.tileMap[tileX, tileY + 1] == TileType.WALL -> tileY + 1f - furnitureExtent
+                    else -> tileY + (1f - furnitureExtent) * 0.5f
+                }
                 worldSprites += WorldSpriteCommand(
                     sortY = tileY + 1.07f, sortOrder = 0, spriteId = furnitureSprite,
-                    centerX = tileX + 0.5f, topY = tileY + 0.12f,
-                    pixelSize = 0.052f
+                    centerX = anchoredX, topY = anchoredTopY,
+                    pixelSize = furniturePixelSize
                 )
             }
 
@@ -312,6 +330,7 @@ class PixelRenderer {
 
         // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
         drawWorldLighting(engine, bunkerLamps)
+        if (engine.zone != WorldZone.BUNKER) drawCorridorFog(engine)
 
         // The reticle exists only while a living infected is visible within seven tiles.
         engine.autoAimTarget?.let { target ->
@@ -366,33 +385,31 @@ class PixelRenderer {
             }
         }
 
-        // Screen-space HUD reads the live simulation values.
-        screenRect(0.42f, 0.28f, 4.75f, 2.72f, 0.055f, 0.067f, 0.066f)
-        drawText(
-            "D${engine.worldClock.day} ${engine.worldClock.hour.toString().padStart(2, '0')}:${engine.worldClock.minute.toString().padStart(2, '0')}",
-            0.68f, 0.43f, 0.075f, 0.78f, 0.76f, 0.65f
-        )
+        // Transparent HUD: all four status bars share one horizontal row at the top.
+        val hudWidth = screenWidth / worldScale
+        // Keep the left/right corners clear for the always-visible menu and backpack buttons.
+        val hudMargin = 2.5f
+        val columnWidth = (hudWidth - hudMargin * 2f) / 4f
+        val barY = 0.34f
+        drawNeedBar("HP", engine.needs.health, hudMargin, barY, columnWidth - 0.10f, 0.78f, 0.24f, 0.20f)
+        drawNeedBar("FO", engine.needs.hunger, hudMargin + columnWidth, barY, columnWidth - 0.10f, 0.64f, 0.43f, 0.22f)
+        drawNeedBar("WT", engine.needs.thirst, hudMargin + columnWidth * 2f, barY, columnWidth - 0.10f, 0.25f, 0.48f, 0.66f)
+        drawNeedBar("EN", engine.needs.energy, hudMargin + columnWidth * 3f, barY, columnWidth - 0.10f, 0.34f, 0.55f, 0.38f)
+        drawText("D${engine.worldClock.day} ${engine.worldClock.hour.toString().padStart(2, '0')}:${engine.worldClock.minute.toString().padStart(2, '0')}",
+            hudMargin, 1.04f, 0.060f, 0.78f, 0.76f, 0.65f)
         val zoneLabel = when (engine.zone) {
             WorldZone.BUNKER -> "BUNKER"
             WorldZone.FOREST -> "FOREST"
             WorldZone.RUINS -> "RUINS"
             WorldZone.ROAD -> "ROAD"
         }
-        drawText(zoneLabel, 0.68f, 0.80f, 0.055f, 0.57f, 0.68f, 0.60f)
-        if (engine.zombies.isNotEmpty()) {
-            drawText("INFECTED: ${engine.zombies.size}", 2.05f, 1.12f, 0.045f, 0.78f, 0.42f, 0.32f)
-        }
-        if (engine.equipment.weaponDrawn) {
-            drawText("PULSE: READY", 2.05f, 0.80f, 0.045f, 0.35f, 0.75f, 0.76f)
-        }
-        drawText("W:" + engine.weather.shortCode, 3.55f, 0.43f, 0.055f, 0.60f, 0.72f, 0.76f)
-        drawNeedBar("HP", engine.needs.health, 1.05f, 0.68f, 0.24f, 0.20f)
-        drawNeedBar("FO", engine.needs.hunger, 1.52f, 0.64f, 0.43f, 0.22f)
-        drawNeedBar("WT", engine.needs.thirst, 1.99f, 0.25f, 0.48f, 0.66f)
-        drawNeedBar("EN", engine.needs.energy, 2.46f, 0.34f, 0.55f, 0.38f)
+        drawText(zoneLabel, hudWidth - 5.0f, 1.04f, 0.052f, 0.57f, 0.68f, 0.60f)
+        drawText("W:" + engine.weather.shortCode, hudWidth - 2.6f, 1.04f, 0.052f, 0.60f, 0.72f, 0.76f)
+        if (engine.zombies.isNotEmpty()) drawText("INFECTED: ${engine.zombies.size}", hudWidth - 5.0f, 1.52f, 0.045f, 0.78f, 0.42f, 0.32f)
+        if (engine.equipment.weaponDrawn) drawText("PULSE: READY", hudWidth - 2.6f, 1.52f, 0.045f, 0.35f, 0.75f, 0.76f)
         engine.lastDiscoveryHudLabel?.let { label ->
-            screenRect(5.7f, 0.42f, 8.6f, 0.72f, 0.08f, 0.12f, 0.10f, 0.94f)
-            drawText("FOUND: $label", 5.95f, 0.68f, 0.075f, 0.78f, 0.76f, 0.62f)
+            screenRect(hudWidth * 0.34f, 1.42f, hudWidth * 0.32f, 0.52f, 0.08f, 0.12f, 0.10f, 0.88f)
+            drawText("FOUND: $label", hudWidth * 0.36f, 1.56f, 0.055f, 0.78f, 0.76f, 0.62f)
         }
 
         // Virtual joystick and interaction button.
@@ -643,11 +660,28 @@ class PixelRenderer {
         }
     }
 
-    private fun drawNeedBar(label: String, value: Float, y: Float, r: Float, g: Float, b: Float) {
-        drawText(label, 0.68f, y, 0.055f, 0.72f, 0.72f, 0.65f)
-        screenRect(1.42f, y + 0.10f, 3.25f, 0.13f, 0.15f, 0.17f, 0.16f)
-        val fill = 3.21f * (value.coerceIn(0f, 100f) / 100f)
-        if (fill > 0f) screenRect(1.44f, y + 0.12f, fill, 0.09f, r, g, b)
+    private fun drawNeedBar(label: String, value: Float, x: Float, y: Float, width: Float, r: Float, g: Float, b: Float) {
+        drawText(label, x, y, 0.052f, 0.78f, 0.78f, 0.70f)
+        val barX = x + 0.48f
+        val barWidth = (width - 0.56f).coerceAtLeast(0.55f)
+        screenRect(barX, y + 0.08f, barWidth, 0.16f, 0.15f, 0.17f, 0.16f)
+        val fill = (barWidth - 0.04f) * (value.coerceIn(0f, 100f) / 100f)
+        if (fill > 0f) screenRect(barX + 0.02f, y + 0.10f, fill, 0.12f, r, g, b)
+    }
+
+    /** Outdoor visibility follows corridors; solid map cells cast the fog behind them. */
+    private fun drawCorridorFog(engine: GameEngine) {
+        val radius = 9.5f
+        val radiusSquared = radius * radius
+        for (y in 0 until engine.tileMap.height) for (x in 0 until engine.tileMap.width) {
+            val cx = x + 0.5f
+            val cy = y + 0.5f
+            val dx = cx - engine.player.x
+            val dy = cy - engine.player.y
+            val visible = dx * dx + dy * dy <= radiusSquared &&
+                engine.tileMap.hasLineOfSight(engine.player.x, engine.player.y, cx, cy)
+            if (!visible) rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.012f, 0.018f, 0.020f, 0.94f)
+        }
     }
 
     /** Tiny 3x5 pixel font used by the HUD; keeps text crisp at the virtual resolution. */

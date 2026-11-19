@@ -50,6 +50,23 @@ class BunkerLayoutTest {
     }
 
     @Test
+    fun bunkerFurnitureIsWallAnchoredAndBedroomRouteRemainsClear() {
+        val map = createZoneMap(WorldZone.BUNKER)
+        assertEquals(TileType.BED, map[2, 1])
+        assertEquals(TileType.STORAGE, map[14, 6])
+        assertEquals(TileType.DINING_TABLE, map[7, 3])
+        assertEquals(TileType.BOOKSHELF, map[9, 3])
+        assertEquals(TileType.GENERATOR, map[13, 3])
+        assertEquals(TileType.RADIO, map[14, 3])
+        assertEquals(TileType.MEDICAL_STATION, map[2, 8])
+        assertEquals(TileType.WORKBENCH, map[8, 8])
+        assertEquals(TileType.WALL, map[15, 6])
+        assertTrue(map.isWalkable(13.5f, 6.5f))
+        assertTrue(map.isWalkable(2.5f, 3.5f))
+        assertNotNull(map.nextPathStep(8.5f, 2.5f, 2.5f, 3.5f))
+    }
+
+    @Test
     fun engineUsesHalfSizeBunkerAfterZoneTransitions() {
         val engine = GameEngine()
         assertEquals(17, engine.tileMap.width)
@@ -61,6 +78,15 @@ class BunkerLayoutTest {
         assertEquals(17, engine.tileMap.width)
         assertEquals(10, engine.tileMap.height)
         assertTrue(engine.tileMap.isWalkable(engine.player.x, engine.player.y))
+    }
+
+    @Test
+    fun initialPlayerSpawnIsInsideTheBunkerNearTheHatchNotBesideTheBed() {
+        val engine = GameEngine()
+        assertEquals(8.5f, engine.player.x, 0.001f)
+        assertEquals(2.5f, engine.player.y, 0.001f)
+        assertTrue(engine.tileMap.isWalkable(engine.player.x, engine.player.y))
+        assertTrue(!engine.canSleep())
     }
 
     @Test

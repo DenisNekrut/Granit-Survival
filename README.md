@@ -1,10 +1,13 @@
 # Granit Survival
 
+[![Android Debug Build](https://github.com/DenisNekrut/Granit-Survival/actions/workflows/android-build.yml/badge.svg?branch=main)](https://github.com/DenisNekrut/Granit-Survival/actions/workflows/android-build.yml)
+
 2D pixel-art survival game for Android, built on **Granit Engine**, a custom engine developed specifically for this project.
 
 ## Technical direction
 
-- Platform: Android, landscape orientation
+- Platform: Android 8.0+ (API 26), landscape orientation
+- Graphics requirement: OpenGL ES 2.0
 - Language: Kotlin/JVM
 - Rendering: EGL14 + OpenGL ES 2.0
 - Engine: custom implementation; Unity, Godot and MonoGame are not used
@@ -48,6 +51,10 @@
 ## Documentation
 - [Granit Engine architecture v2.0](docs/architecture/GRANIT_ENGINE_ARCHITECTURE.md)
 - [Project requirements and progress tracker](docs/PROJECT_BACKLOG.md)
+- [Android debug APK installation](docs/ANDROID_INSTALL.md)
+- [Android device smoke tests](docs/ANDROID_DEVICE_SMOKE_TEST.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
 
 The older Unity-oriented plan is retained for historical reference and is superseded by the custom-engine architecture above.
 
@@ -109,3 +116,22 @@ Outdoor expeditions now feature three original infected archetypes: shamblers, r
 - The abstract pulse action prioritizes the currently selected visible target.
 - The context action routes to the nearest matching bunker station panel. The workshop remains inspectable without power, while crafting controls are disabled until power is restored.
 - During gameplay, tapping the dimmed area outside an open interaction card closes it. Taps inside the card remain available to its controls.
+
+
+## Environmental art pass
+
+- Zone dressing is deterministic and sparse, so a saved coordinate keeps the same visual details on every visit.
+- The forest adds grass patches and fallen logs alongside trees and bushes.
+- Ruins add scattered metal scrap and small puddles alongside barrels and debris.
+- Roads add signs and puddles alongside streetlights and wreckage silhouettes.
+- The bunker uses occasional floor grates and supply crates; decorations are drawn only on floor tiles and do not alter collision or navigation.
+- Atlas regression tests verify every selected prop has a renderable sprite entry.
+
+
+## Android updates from GitHub
+
+The in-game **ОБНОВИТЬ** entry opens the repository's latest GitHub Releases page. It is currently a navigation link only: signed production releases and automatic in-place APK updates are intentionally deferred.
+
+For now, GitHub Actions builds a **Debug APK** for pull requests. Download and install it using the [Android installation guide](docs/ANDROID_INSTALL.md). A debug APK from a different CI runner may not be accepted as an in-place update because its debug signing certificate can differ; preserve local saves before uninstalling an older test build.
+
+No keystore, passwords or GitHub Actions secrets are required for current development. The release-signing setup will be revisited later, when the project is ready for a stable production update path.

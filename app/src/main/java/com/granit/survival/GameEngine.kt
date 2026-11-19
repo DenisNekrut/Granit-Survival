@@ -9,8 +9,9 @@ data class EngineInput(val moveX: Float = 0f, val moveY: Float = 0f, val interac
 enum class PlayerFacing { DOWN, UP, LEFT, RIGHT }
 
 data class PlayerState(
-    var x: Float = 1.5f,
-    var y: Float = 1.5f,
+    // Start just inside the bunker hatch; the bedroom bed is not the initial spawn point.
+    var x: Float = 8.5f,
+    var y: Float = 2.5f,
     var speed: Float = 4.2f,
     var facing: PlayerFacing = PlayerFacing.DOWN
 )
@@ -40,6 +41,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val camera = Camera2D()
     val inventory = Inventory()
     val bunkerStorage = BunkerStorage()
+    private val inventorySystem = InventorySystem(inventory, bunkerStorage)
     val needs = SurvivalNeeds()
     val psychology = PsychologicalState()
     val bookLibrary = BookLibrary()
@@ -50,6 +52,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val weatherMovementMultiplier: Float get() =
         if (zone == WorldZone.BUNKER) 1f else weather.outdoorMovementMultiplier
     val checkpointSystem = CheckpointSystem()
+    private val clockAndNeedsSystem = ClockAndNeedsSystem(
+        worldClock, bunkerPower, statistics, needs, psychology
+    )
 
     private var accumulator = 0f
     private var gameMinuteAccumulator = 0f
@@ -65,11 +70,12 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         private set
     private var wasInteracting = false
     val zombies = mutableListOf<ZombieActor>()
-    val autoAimTarget: ZombieActor? get() = if (zone == WorldZone.BUNKER) null else
-        ZombieSystem.findVisibleTarget(zombies, player, tileMap)
+    val autoAimTarget: ZombieActor? get() =
+        CombatSystem.findAutoAimTarget(zone, zombies, player, tileMap)
     private var pulseCooldownSeconds = 0f
     private var idleSeconds = 0f
-    private var wanderRoomIndex = 0
+    // First idle destination must differ from the initial spawn room.
+    private var wanderRoomIndex = 1
     private var wanderTarget: Pair<Float, Float>? = null
     private val discoveredPoiIds = linkedSetOf<String>()
     var lastDiscoveryTitle: String? = null
@@ -105,6 +111,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
     init {
         statistics.visitZone(zone)
+        camera.snapTo(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         // The initial safe state acts as the first wake-up checkpoint.
         checkpointSystem.capture(this)
     }
@@ -153,7 +160,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun canUseWorkbench(): Boolean = canAccessWorkbench() && bunkerPower.hasPower
 
     fun canAccessBookshelf(): Boolean = zone == WorldZone.BUNKER &&
-        tileMap.isNearTile(TileType.BOOKSHELF, player.x, player.y, 1.5f)
+        tileMap.isNearTile(TileType.BOOKSHELF, player.x, player.y, 1.25f)
 
     fun canAccessDiningTable(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.DINING_TABLE, player.x, player.y, 1.5f)
@@ -257,7 +264,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun changeZone(target: WorldZone, regenerate: Boolean = true, entryFrom: WorldZone? = null) {
         val previousZone = zone
         if (target != previousZone) psychology.onZoneChange(previousZone, target)
-        val targetMap = if (regenerate && target.isProcedurallyGenerated) {
+        val targetMap = if (ZoneTransitionSystem.shouldGenerateFreshMap(target, regenerate)) {
             createZoneMap(target, mapSeedGenerator()).also { zoneMaps[target] = it }
         } else {
             zoneMaps.getOrPut(target) { createZoneMap(target) }
@@ -268,13 +275,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         lastDiscoveryTitle = null
         lastDiscoveryHudLabel = null
         val arrival = entryFrom
-            ?.let { arrivalExitFor(it, target) }
+            ?.let { ZoneTransitionSystem.arrivalExitFor(it, target) }
             ?.let(tileMap::spawnBesideExit)
         player.x = arrival?.first ?: target.spawnX
         player.y = arrival?.second ?: target.spawnY
-        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+        camera.snapTo(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         zombies.clear()
-        zombies += ZombieSystem.spawn(target, tileMap, player.x, player.y)
+        zombies += CombatSystem.spawn(target, tileMap, player.x, player.y)
         pulseCooldownSeconds = 0f
         wasInteracting = false
         isMoving = false
@@ -302,54 +309,35 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     }
 
     fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean {
-        if (!canAccessStorage() || amount <= 0 || !bunkerStorage.deposit(inventory, type, amount)) return false
+        if (!canAccessStorage() || !inventorySystem.transferToStorage(type, amount)) return false
         return advanceGameMinutes(1)
     }
 
     fun transferFromStorage(type: ItemType, amount: Int = bunkerStorage.count(type)): Boolean {
-        if (!canAccessStorage() || amount <= 0 || !bunkerStorage.withdraw(inventory, type, amount)) return false
+        if (!canAccessStorage() || !inventorySystem.transferFromStorage(type, amount)) return false
         return advanceGameMinutes(1)
     }
 
     fun consumeFood(): Boolean {
-        if (!inventory.remove(ItemType.CANNED_FOOD, 1)) return false
+        if (!inventorySystem.remove(ItemType.CANNED_FOOD, 1)) return false
         needs.consumeFood()
         return advanceGameMinutes(5)
     }
 
     fun drinkWater(): Boolean {
-        if (!inventory.remove(ItemType.WATER, 1)) return false
+        if (!inventorySystem.remove(ItemType.WATER, 1)) return false
         needs.drinkWater()
         return advanceGameMinutes(5)
     }
 
     /** Apply the cost of a discrete action using the same clock/needs rules as real time. */
     private fun advanceGameMinutes(minutes: Int): Boolean {
-        if (minutes <= 0) return true
-        worldClock.advanceMinutes(minutes)
-        bunkerPower.advanceMinutes(minutes)
-        statistics.recordMinutes(minutes, zone, worldClock.day)
-        needs.advanceAwake(minutes)
-        psychology.advanceAwake(minutes, isMoving, zone)
-        if (needs.health <= 0f) {
+        return clockAndNeedsSystem.advanceActionMinutes(minutes, zone, isMoving) {
             checkpointSystem.restore(this)
             gameMinuteAccumulator = 0f
-            return false
         }
-        return true
     }
 
-    private fun arrivalExitFor(from: WorldZone, target: WorldZone): TileType? = when (target) {
-        WorldZone.BUNKER -> if (from != WorldZone.BUNKER) TileType.EXIT_TO_FOREST else null
-        WorldZone.FOREST -> when (from) {
-            WorldZone.BUNKER -> TileType.EXIT_TO_BUNKER
-            WorldZone.RUINS -> TileType.EXIT_TO_RUINS
-            WorldZone.ROAD -> TileType.EXIT_TO_ROAD
-            WorldZone.FOREST -> null
-        }
-        WorldZone.RUINS, WorldZone.ROAD ->
-            if (from == WorldZone.FOREST) TileType.EXIT_TO_FOREST else null
-    }
 
     private fun travelToZone(target: WorldZone) {
         if (target == zone) return
@@ -361,22 +349,22 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     /** Restore the complete wake-up state after a failed expedition. */
     fun respawnAtWakeCheckpoint(): Boolean = checkpointSystem.restore(this)
 
-    fun createSaveSnapshot(): EngineSaveSnapshot = EngineSaveSnapshot(
-        player = PlayerSnapshot(player.x, player.y, player.speed),
-        inventory = inventory.snapshot(),
-        bunkerStorage = bunkerStorage.snapshot(),
-        needs = needs.snapshot(),
-        psychology = psychology.snapshot(),
-        clock = worldClock.snapshot(),
-        remainingResources = tileMap.resourceSnapshot(),
+    fun createSaveSnapshot(): EngineSaveSnapshot = SaveSnapshotFactory.create(
+        player = player,
+        inventory = inventory,
+        bunkerStorage = bunkerStorage,
+        needs = needs,
+        psychology = psychology,
+        worldClock = worldClock,
+        tileMap = tileMap,
         zone = zone,
         zoneResources = zoneResourceSnapshot(),
-        bookLibrary = bookLibrary.snapshot(),
-        radio = radioSystem.snapshot(),
+        bookLibrary = bookLibrary,
+        radioSystem = radioSystem,
         discoveredPoiIds = discoveredPoiIds.toSet(),
-        equipment = equipment.snapshot(),
-        statistics = statistics.snapshot(),
-        bunkerPower = bunkerPower.snapshot(),
+        equipment = equipment,
+        statistics = statistics,
+        bunkerPower = bunkerPower,
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
@@ -400,7 +388,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         worldClock.restore(snapshot.clock)
         tileMap.restoreResources(snapshot.remainingResources)
         checkpointSystem.restoreSnapshot(snapshot.wakeCheckpoint)
-        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+        camera.snapTo(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         accumulator = 0f
         gameMinuteAccumulator = 0f
         wasInteracting = false
@@ -479,11 +467,10 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (input.fire && pulseCooldownSeconds <= 0f && zone != WorldZone.BUNKER && equipment.weaponDrawn) {
             pulseCooldownSeconds = 0.55f
             val selectedTarget = autoAimTarget
-            if (selectedTarget != null) ZombieSystem.pulseHitTarget(zombies, selectedTarget)
-            else ZombieSystem.pulseHit(zombies, player, player.facing)
+            CombatSystem.firePulse(zombies, selectedTarget, player)
         }
         pulseCooldownSeconds = (pulseCooldownSeconds - delta).coerceAtLeast(0f)
-        val contactDamage = ZombieSystem.update(zombies, player, tileMap, delta)
+        val contactDamage = CombatSystem.update(zombies, player, tileMap, delta)
         if (contactDamage > 0f) {
             needs.applyDamage(contactDamage)
             if (needs.health <= 0f) {
@@ -494,19 +481,15 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         wasInteracting = input.interact
         gameMinuteAccumulator += delta
         while (gameMinuteAccumulator + 0.00001f >= GAME_MINUTE_REAL_SECONDS) {
-            worldClock.advanceMinutes(1)
-            bunkerPower.advanceMinutes(1)
-            statistics.recordMinutes(1, zone, worldClock.day)
-            needs.advanceAwake(1)
-            psychology.advanceAwake(1, isMoving, zone)
+            val survived = clockAndNeedsSystem.advanceRealtimeMinute(zone, isMoving)
             gameMinuteAccumulator -= GAME_MINUTE_REAL_SECONDS
-            if (needs.health <= 0f) {
+            if (!survived) {
                 checkpointSystem.restore(this)
                 gameMinuteAccumulator = 0f
                 break
             }
         }
-        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat(), delta)
         simulationTimeSeconds += delta.toDouble()
     }
 
@@ -514,7 +497,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val resource = tileMap.nearestResource(player.x, player.y, 1.35f)
         if (resource != null) {
             // Remove the world node only after the inventory accepted the item.
-            if (inventory.add(resource.type, 1) == 0 && tileMap.collectResource(resource)) {
+            if (inventorySystem.add(resource.type, 1) == 0 && tileMap.collectResource(resource)) {
                 collectedResourceCount++
                 statistics.recordResourceCollected()
                 lastCollectedItem = resource.type
@@ -526,12 +509,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
         when (tileMap.nearestInteractable(player.x, player.y, 1.35f)) {
             TileType.STORAGE -> {
-                var transferred = false
-                ItemType.values().forEach { type ->
-                    val amount = inventory.count(type)
-                    if (amount > 0 && bunkerStorage.deposit(inventory, type, amount)) transferred = true
-                }
-                if (transferred) advanceGameMinutes(1)
+                if (inventorySystem.depositAll()) advanceGameMinutes(1)
                 interactionCount++
             }
             TileType.EXIT_TO_BUNKER -> { travelToZone(WorldZone.BUNKER); interactionCount++ }
