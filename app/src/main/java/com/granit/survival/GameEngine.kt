@@ -70,7 +70,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         ZombieSystem.findVisibleTarget(zombies, player, tileMap)
     private var pulseCooldownSeconds = 0f
     private var idleSeconds = 0f
-    private var wanderRoomIndex = 0
+    // First idle destination must differ from the initial spawn room.
+    private var wanderRoomIndex = 1
     private var wanderTarget: Pair<Float, Float>? = null
     private val discoveredPoiIds = linkedSetOf<String>()
     var lastDiscoveryTitle: String? = null
