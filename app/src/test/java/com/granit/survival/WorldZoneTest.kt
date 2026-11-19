@@ -168,6 +168,8 @@ class WorldZoneTest {
             assertEquals(TileType.FLOOR, map[13, 12])
             assertEquals(TileType.WALL, map[26, 18])
             assertEquals(TileType.FLOOR, map[20, 7])
+            assertTrue("$zone wall must block sight", !map.hasLineOfSight(10.5f, 5.5f, 15.5f, 5.5f))
+            assertTrue("$zone doorway must preserve sight", map.hasLineOfSight(10.5f, 4.5f, 15.5f, 4.5f))
         }
     }
 
