@@ -16,6 +16,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     @Volatile private var surfaceReady = false
     private var joystickPointerId: Int = MotionEvent.INVALID_POINTER_ID
     private var actionPointerId: Int = MotionEvent.INVALID_POINTER_ID
+    private var firePointerId: Int = MotionEvent.INVALID_POINTER_ID
 
     init {
         // Match the RGBA_8888 EGL config selected by EngineRenderThread.
@@ -69,10 +70,14 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
                 val touchX = event.getX(index)
                 val touchY = event.getY(index)
                 val inJoystickArea = touchX < surfaceWidth * 0.38f && touchY > surfaceHeight * 0.62f
-                val inActionArea = touchX > surfaceWidth * 0.68f && touchY > surfaceHeight * 0.62f
+                val inActionArea = touchX > surfaceWidth * 0.68f && touchY > surfaceHeight * 0.72f
+                val inFireArea = touchX > surfaceWidth * 0.68f && touchY in (surfaceHeight * 0.48f)..(surfaceHeight * 0.68f)
                 if (inJoystickArea && joystickPointerId == MotionEvent.INVALID_POINTER_ID) {
                     joystickPointerId = pointerId
                     thread.setJoystick(touchX, touchY, true)
+                } else if (inFireArea && firePointerId == MotionEvent.INVALID_POINTER_ID) {
+                    firePointerId = pointerId
+                    thread.setFiring(true)
                 } else if (inActionArea && actionPointerId == MotionEvent.INVALID_POINTER_ID) {
                     actionPointerId = pointerId
                     thread.setInteracting(true)
@@ -89,6 +94,10 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
                     joystickPointerId = MotionEvent.INVALID_POINTER_ID
                     thread.setJoystick(0f, 0f, false)
                 }
+                if (pointerId == firePointerId) {
+                    firePointerId = MotionEvent.INVALID_POINTER_ID
+                    thread.setFiring(false)
+                }
                 if (pointerId == actionPointerId) {
                     actionPointerId = MotionEvent.INVALID_POINTER_ID
                     thread.setInteracting(false)
@@ -97,6 +106,8 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
             MotionEvent.ACTION_CANCEL -> {
                 joystickPointerId = MotionEvent.INVALID_POINTER_ID
                 actionPointerId = MotionEvent.INVALID_POINTER_ID
+                firePointerId = MotionEvent.INVALID_POINTER_ID
+                thread.setFiring(false)
                 thread.setJoystick(0f, 0f, false)
                 thread.setInteracting(false)
             }
@@ -131,5 +142,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
         if (!thread.isAlive) session.engine.releaseInputState()
         joystickPointerId = MotionEvent.INVALID_POINTER_ID
         actionPointerId = MotionEvent.INVALID_POINTER_ID
+        firePointerId = MotionEvent.INVALID_POINTER_ID
+        thread.setFiring(false)
     }
 }
