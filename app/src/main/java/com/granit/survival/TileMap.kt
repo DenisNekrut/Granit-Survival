@@ -214,6 +214,27 @@ class TileMap(
         return true
     }
 
+    /** Locate a transition tile and return a safe walkable cell immediately inside it. */
+    fun spawnBesideExit(exitType: TileType): Pair<Float, Float>? {
+        var exit: Pair<Int, Int>? = null
+        forEachTile { x, y, type ->
+            if (exit == null && type == exitType) exit = x to y
+        }
+        val (exitX, exitY) = exit ?: return null
+        val inwardOffsets = when {
+            exitX <= 1 -> listOf(1 to 0, 0 to -1, 0 to 1)
+            exitX >= width - 2 -> listOf(-1 to 0, 0 to -1, 0 to 1)
+            exitY <= 1 -> listOf(0 to 1, -1 to 0, 1 to 0)
+            exitY >= height - 2 -> listOf(0 to -1, -1 to 0, 1 to 0)
+            else -> listOf(0 to 1, 0 to -1, -1 to 0, 1 to 0)
+        }
+        return inwardOffsets.firstNotNullOfOrNull { (dx, dy) ->
+            val x = exitX + dx
+            val y = exitY + dy
+            if (isWalkable(x + 0.5f, y + 0.5f)) x + 0.5f to (y + 0.5f) else null
+        }
+    }
+
     fun isNearTile(target: TileType, worldX: Float, worldY: Float, maxDistance: Float): Boolean {
         val limit = maxDistance * maxDistance
         var found = false
