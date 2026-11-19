@@ -66,6 +66,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     private var wasInteracting = false
     val zombies = mutableListOf<ZombieActor>()
     private var pulseCooldownSeconds = 0f
+    private var idleSeconds = 0f
+    private var wanderRoomIndex = 0
+    private var wanderTarget: Pair<Float, Float>? = null
     private val discoveredPoiIds = linkedSetOf<String>()
     var lastDiscoveryTitle: String? = null
         private set
@@ -271,6 +274,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         pulseCooldownSeconds = 0f
         wasInteracting = false
         isMoving = false
+        idleSeconds = 0f
+        wanderTarget = null
     }
 
     /** Snapshot only maps that actually exist; an unvisited expedition remains ungenerated. */
@@ -396,38 +401,71 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         gameMinuteAccumulator = 0f
         wasInteracting = false
         isMoving = false
+        idleSeconds = 0f
+        wanderTarget = null
         player.facing = PlayerFacing.DOWN
     }
 
     private fun fixedUpdate(delta: Float, input: EngineInput) {
         val previousX = player.x
         val previousY = player.y
-        val length = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
+        val manualLength = sqrt(input.moveX * input.moveX + input.moveY * input.moveY)
+        val manualInput = manualLength > 0.08f || input.interact || input.fire
+        if (manualInput) {
+            idleSeconds = 0f
+            wanderTarget = null
+        } else if (zone == WorldZone.BUNKER) {
+            idleSeconds += delta
+            if (idleSeconds >= 15f && wanderTarget == null) {
+                val rooms = listOf(2.5f to 2.5f, 7.5f to 2.5f, 14.5f to 2.5f,
+                    2.5f to 7.5f, 9.5f to 7.5f, 14.5f to 7.5f)
+                var checked = 0
+                while (checked < rooms.size && wanderTarget == null) {
+                    wanderRoomIndex = (wanderRoomIndex + 1) % rooms.size
+                    val candidate = rooms[wanderRoomIndex]
+                    if (tileMap.isWalkable(candidate.first, candidate.second)) wanderTarget = candidate
+                    checked++
+                }
+            }
+        } else {
+            idleSeconds = 0f
+            wanderTarget = null
+        }
+
+        val autoDirection = if (manualLength <= 0.08f && !input.interact && !input.fire && zone == WorldZone.BUNKER) {
+            wanderTarget?.let { target ->
+                if (kotlin.math.abs(player.x - target.first) < 0.18f &&
+                    kotlin.math.abs(player.y - target.second) < 0.18f) {
+                    wanderTarget = null
+                    idleSeconds = 0f
+                    null
+                } else tileMap.nextPathStep(player.x, player.y, target.first, target.second)
+            }
+        } else null
+        val moveX = if (manualLength > 0.08f) input.moveX else autoDirection?.let { (x, _) -> (x - player.x).coerceIn(-1f, 1f) } ?: 0f
+        val moveY = if (manualLength > 0.08f) input.moveY else autoDirection?.let { (_, y) -> (y - player.y).coerceIn(-1f, 1f) } ?: 0f
+        val length = sqrt(moveX * moveX + moveY * moveY)
         val scale = if (length > 1f) 1f / length else 1f
         val effectiveSpeed = player.speed * needs.movementSpeedMultiplier *
             psychology.movementSpeedMultiplier * weatherMovementMultiplier
-        val stepX = input.moveX * scale * effectiveSpeed * delta
-        val stepY = input.moveY * scale * effectiveSpeed * delta
+        val stepX = moveX * scale * effectiveSpeed * delta
+        val stepY = moveY * scale * effectiveSpeed * delta
         isMoving = kotlin.math.abs(stepX) > 0.0001f || kotlin.math.abs(stepY) > 0.0001f
         if (isMoving) {
-            player.facing = if (kotlin.math.abs(input.moveX) > kotlin.math.abs(input.moveY)) {
-                if (input.moveX < 0f) PlayerFacing.LEFT else PlayerFacing.RIGHT
+            player.facing = if (kotlin.math.abs(moveX) > kotlin.math.abs(moveY)) {
+                if (moveX < 0f) PlayerFacing.LEFT else PlayerFacing.RIGHT
             } else {
-                if (input.moveY < 0f) PlayerFacing.UP else PlayerFacing.DOWN
+                if (moveY < 0f) PlayerFacing.UP else PlayerFacing.DOWN
             }
         }
-
         val nextX = (player.x + stepX).coerceIn(0.65f, tileMap.width - 0.65f)
         if (tileMap.isWalkable(nextX, player.y)) player.x = nextX
-
         val nextY = (player.y + stepY).coerceIn(0.8f, tileMap.height - 0.8f)
         if (tileMap.isWalkable(player.x, nextY)) player.y = nextY
         val movedX = player.x - previousX
         val movedY = player.y - previousY
         statistics.recordDistance(sqrt(movedX * movedX + movedY * movedY))
-
         scanNearbyPointsOfInterest()
-
         if (input.interact && !wasInteracting) interact()
         if (input.fire && pulseCooldownSeconds <= 0f && zone != WorldZone.BUNKER && equipment.weaponDrawn) {
             pulseCooldownSeconds = 0.55f
@@ -443,7 +481,6 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             }
         }
         wasInteracting = input.interact
-
         gameMinuteAccumulator += delta
         while (gameMinuteAccumulator + 0.00001f >= GAME_MINUTE_REAL_SECONDS) {
             worldClock.advanceMinutes(1)
@@ -458,7 +495,6 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
                 break
             }
         }
-
         camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
         simulationTimeSeconds += delta.toDouble()
     }
