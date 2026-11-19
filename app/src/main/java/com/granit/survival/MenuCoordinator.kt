@@ -18,6 +18,7 @@ internal class MenuCoordinator(
     private val hasSavedGame: () -> Boolean,
     private val startNewGame: () -> Unit,
     private val loadMostRecent: () -> Boolean,
+    private val loadError: () -> String?,
     private val enterGame: () -> Unit,
     private val showSaveSlots: () -> Unit,
     private val showSettings: () -> Unit,
@@ -37,7 +38,7 @@ internal class MenuCoordinator(
         })
         panel.addView(menuButton("ПРОДОЛЖИТЬ", hasSavedGame()) {
             if (loadMostRecent()) enterGame()
-            else Toast.makeText(activity, "Нет доступного сохранения", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(activity, loadError() ?: "Нет доступного сохранения", Toast.LENGTH_LONG).show()
         })
         panel.addView(menuButton("СОХРАНЕНИЯ", true) { showSaveSlots() })
         panel.addView(menuButton("НАСТРОЙКИ", true) { showSettings() })

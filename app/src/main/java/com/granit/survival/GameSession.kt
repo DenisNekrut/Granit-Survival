@@ -36,14 +36,36 @@ class GameSession(context: Context) {
 
     fun drinkWater(): Boolean = engine.drinkWater()
 
+    var lastLoadError: String? = null
+        private set
+
     fun loadMostRecent(): Boolean {
-        val candidate = saves.listSlots()
+        lastLoadError = null
+        val slots = saves.listSlots()
+        val candidate = slots
             .filter { it.exists && !it.corrupted && it.savedAtMillis != null }
             .maxByOrNull { it.savedAtMillis ?: 0L }
-        val autoTimestamp = saves.autoSaveTimestamp()
-        if (autoTimestamp != null && autoTimestamp > (candidate?.savedAtMillis ?: 0L)) {
-            if (runCatching { saves.loadAuto(engine) }.getOrDefault(false)) return true
+        if (candidate == null && slots.any { it.exists && it.corrupted }) {
+            lastLoadError = "Файл сохранения повреждён. Открой список слотов и проверьте его."
         }
-        return candidate?.let { runCatching { loadSlot(it.slot) }.getOrDefault(false) } ?: false
+        val autoTimestamp = saves.autoSaveTimestamp()
+        if (autoTimestamp == null && saves.hasAutoSaveFile() && lastLoadError == null) {
+            lastLoadError = "Файл автосохранения повреждён или не читается."
+        }
+        if (autoTimestamp != null && autoTimestamp > (candidate?.savedAtMillis ?: 0L)) {
+            try {
+                if (saves.loadAuto(engine)) return true
+            } catch (failure: Exception) {
+                lastLoadError = failure.message ?: "Не удалось загрузить автосохранение"
+            }
+        }
+        if (candidate != null) {
+            try {
+                return loadSlot(candidate.slot)
+            } catch (failure: Exception) {
+                lastLoadError = failure.message ?: "Не удалось загрузить слот ${candidate.slot}"
+            }
+        }
+        return false
     }
 }

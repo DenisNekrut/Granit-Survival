@@ -42,6 +42,7 @@ class PixelRenderer {
     private val textureVertexBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
     private val textureUvBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
     private var queuedTextureVertexCount = 0
+    private var frameDrawCalls = 0
 
     fun create(assets: AssetManager? = null) {
         val atlasErrors = PixelSpriteAtlas.validate()
@@ -159,8 +160,9 @@ class PixelRenderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (program == 0) return
         val cameraHeight = if (engine.zone == WorldZone.BUNKER) {
-            // The bunker is compact, but the camera must still have room to track the player.
-            minOf(8.2f, 16.5f * screenHeight / screenWidth)
+            // Keep the visible bunker width narrower than the map so tracking is perceptible
+            // on both standard landscape and extra-wide phone displays.
+            BunkerCameraProfile.viewportHeight(screenWidth, screenHeight)
         } else 9.5f
         worldScale = (screenHeight / cameraHeight) * displayScale
         GLES20.glUseProgram(program)
@@ -170,6 +172,7 @@ class PixelRenderer {
         currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
         queuedVertexCount = 0
         queuedTextureVertexCount = 0
+        frameDrawCalls = 0
         textureVertexBuffer.clear()
         textureUvBuffer.clear()
         GLES20.glEnableVertexAttribArray(positionLocation)
@@ -182,6 +185,13 @@ class PixelRenderer {
             WorldZone.RUINS -> floatArrayOf(0.25f, 0.22f, 0.19f)
             WorldZone.ROAD -> floatArrayOf(0.20f, 0.23f, 0.26f)
         }
+        // Extend the ground beyond the solid map perimeter. The camera can reveal this
+        // neutral margin near map edges instead of cutting the location flush against the screen.
+        val edgePadding = Camera2D.WORLD_EDGE_PADDING
+        rect(-edgePadding, -edgePadding,
+            engine.tileMap.width + edgePadding * 2f,
+            engine.tileMap.height + edgePadding * 2f,
+            floorTone[0] * 0.58f, floorTone[1] * 0.58f, floorTone[2] * 0.58f)
         rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
             floorTone[0], floorTone[1], floorTone[2])
         for (x in 1 until engine.tileMap.width) {
@@ -618,6 +628,7 @@ class PixelRenderer {
         spriteTexture?.bind(0)
         GLES20.glUniform1i(textureSamplerLocation, 0)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, queuedTextureVertexCount)
+        frameDrawCalls++
         GLES20.glDisableVertexAttribArray(texturePositionLocation)
         GLES20.glDisableVertexAttribArray(textureUvLocation)
         GLES20.glUseProgram(program)
@@ -844,8 +855,11 @@ class PixelRenderer {
         GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
         GLES20.glVertexAttribPointer(vertexColorLocation, 4, GLES20.GL_FLOAT, false, 0, colorBuffer)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, queuedVertexCount)
+        frameDrawCalls++
         vertexBuffer.clear(); colorBuffer.clear(); queuedVertexCount = 0
     }
+
+    fun currentFrameDrawCalls(): Int = frameDrawCalls
 
     private fun allocateFloatBuffer(floatCount: Int): FloatBuffer =
         ByteBuffer.allocateDirect(floatCount * java.lang.Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer()

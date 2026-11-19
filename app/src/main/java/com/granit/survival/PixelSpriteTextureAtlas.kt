@@ -8,71 +8,123 @@ data class BuiltPixelSpriteAtlas(
     val bitmap: Bitmap
 )
 
+/** Packed position of one sprite inside the generated texture. */
+data class SpriteAtlasPackEntry(
+    val id: String,
+    val frameWidth: Int,
+    val frameHeight: Int,
+    val frames: List<SpriteAtlasFrame>
+)
+
+/**
+ * Platform-independent atlas layout.
+ *
+ * The cell size follows the largest authored frame, so tall character frames
+ * (16×24) and small environment props (16×16) share one texture without any
+ * frame exceeding its cell. This type intentionally avoids Android classes so
+ * the packing rules can be verified by JVM unit tests.
+ */
+data class SpriteAtlasPackPlan(
+    val cellSize: Int,
+    val columns: Int,
+    val rows: Int,
+    val entries: List<SpriteAtlasPackEntry>
+) {
+    val textureWidth: Int get() = columns * cellSize
+    val textureHeight: Int get() = rows * cellSize
+    val frameCount: Int get() = entries.sumOf { it.frames.size }
+
+    fun entry(id: String): SpriteAtlasPackEntry? = entries.firstOrNull { it.id == id }
+}
+
 /**
  * Packs the current authored pixel sprites into a transparent RGBA texture.
  * This keeps the game playable while the project transitions from code-defined
  * sprites to externally authored PNG atlases.
  */
 object PixelSpriteTextureAtlas {
-    private const val CELL_SIZE = 16
-    private const val COLUMNS = 16
+    const val COLUMNS = 16
 
-    fun build(): BuiltPixelSpriteAtlas {
+    /**
+     * Compute the texture layout for every authored sprite.
+     *
+     * Every frame must have identical dimensions inside its own sprite; the cell
+     * size is derived from the largest frame so a sprite can never be laid out
+     * outside its cell or overlap the next one.
+     */
+    fun plan(): SpriteAtlasPackPlan {
         val ids = PixelSpriteAtlas.allIds().sorted()
-        val framesTotal = ids.sumOf { PixelSpriteAtlas.sprite(it)?.frames?.size ?: 0 }
-        require(framesTotal > 0) { "Pixel sprite atlas is empty" }
-        val rows = (framesTotal + COLUMNS - 1) / COLUMNS
-        val width = COLUMNS * CELL_SIZE
-        val height = rows * CELL_SIZE
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val entries = mutableListOf<SpriteAtlasEntry>()
-        var frameIndex = 0
+        require(ids.isNotEmpty()) { "Pixel sprite atlas is empty" }
 
-        ids.forEach { id ->
-            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
+        val bounds = ids.associateWith { id ->
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id)) { "Sprite $id is missing" }
+            require(sprite.frames.isNotEmpty()) { "Sprite $id has no frames" }
             val first = sprite.frames.first()
             val frameWidth = first.maxOfOrNull { it.length } ?: 0
             val frameHeight = first.size
-            require(frameWidth in 1..CELL_SIZE && frameHeight in 1..CELL_SIZE) {
-                "Sprite $id exceeds atlas cell size"
-            }
-            val frames = sprite.frames.mapIndexed { index, rowsData ->
+            require(frameWidth > 0 && frameHeight > 0) { "Sprite $id has an empty frame" }
+            sprite.frames.forEachIndexed { index, rowsData ->
                 require(rowsData.size == frameHeight && rowsData.all { it.length == frameWidth }) {
                     "Sprite $id frame $index has inconsistent dimensions"
                 }
-                val cellX = (frameIndex % COLUMNS) * CELL_SIZE
-                val cellY = (frameIndex / COLUMNS) * CELL_SIZE
-                rowsData.forEachIndexed { y, row ->
+            }
+            frameWidth to frameHeight
+        }
+
+        val cellSize = bounds.values.maxOf { (width, height) -> maxOf(width, height) }
+        val totalFrames = ids.sumOf { requireNotNull(PixelSpriteAtlas.sprite(it)).frames.size }
+        val rows = (totalFrames + COLUMNS - 1) / COLUMNS
+
+        var frameIndex = 0
+        val entries = ids.map { id ->
+            val (frameWidth, frameHeight) = bounds.getValue(id)
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
+            val frames = List(sprite.frames.size) {
+                val cellX = (frameIndex % COLUMNS) * cellSize
+                val cellY = (frameIndex / COLUMNS) * cellSize
+                frameIndex++
+                SpriteAtlasFrame(cellX, cellY, frameWidth, frameHeight)
+            }
+            SpriteAtlasPackEntry(id, frameWidth, frameHeight, frames)
+        }
+        return SpriteAtlasPackPlan(cellSize, COLUMNS, rows, entries)
+    }
+
+    fun build(): BuiltPixelSpriteAtlas {
+        val plan = plan()
+        val bitmap = Bitmap.createBitmap(plan.textureWidth, plan.textureHeight, Bitmap.Config.ARGB_8888)
+        val entries = plan.entries.map { packed ->
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(packed.id))
+            packed.frames.forEachIndexed { frameIndex, frame ->
+                sprite.frames[frameIndex].forEachIndexed { y, row ->
                     row.forEachIndexed { x, symbol ->
                         if (symbol != '.') {
                             val color = sprite.palette[symbol]
-                                ?: error("Sprite $id uses undefined palette symbol $symbol")
+                                ?: error("Sprite ${packed.id} uses undefined palette symbol $symbol")
                             val argb = Color.argb(
                                 255,
                                 (color[0].coerceIn(0f, 1f) * 255f).toInt(),
                                 (color[1].coerceIn(0f, 1f) * 255f).toInt(),
                                 (color[2].coerceIn(0f, 1f) * 255f).toInt()
                             )
-                            bitmap.setPixel(cellX + x, cellY + y, argb)
+                            bitmap.setPixel(frame.x + x, frame.y + y, argb)
                         }
                     }
                 }
-                frameIndex++
-                SpriteAtlasFrame(cellX, cellY, frameWidth, frameHeight)
             }
-            entries += SpriteAtlasEntry(
-                id = id,
-                frameWidth = frameWidth,
-                frameHeight = frameHeight,
-                frames = frames
+            SpriteAtlasEntry(
+                id = packed.id,
+                frameWidth = packed.frameWidth,
+                frameHeight = packed.frameHeight,
+                frames = packed.frames
             )
         }
 
         val manifest = SpriteAtlasManifest(
             version = 1,
             texture = "generated/pixel-sprite-atlas",
-            textureWidth = width,
-            textureHeight = height,
+            textureWidth = plan.textureWidth,
+            textureHeight = plan.textureHeight,
             filter = "nearest",
             sprites = entries
         )

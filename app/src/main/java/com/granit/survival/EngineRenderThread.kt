@@ -7,6 +7,7 @@ import android.opengl.EGLContext
 import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.opengl.GLES20
+import android.os.Debug
 import android.util.Log
 import android.view.SurfaceHolder
 import java.util.concurrent.atomic.AtomicBoolean
@@ -22,7 +23,7 @@ class EngineRenderThread(
     private val onInteractionProcessed: () -> Unit = {},
     private val onRenderFailure: (Throwable) -> Unit = {}
 ) : Thread("Granit-RenderThread") {
-    companion object { private const val TAG = "GranitEGL" }
+    companion object { private const val TAG = "GranitEGL"; private const val TAG_PERFORMANCE = "GranitPerf"; private const val PERFORMANCE_LOG_INTERVAL_NANOS = 5_000_000_000L }
     private val running = AtomicBoolean(true)
     @Volatile private var viewportWidth = initialWidth.coerceAtLeast(1)
     @Volatile private var viewportHeight = initialHeight.coerceAtLeast(1)
@@ -121,10 +122,13 @@ class EngineRenderThread(
             val fixedFrameDelayNanos = 16_000_000L
             var previousFrame = System.nanoTime()
             var wasInteracting = false
+            val performanceMonitor = PerformanceMonitor()
+            var lastPerformanceLogNanos = previousFrame
 
             while (running.get() && surfaceHolder.surface.isValid) {
                 val frameStart = System.nanoTime()
-                val deltaSeconds = ((frameStart - previousFrame) / 1_000_000_000.0)
+                val frameIntervalNanos = (frameStart - previousFrame).coerceAtLeast(1L)
+                val deltaSeconds = (frameIntervalNanos / 1_000_000_000.0)
                     .toFloat().coerceAtMost(0.25f)
                 previousFrame = frameStart
 
@@ -172,6 +176,21 @@ class EngineRenderThread(
                     val eglError = EGL14.eglGetError()
                     if (eglError == EGL14.EGL_BAD_SURFACE || eglError == EGL14.EGL_CONTEXT_LOST) break
                     throw IllegalStateException("eglSwapBuffers failed: " + Integer.toHexString(eglError))
+                }
+
+                val reportTimeNanos = System.nanoTime()
+                performanceMonitor.recordFrame(frameIntervalNanos, renderer?.currentFrameDrawCalls() ?: 0)
+                if (reportTimeNanos - lastPerformanceLogNanos >= PERFORMANCE_LOG_INTERVAL_NANOS) {
+                    val runtime = Runtime.getRuntime()
+                    val snapshot = performanceMonitor.snapshot(
+                        windowDurationNanos = reportTimeNanos - lastPerformanceLogNanos,
+                        javaHeapUsedBytes = runtime.totalMemory() - runtime.freeMemory(),
+                        javaHeapMaxBytes = runtime.maxMemory(),
+                        nativeHeapAllocatedBytes = Debug.getNativeHeapAllocatedSize(),
+                        pssKilobytes = Debug.getPss()
+                    )
+                    if (snapshot != null) Log.i(TAG_PERFORMANCE, snapshot.toLogLine())
+                    lastPerformanceLogNanos = reportTimeNanos
                 }
 
                 val elapsed = System.nanoTime() - frameStart

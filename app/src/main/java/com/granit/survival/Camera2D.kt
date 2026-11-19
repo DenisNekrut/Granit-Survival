@@ -9,6 +9,8 @@ class Camera2D(
 ) {
     companion object {
         private const val FOLLOW_SPEED = 10f
+        /** Visible neutral margin beyond the solid map boundary, in world tiles. */
+        const val WORLD_EDGE_PADDING = 1.5f
     }
 
     var viewportWidth: Float = viewportWidth
@@ -60,7 +62,8 @@ class Camera2D(
             val safeWorldSize = worldSize.coerceAtLeast(1f)
             if (safeWorldSize <= viewportSize) return safeWorldSize * 0.5f
             val halfViewport = viewportSize * 0.5f
-            return target.coerceIn(halfViewport, safeWorldSize - halfViewport)
+            val padding = WORLD_EDGE_PADDING
+            return target.coerceIn(halfViewport - padding, safeWorldSize - halfViewport + padding)
         }
         return clampAxis(targetX, worldWidth, viewportWidth) to
             clampAxis(targetY, worldHeight, viewportHeight)
