@@ -25,8 +25,9 @@ class PixelRenderer {
     private var textureSamplerLocation = -1
     private var spriteTexture: GlesTexture? = null
     private var spriteManifest: SpriteAtlasManifest? = null
-    private val textureVertexBuffer: FloatBuffer = allocateFloatBuffer(12)
-    private val textureUvBuffer: FloatBuffer = allocateFloatBuffer(12)
+    private val textureVertexBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
+    private val textureUvBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
+    private var queuedTextureVertexCount = 0
 
     fun create() {
         val atlasErrors = PixelSpriteAtlas.validate()
@@ -127,6 +128,9 @@ class PixelRenderer {
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         currentCamera = engine.camera
         queuedVertexCount = 0
+        queuedTextureVertexCount = 0
+        textureVertexBuffer.clear()
+        textureUvBuffer.clear()
         GLES20.glEnableVertexAttribArray(positionLocation)
         GLES20.glEnableVertexAttribArray(vertexColorLocation)
 
@@ -271,6 +275,7 @@ class PixelRenderer {
             if (interacting) 0.42f else 0.30f, controlsOpacity)
 
 
+        flushTextureBatch()
         flushBatch()
         GLES20.glDisableVertexAttribArray(positionLocation)
         GLES20.glDisableVertexAttribArray(vertexColorLocation)
@@ -369,7 +374,10 @@ class PixelRenderer {
         height: Float,
         flipX: Boolean
     ) {
+        // Flat and textured batches are flushed at boundaries to retain painter's order.
         flushBatch()
+        if (queuedTextureVertexCount + 6 > textureVertexBuffer.capacity() / 2) flushTextureBatch()
+
         val worldLeft = centerX - width * 0.5f
         val viewX = currentCamera?.worldToViewX(worldLeft) ?: worldLeft
         val viewY = currentCamera?.worldToViewY(topY) ?: topY
@@ -382,32 +390,34 @@ class PixelRenderer {
         val uv = manifest.uvRect(frame)
         val uvLeft = if (flipX) uv.right else uv.left
         val uvRight = if (flipX) uv.left else uv.right
-        val positions = floatArrayOf(
-            x1, y1, x1, y2, x2, y1,
-            x2, y1, x1, y2, x2, y2
-        )
-        val coordinates = floatArrayOf(
-            uvLeft, uv.top, uvLeft, uv.bottom, uvRight, uv.top,
-            uvRight, uv.top, uvLeft, uv.bottom, uvRight, uv.bottom
-        )
-        textureVertexBuffer.clear()
-        textureVertexBuffer.put(positions).position(0)
-        textureUvBuffer.clear()
-        textureUvBuffer.put(coordinates).position(0)
+
+        textureVertexBuffer.put(x1).put(y1).put(x1).put(y2).put(x2).put(y1)
+        textureVertexBuffer.put(x2).put(y1).put(x1).put(y2).put(x2).put(y2)
+        textureUvBuffer.put(uvLeft).put(uv.top).put(uvLeft).put(uv.bottom).put(uvRight).put(uv.top)
+        textureUvBuffer.put(uvRight).put(uv.top).put(uvLeft).put(uv.bottom).put(uvRight).put(uv.bottom)
+        queuedTextureVertexCount += 6
+    }
+
+    private fun flushTextureBatch() {
+        if (queuedTextureVertexCount == 0) return
+        textureVertexBuffer.flip()
+        textureUvBuffer.flip()
         GLES20.glUseProgram(textureProgram)
         GLES20.glEnableVertexAttribArray(texturePositionLocation)
         GLES20.glEnableVertexAttribArray(textureUvLocation)
         GLES20.glVertexAttribPointer(texturePositionLocation, 2, GLES20.GL_FLOAT, false, 0, textureVertexBuffer)
         GLES20.glVertexAttribPointer(textureUvLocation, 2, GLES20.GL_FLOAT, false, 0, textureUvBuffer)
-        texture.bind(0)
+        spriteTexture?.bind(0)
         GLES20.glUniform1i(textureSamplerLocation, 0)
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6)
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, queuedTextureVertexCount)
         GLES20.glDisableVertexAttribArray(texturePositionLocation)
         GLES20.glDisableVertexAttribArray(textureUvLocation)
         GLES20.glUseProgram(program)
-        // Texture and flat programs may reuse the same attribute indices.
         GLES20.glEnableVertexAttribArray(positionLocation)
         GLES20.glEnableVertexAttribArray(vertexColorLocation)
+        textureVertexBuffer.clear()
+        textureUvBuffer.clear()
+        queuedTextureVertexCount = 0
     }
 
     private fun drawPixelSprite(
@@ -574,6 +584,7 @@ class PixelRenderer {
 
     /** Adds two triangles to the frame batch without issuing a draw call. */
     private fun appendQuad(left: Float, top: Float, right: Float, bottom: Float, r: Float, g: Float, b: Float, a: Float) {
+        flushTextureBatch()
         ensureBatchCapacity(queuedVertexCount + 6)
         val x1 = toNdcX(left); val y1 = toNdcY(top)
         val x2 = toNdcX(right); val y2 = toNdcY(bottom)
@@ -619,5 +630,5 @@ class PixelRenderer {
         }
         return shader
     }
-    private companion object { const val INITIAL_VERTEX_CAPACITY = 8192 }
+    private companion object { const val INITIAL_VERTEX_CAPACITY = 8192; const val INITIAL_TEXTURE_VERTEX_CAPACITY = 4096 }
 }
