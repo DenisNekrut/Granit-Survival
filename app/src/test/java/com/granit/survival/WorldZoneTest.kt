@@ -6,6 +6,35 @@ import org.junit.Test
 
 class WorldZoneTest {
     @Test
+    fun bunkerHasFiveRoomsWithReachableEquipmentStations() {
+        val engine = GameEngine()
+        val types = mutableSetOf<TileType>()
+        engine.tileMap.forEachTile { _, _, type -> types += type }
+
+        assertTrue(TileType.BED in types)
+        assertTrue(TileType.DINING_TABLE in types)
+        assertTrue(TileType.GENERATOR in types)
+        assertTrue(TileType.MEDICAL_STATION in types)
+        assertTrue(TileType.WORKBENCH in types)
+
+        engine.player.x = 17.5f
+        engine.player.y = 6.5f
+        assertTrue(engine.canAccessDiningTable())
+
+        engine.player.x = 27.5f
+        engine.player.y = 5.5f
+        assertTrue(engine.canAccessGenerator())
+
+        engine.player.x = 5.5f
+        engine.player.y = 18.5f
+        assertTrue(engine.canAccessMedicalStation())
+
+        engine.player.x = 17.5f
+        engine.player.y = 18.5f
+        assertTrue(engine.canUseWorkbench())
+    }
+
+    @Test
     fun playerCanTravelFromBunkerToForestAndBack() {
         val engine = GameEngine()
         engine.player.x = 20.5f
