@@ -17,7 +17,7 @@ class TileMap(
     val zone: WorldZone = WorldZone.BUNKER,
     val seed: Long? = null
 ) {
-    val layoutSeed: Long? = seed
+    val layoutSeed: Long? = if (zone.isProcedurallyGenerated) seed else null
     private val tiles = Array(height) { Array(width) { TileType.FLOOR } }
 
     init {
