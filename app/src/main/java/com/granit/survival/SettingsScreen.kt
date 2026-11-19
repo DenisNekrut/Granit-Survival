@@ -19,7 +19,6 @@ internal class SettingsScreen(
     private val label: (String, Float, Int, Boolean) -> TextView,
     private val menuButton: (String, Boolean, () -> Unit) -> android.widget.Button,
     private val showOverlay: (LinearLayout) -> Unit,
-    private val dp: (Int) -> Int,
     private val onSaved: () -> Unit,
     private val onCancel: () -> Unit
 ) {
