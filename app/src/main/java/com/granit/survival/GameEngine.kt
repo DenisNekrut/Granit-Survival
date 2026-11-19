@@ -1,6 +1,7 @@
 package com.granit.survival
 
 import kotlin.math.sqrt
+import kotlin.random.Random
 
 /** Platform-independent simulation state for Granit Survival. */
 data class EngineInput(val moveX: Float = 0f, val moveY: Float = 0f, val interact: Boolean = false)
@@ -14,7 +15,7 @@ data class PlayerState(
     var facing: PlayerFacing = PlayerFacing.DOWN
 )
 
-class GameEngine {
+class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() }) {
     companion object {
         const val WORLD_WIDTH = 40f
         const val WORLD_HEIGHT = 24f
@@ -189,9 +190,19 @@ class GameEngine {
         return advanceGameMinutes(5)
     }
 
-    fun changeZone(target: WorldZone) {
+    /**
+     * Enter a zone. Resource maps marked procedural receive a fresh seed on every
+     * new entry; fixed maps (bunker and first forest area) are reused unchanged.
+     * Save/checkpoint restoration passes regenerate=false to rebuild the exact map.
+     */
+    fun changeZone(target: WorldZone, regenerate: Boolean = true) {
         if (target != zone) psychology.onZoneChange(zone, target)
-        tileMap = zoneMaps.getOrPut(target) { TileMap(zone = target) }
+        val targetMap = if (regenerate && target.isProcedurallyGenerated) {
+            TileMap(zone = target, seed = mapSeedGenerator()).also { zoneMaps[target] = it }
+        } else {
+            zoneMaps.getOrPut(target) { TileMap(zone = target) }
+        }
+        tileMap = targetMap
         lastDiscoveryTitle = null
         lastDiscoveryHudLabel = null
         player.x = target.spawnX
@@ -201,20 +212,23 @@ class GameEngine {
         isMoving = false
     }
 
-    fun zoneResourceSnapshot(): List<ZoneResourceSnapshot> = WorldZone.values().map { target ->
-        ZoneResourceSnapshot(target, zoneMaps.getOrPut(target) { TileMap(zone = target) }.resourceSnapshot())
+    /** Snapshot only maps that actually exist; an unvisited expedition remains ungenerated. */
+    fun zoneResourceSnapshot(): List<ZoneResourceSnapshot> = zoneMaps.map { (target, map) ->
+        ZoneResourceSnapshot(target, map.resourceSnapshot(), map.layoutSeed)
     }
 
     fun restoreZoneResources(snapshots: List<ZoneResourceSnapshot>) {
+        zoneMaps.clear()
         if (snapshots.isEmpty()) {
-            zoneMaps.clear()
-            WorldZone.values().forEach { target -> zoneMaps[target] = TileMap(zone = target) }
+            zoneMaps[WorldZone.BUNKER] = TileMap(zone = WorldZone.BUNKER)
             return
         }
         snapshots.forEach { snapshot ->
-            zoneMaps.getOrPut(snapshot.zone) { TileMap(zone = snapshot.zone) }
-                .restoreResources(snapshot.resources)
+            val map = TileMap(zone = snapshot.zone, seed = snapshot.seed)
+            map.restoreResources(snapshot.resources)
+            zoneMaps[snapshot.zone] = map
         }
+        zoneMaps.putIfAbsent(WorldZone.BUNKER, TileMap(zone = WorldZone.BUNKER))
     }
 
     fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean =
@@ -276,7 +290,7 @@ class GameEngine {
 
     fun restoreSaveSnapshot(snapshot: EngineSaveSnapshot) {
         restoreZoneResources(snapshot.zoneResources)
-        changeZone(snapshot.zone)
+        changeZone(snapshot.zone, regenerate = false)
         restoreDiscoveredPointsOfInterest(snapshot.discoveredPoiIds)
         if (snapshot.zoneResources.isEmpty()) tileMap.restoreResources(snapshot.remainingResources)
         player.x = snapshot.player.x
