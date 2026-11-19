@@ -36,6 +36,25 @@ class CheckpointTest {
     }
 
     @Test
+    fun deathRollbackRestoresEquipmentAndAllCharacterStatistics() {
+        val engine = GameEngine { 404L }
+        engine.sleepUntilMorning()
+        val checkpointStats = engine.statistics.snapshot()
+        val checkpointEquipment = engine.equipment.snapshot()
+
+        engine.changeZone(WorldZone.RUINS)
+        engine.statistics.recordDistance(120f)
+        engine.statistics.recordResourceCollected(4)
+        engine.statistics.recordCrafted(3)
+        engine.statistics.recordBookRead()
+
+        assertTrue(engine.respawnAtWakeCheckpoint())
+        assertEquals(checkpointStats, engine.statistics.snapshot())
+        assertEquals(checkpointEquipment, engine.equipment.snapshot())
+        assertEquals(WorldZone.BUNKER, engine.zone)
+    }
+
+    @Test
     fun sleepCreatesNewWakeCheckpoint() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.WATER, 2)
