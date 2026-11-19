@@ -24,7 +24,7 @@ class ZonePropSelectorTest {
         assertEquals("bush", ZonePropSelector.spriteFor(WorldZone.FOREST, 0, 0))
         assertEquals("barrel", ZonePropSelector.spriteFor(WorldZone.RUINS, 0, 0))
         assertEquals("streetlamp", ZonePropSelector.spriteFor(WorldZone.ROAD, 0, 0))
-        assertEquals("wreck", ZonePropSelector.spriteFor(WorldZone.ROAD, 1, 5))
+        assertEquals("wreck", ZonePropSelector.spriteFor(WorldZone.ROAD, 1, 7))
         assertNull(ZonePropSelector.spriteFor(WorldZone.BUNKER, 1, 0))
     }
 }
