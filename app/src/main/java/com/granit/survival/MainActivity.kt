@@ -3,6 +3,7 @@ package com.granit.survival
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
@@ -12,6 +13,7 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.FrameLayout
@@ -65,6 +67,12 @@ class MainActivity : Activity() {
             session.audio.setVolumes(audioSettings.musicVolume, audioSettings.effectsVolume)
             session.audio.start()
         }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        Log.i("GranitLifecycle", "configuration changed: orientation=${newConfig.orientation} screen=${newConfig.screenWidthDp}x${newConfig.screenHeightDp}dp")
+        if (::gameSurface.isInitialized) gameSurface.syncViewportFromView()
     }
 
     override fun onPause() {
