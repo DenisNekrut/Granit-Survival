@@ -110,7 +110,7 @@ internal class BunkerStationPanels(
         BookCatalog.all.forEach { book ->
             val read = session.engine.bookLibrary.hasRead(book.id)
             panel.addView(label(book.title + " · " + book.category.displayName, 15f, Color.WHITE, false))
-            panel.addView(label(book.description + " · " + book.readMinutes + " мин.", 12f, Color.LTGRAY, false))
+            panel.addView(label(book.description + " · " + (book.readMinutes / 60) + " ч. чтения", 12f, Color.LTGRAY, false))
             panel.addView(menuButton(if (read) "ПРОЧИТАНО" else "ЧИТАТЬ", !read) {
                 if (session.engine.readBook(book.id)) {
                     Toast.makeText(activity, "Книга прочитана", Toast.LENGTH_SHORT).show()
