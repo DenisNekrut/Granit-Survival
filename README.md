@@ -15,28 +15,31 @@
 ### Engine and gameplay
 - Android application shell, SurfaceView lifecycle and EGL render thread.
 - Fixed-step simulation, camera, collision, virtual joystick and multitouch input.
-- Four connected areas: bunker, forest, ruins and road; exits are reachable from each zone's spawn.
-- Separate maps and resource states for each area; collected resources remain collected when revisiting.
+- Four connected areas: bunker, fixed first forest area, ruins and road; exits are reachable from each zone's spawn.
+- Ruins and road are regenerated from a new deterministic seed on every new entry; bunker and first forest map stay fixed. The current map seed and remaining resources are preserved by save/checkpoint restore.
 - Gathering and travelling consume in-game time.
 - 4×4 inventory, resource collection, bunker storage and item transfer.
 - Health, hunger, thirst, energy, food and water.
-- Sleep until 07:00, wake-up checkpoint and rollback of the reversible run state.
+- Sleep until 07:00, wake-up checkpoint and rollback of the reversible run state, including equipment, statistics and generated map state.
 - Deterministic five-state weather cycle; outdoor conditions gently affect movement, and radio forecasts the next day.
 
 ### Bunker, knowledge and events
-- Main menu, pause menu, expedition journal, save-slot manager, settings, storage and workbench screens.
-- Three manual save slots and a separate atomic autosave; JSON schema v6 reads older versions 1–5.
+- Main menu, pause menu with a prominent return-to-menu action, expedition journal, character statistics, save-slot manager, settings, storage and workbench screens.
+- Three manual save slots and a separate atomic autosave; JSON schema v8 reads older versions 1–7.
 - Workbench recipes for bandage and medical kit; medical kit recipe unlocks after reading a technical manual.
 - Bunker library with fiction, science, technical manuals, diaries and magazines. Reading consumes game time and may affect morale/stress.
 - Bunker radio with one daily broadcast: weather, maintenance notes, archival broadcast or weak signal. Listening consumes 10 in-game minutes.
 - Six discoverable landmarks in forest, ruins and road. Full Russian descriptions are recorded in the expedition journal.
-- Read books, discovered landmarks, radio state and psychological indicators are included in save/checkpoint rollback.
+- Read books, discovered landmarks, radio state, equipment and psychological indicators are included in save/checkpoint rollback.
+- Character statistics track survived days, expedition minutes, distance travelled, collected resources, crafted items, books read and visited zones; they are displayed in a dedicated screen and revert with the wake checkpoint.
+- A fictional non-lethal signal emitter is automatically drawn outside the bunker, holstered on return, and shown beside the character/HUD. A wider equipment/combat system is not yet implemented.
 - Psychological indicators: stress, loneliness, fatigue and morale. Sleep/return aid recovery; fatigue and stress gently reduce movement speed.
 
 ### Graphics and settings
 - PixelSpriteAtlas with player idle/walk frames, resource and medical-item sprites.
 - Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
-- Pixel-art bed, storage, workbench, bookshelf and radio.
+- Pixel-art bed, storage, workbench, bookshelf, radio, dining table, generator and medical station.
+- Bunker is divided into connected bedroom, dining room, generator room, medical room, workshop and utility storage room; each room has contextual access.
 - HUD displays live survival meters, day/time, current zone and weather.
 - Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored but still need integration.
 
@@ -48,7 +51,7 @@ The older Unity-oriented plan is retained for historical reference and is supers
 
 ## Remaining work
 
-This is still a playable prototype, not a finished game. The next work includes a complete art pass and external sprite sheets, more recipes and bunker upgrades, richer weather/story events, NPCs and expedition objectives, full audio/settings integration, and physical Android device testing.
+This is still a playable prototype, not a finished game. The next work includes a complete art pass and external sprite sheets, richer procedural map variety and points of interest, a fully functional generator/medical/dining system, more recipes and bunker upgrades, richer weather/story events, NPCs and expedition objectives, a broader equipment system, and physical Android device testing.
 
 ## Downloading a test APK
 
