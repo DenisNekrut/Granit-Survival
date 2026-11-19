@@ -74,10 +74,10 @@ class TileMap(
 
         // Small starter supplies remain available inside the safe room.
         set(7, 8, TileType.RESOURCE_WOOD)
-        set(12, 8, TileType.RESOURCE_METAL)
+        set(11, 8, TileType.RESOURCE_METAL)
         set(10, 11, TileType.RESOURCE_FABRIC)
-        set(14, 10, TileType.RESOURCE_FOOD)
-        set(5, 10, TileType.RESOURCE_WATER)
+        set(14, 9, TileType.RESOURCE_FOOD)
+        set(5, 9, TileType.RESOURCE_WATER)
     }
 
     private fun buildForest() {
