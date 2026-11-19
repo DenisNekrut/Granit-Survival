@@ -6,6 +6,11 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.widget.LinearLayout
 import android.widget.Toast
+import android.widget.Button
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
 
@@ -13,6 +18,7 @@ import java.util.Date
 internal class SaveSlotsScreen(
     private val activity: Activity,
     private val saves: GameSaveRepository,
+    private val scope: CoroutineScope,
     private val createPanel: (String, String) -> LinearLayout,
     private val label: (String, Float, Int, Boolean) -> android.widget.TextView,
     private val menuButton: (String, Boolean, () -> Unit) -> android.widget.Button,
@@ -50,30 +56,37 @@ internal class SaveSlotsScreen(
             }
             row.addView(label(info, 14f, Color.WHITE, false))
             val actions = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
-            actions.addView(menuButton("ЗАГРУЗИТЬ", slot.exists && !slot.corrupted) {
-                runCatching { loadSlot(slot.slot) }
-                    .onSuccess { loaded ->
+            lateinit var loadButton: Button
+            loadButton = menuButton("ЗАГРУЗИТЬ", slot.exists && !slot.corrupted) {
+                scope.launch {
+                    loadButton.isEnabled = false
+                    try {
+                        val loaded = withContext(Dispatchers.IO) { loadSlot(slot.slot) }
                         if (loaded) onLoaded()
                         else Toast.makeText(activity, "Слот ${slot.slot} не найден", Toast.LENGTH_LONG).show()
+                    } catch (failure: Exception) {
+                        Toast.makeText(activity, "Ошибка загрузки: ${failure.message}", Toast.LENGTH_LONG).show()
+                    } finally {
+                        loadButton.isEnabled = true
                     }
-                    .onFailure {
-                        Toast.makeText(activity, "Ошибка загрузки: ${it.message}", Toast.LENGTH_LONG).show()
-                    }
-            }, weightedParams())
+                }
+            }
+            actions.addView(loadButton, weightedParams())
             actions.addView(menuButton("СОХРАНИТЬ", allowSave) {
                 AlertDialog.Builder(activity)
                     .setTitle("Перезаписать слот ${slot.slot}?")
                     .setMessage("Старое сохранение в этом слоте будет заменено.")
                     .setNegativeButton("ОТМЕНА", null)
                     .setPositiveButton("СОХРАНИТЬ") { _, _ ->
-                        runCatching { saveSlot(slot.slot) }
-                            .onSuccess {
+                        scope.launch {
+                            try {
+                                withContext(Dispatchers.IO) { saveSlot(slot.slot) }
                                 Toast.makeText(activity, "Игра сохранена", Toast.LENGTH_SHORT).show()
                                 onSaved()
+                            } catch (failure: Exception) {
+                                Toast.makeText(activity, "Ошибка сохранения: ${failure.message}", Toast.LENGTH_LONG).show()
                             }
-                            .onFailure {
-                                Toast.makeText(activity, "Ошибка сохранения: ${it.message}", Toast.LENGTH_LONG).show()
-                            }
+                        }
                     }.show()
             }, weightedParams())
             actions.addView(menuButton("УДАЛИТЬ", slot.exists) {
@@ -82,8 +95,17 @@ internal class SaveSlotsScreen(
                     .setMessage("Это действие нельзя отменить.")
                     .setNegativeButton("ОТМЕНА", null)
                     .setPositiveButton("УДАЛИТЬ") { _, _ ->
-                        saves.delete(slot.slot)
-                        show(allowSave)
+                        scope.launch {
+                            try {
+                                val deleted = withContext(Dispatchers.IO) { saves.delete(slot.slot) }
+                                if (!deleted) {
+                                    Toast.makeText(activity, "Не удалось удалить слот ${slot.slot}", Toast.LENGTH_LONG).show()
+                                }
+                                show(allowSave)
+                            } catch (failure: Exception) {
+                                Toast.makeText(activity, "Ошибка удаления: ${failure.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
                     }.show()
             }, weightedParams())
             row.addView(actions)
