@@ -21,6 +21,7 @@ data class EngineSaveSnapshot(
     val zoneResources: List<ZoneResourceSnapshot> = emptyList(),
     val discoveredPoiIds: Set<String> = emptySet(),
     val equipment: PlayerEquipmentSnapshot = PlayerEquipmentSnapshot(),
+    val statistics: CharacterStatisticsSnapshot = CharacterStatisticsSnapshot(),
     val wakeCheckpoint: WakeCheckpoint?
 ) {
     companion object
@@ -127,7 +128,7 @@ class GameSaveRepository(context: Context) {
 
     companion object {
         const val MAX_SLOTS = 3
-        const val SAVE_VERSION = 7
+        const val SAVE_VERSION = 8
     }
 }
 
@@ -145,6 +146,7 @@ private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("zoneResources", zoneResources.toZoneResourcesJson())
     .put("discoveredPoiIds", JSONArray(discoveredPoiIds.toList()))
     .put("equipment", equipment.toJson())
+    .put("statistics", statistics.toJson())
     .put("wakeCheckpoint", wakeCheckpoint?.toJson() ?: JSONObject.NULL)
 
 private fun PlayerSnapshot.toJson() = JSONObject()
@@ -163,6 +165,15 @@ private fun BunkerRadioSnapshot.toJson() = JSONObject().put("lastListenedDay", l
 private fun PlayerEquipmentSnapshot.toJson() = JSONObject()
     .put("weapon", weapon?.name ?: JSONObject.NULL)
     .put("weaponDrawn", weaponDrawn)
+
+private fun CharacterStatisticsSnapshot.toJson() = JSONObject()
+    .put("daysSurvived", daysSurvived)
+    .put("expeditionMinutes", expeditionMinutes)
+    .put("distanceTravelled", distanceTravelled.toDouble())
+    .put("resourcesCollected", resourcesCollected)
+    .put("itemsCrafted", itemsCrafted)
+    .put("booksRead", booksRead)
+    .put("visitedZones", JSONArray(visitedZones.map { it.name }))
 
 private fun PsychologicalStateSnapshot.toJson() = JSONObject()
     .put("stress", stress.toDouble())
@@ -213,6 +224,7 @@ private fun WakeCheckpoint.toJson() = JSONObject()
     .put("zoneResources", zoneResources.toZoneResourcesJson())
     .put("discoveredPoiIds", JSONArray(discoveredPoiIds.toList()))
     .put("equipment", equipment.toJson())
+    .put("statistics", statistics.toJson())
 
 private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveSnapshot {
     val checkpointJson = json.optJSONObject("wakeCheckpoint")
@@ -233,6 +245,7 @@ private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveS
         discoveredPoiIds = json.optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet(),
         equipment = json.optJSONObject("equipment")?.toEquipmentSnapshot()
             ?: PlayerEquipmentSnapshot(weaponDrawn = restoredZone != WorldZone.BUNKER),
+        statistics = json.optJSONObject("statistics")?.toStatisticsSnapshot() ?: CharacterStatisticsSnapshot(),
         wakeCheckpoint = checkpointJson?.toWakeCheckpoint()
     )
 }
@@ -257,6 +270,20 @@ private fun JSONObject.toBunkerRadioSnapshot() = BunkerRadioSnapshot(
 private fun JSONObject.toEquipmentSnapshot() = PlayerEquipmentSnapshot(
     weapon = runCatching { optString("weapon").takeIf { it.isNotBlank() && it != "null" }?.let(WeaponType::valueOf) }.getOrNull(),
     weaponDrawn = optBoolean("weaponDrawn", false)
+)
+
+private fun JSONObject.toStatisticsSnapshot() = CharacterStatisticsSnapshot(
+    daysSurvived = optInt("daysSurvived", 1),
+    expeditionMinutes = optLong("expeditionMinutes", 0L),
+    distanceTravelled = optDouble("distanceTravelled", 0.0).toFloat(),
+    resourcesCollected = optInt("resourcesCollected", 0),
+    itemsCrafted = optInt("itemsCrafted", 0),
+    booksRead = optInt("booksRead", 0),
+    visitedZones = optJSONArray("visitedZones")?.let { array ->
+        (0 until array.length()).mapNotNull { index ->
+            runCatching { WorldZone.valueOf(array.optString(index)) }.getOrNull()
+        }.toSet()
+    } ?: setOf(WorldZone.BUNKER)
 )
 
 private fun JSONObject.toBookLibrarySnapshot() = BookLibrarySnapshot(
@@ -324,6 +351,7 @@ private fun JSONObject.toWakeCheckpoint(): WakeCheckpoint {
     zoneResources = optJSONArray("zoneResources")?.toZoneResources() ?: emptyList(),
     discoveredPoiIds = optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet(),
     equipment = optJSONObject("equipment")?.toEquipmentSnapshot()
-        ?: PlayerEquipmentSnapshot(weaponDrawn = restoredZone != WorldZone.BUNKER)
+        ?: PlayerEquipmentSnapshot(weaponDrawn = restoredZone != WorldZone.BUNKER),
+    statistics = optJSONObject("statistics")?.toStatisticsSnapshot() ?: CharacterStatisticsSnapshot()
     )
 }
