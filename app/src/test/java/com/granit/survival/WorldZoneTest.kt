@@ -203,7 +203,7 @@ class WorldZoneTest {
     fun weaponIsDrawnAutomaticallyOutsideAndHolsteredInBunker() {
         val engine = GameEngine()
         assertEquals(false, engine.equipment.weaponDrawn)
-        assertEquals(WeaponType.SIGNAL_EMITTER, engine.equipment.weapon)
+        assertEquals(WeaponType.PULSE_CARBINE, engine.equipment.weapon)
 
         engine.changeZone(WorldZone.FOREST)
         assertEquals(true, engine.equipment.weaponDrawn)
