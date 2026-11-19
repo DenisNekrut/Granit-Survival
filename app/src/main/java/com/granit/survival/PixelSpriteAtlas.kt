@@ -35,6 +35,40 @@ object PixelSpriteAtlas {
             ),
             palette = characterPalette
         ),
+        "player_back" to PixelSprite(
+            frames = listOf(
+                listOf(
+                    "....HHHH....", "...HHHHHH...", "...HHHHHH...", "..HHHHHHHH..",
+                    "..HHHHHHHH..", "..HHHHHHHH..", "..CCCCCCCC..", ".PCCCCCCCC..",
+                    ".PCCCCCCCC..", ".PCCCCCCCC..", "..CCCCCCCC..", "..BBBBBBBB..",
+                    "..BB..BB....", "..BB..BB....", "DD....DD....", "DD....DD...."
+                ),
+                listOf(
+                    "....HHHH....", "...HHHHHH...", "...HHHHHH...", "..HHHHHHHH..",
+                    "..HHHHHHHH..", "..HHHHHHHH..", "..CCCCCCCC..", ".PCCCCCCCC..",
+                    ".PCCCCCCCC..", ".PCCCCCCCC..", "..CCCCCCCC..", "..BBBBBBBB..",
+                    "...BBBB.....", "..BB..BB....", "...DD..DD...", "...DD..DD..."
+                )
+            ),
+            palette = characterPalette
+        ),
+        "player_side" to PixelSprite(
+            frames = listOf(
+                listOf(
+                    "....HHHH....", "...HHHHHH...", "...HHHHHH...", "...SSSSSS...",
+                    "..SSSSSSSS..", "..SSSSSSSS..", "..CCAAAAA...", ".PCCCCCCC...",
+                    ".PCCCCCCC...", ".PCCCCCCC...", "..CCCCCCC...", "..BBBBBBB...",
+                    "..BB..BB....", "..BB..BB....", "...DD.DD....", "...DD.DD...."
+                ),
+                listOf(
+                    "....HHHH....", "...HHHHHH...", "...HHHHHH...", "...SSSSSS...",
+                    "..SSSSSSSS..", "..SSSSSSSS..", "..CCAAAAA...", ".PCCCCCCC...",
+                    ".PCCCCCCC...", ".PCCCCCCC...", "..CCCCCCC...", "..BBBBBBB...",
+                    "...BBBB.....", "..BB..BB....", "....DD.DD...", "....DD.DD..."
+                )
+            ),
+            palette = characterPalette
+        ),
         "wood" to PixelSprite(listOf(listOf(
             "........", "..WW....", "..WW....", "WWWWWW..",
             "..WWWW..", "..WW....", "..WW....", "........"
