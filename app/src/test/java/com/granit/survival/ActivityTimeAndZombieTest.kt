@@ -17,7 +17,7 @@ class ActivityTimeAndZombieTest {
     @Test
     fun readingBookConsumesItsFullReadingDuration() {
         val engine = GameEngine()
-        engine.player.x = 7.5f
+        engine.player.x = 9.5f
         engine.player.y = 2.5f
         val start = engine.worldClock.totalMinutes
 
