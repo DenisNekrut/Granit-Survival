@@ -340,6 +340,69 @@ object PixelSpriteAtlas {
             'M' to floatArrayOf(0.35f, 0.39f, 0.37f),
             'B' to floatArrayOf(0.12f, 0.15f, 0.14f)
         )),
+        "crate" to PixelSprite(listOf(listOf(
+            "................",
+            "..WWWWWWWWWWWW..",
+            "..WBBBBBBBBBBW..",
+            "..WBWWWWWWWWBW..",
+            "..WBW......WBW..",
+            "..WBW......WBW..",
+            "..WBWWWWWWWWBW..",
+            "..WBBBBBBBBBBW..",
+            "..WWWWWWWWWWWW..",
+            "..WW..........W.",
+            "..WW..........W.",
+            "..WW..........W.",
+            "..WW..........W.",
+            "................",
+            "................",
+            "................"
+        )), mapOf(
+            'W' to floatArrayOf(0.39f, 0.27f, 0.17f),
+            'B' to floatArrayOf(0.19f, 0.16f, 0.13f)
+        )),
+        "barrel" to PixelSprite(listOf(listOf(
+            "................",
+            ".....MMMMMM.....",
+            "....MMMMMMMM....",
+            "...MMBBBBBBMM...",
+            "...MMBBBBBBMM...",
+            "...MMBBBBBBMM...",
+            "...MMMMMMMMMM...",
+            "...MMBBBBBBMM...",
+            "...MMBBBBBBMM...",
+            "...MMBBBBBBMM...",
+            "....MMMMMMMM....",
+            ".....MMMMMM.....",
+            "................",
+            "................",
+            "................",
+            "................"
+        )), mapOf(
+            'M' to floatArrayOf(0.46f, 0.49f, 0.46f),
+            'B' to floatArrayOf(0.30f, 0.34f, 0.32f)
+        )),
+        "wreck" to PixelSprite(listOf(listOf(
+            "................",
+            ".....MMMMMM.....",
+            "...MMMMMMMMMM...",
+            "..MMBBBBBBBBMM..",
+            ".MMBBBBBBBBBBMM.",
+            ".MMBBMMMMBBBBMM.",
+            ".MMMMMMMMMMMMMM.",
+            ".MMBBBBBBBBBBMM.",
+            "..MMBBBBBBBBMM..",
+            "...MM....MM.....",
+            "...MM....MM.....",
+            "................",
+            "................",
+            "................",
+            "................",
+            "................"
+        )), mapOf(
+            'M' to floatArrayOf(0.34f, 0.37f, 0.35f),
+            'B' to floatArrayOf(0.19f, 0.23f, 0.21f)
+        ))
         "water" to PixelSprite(listOf(listOf(
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
