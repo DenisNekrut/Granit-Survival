@@ -586,11 +586,15 @@ class PixelRenderer {
     }
 
     private fun drawInventory(inventory: Inventory) {
-        val panelX = 15.45f
-        val panelY = 0.45f
+        // HUD and backpack use the current screen-space viewport, not fixed world coordinates.
+        // This keeps the inventory attached to the right display edge on wide and narrow phones.
         val slotSize = 0.72f
         val gap = 0.08f
-        screenRect(panelX - 0.12f, panelY - 0.12f, 3.32f, 3.32f, 0.055f, 0.065f, 0.068f)
+        val panelWidth = inventory.columns * slotSize + (inventory.columns - 1) * gap + 0.24f
+        val viewportWidth = screenWidth / worldScale
+        val panelX = (viewportWidth - panelWidth - 0.42f).coerceAtLeast(0.42f)
+        val panelY = 0.45f
+        screenRect(panelX - 0.12f, panelY - 0.12f, panelWidth, 3.32f, 0.055f, 0.065f, 0.068f)
         for (index in 0 until inventory.columns * inventory.rows) {
             val column = index % inventory.columns
             val row = index / inventory.columns
