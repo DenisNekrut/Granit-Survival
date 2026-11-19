@@ -21,6 +21,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         const val WORLD_HEIGHT = 24f
         const val MEDICAL_KIT_HEALING = 35f
         const val BANDAGE_HEALING = 15f
+        const val MEDICAL_STATION_HEALING = 50f
+        const val MEDICAL_STATION_TREATMENT_MINUTES = 12
         const val RESOURCE_GATHER_MINUTES = 2
         const val ZONE_TRAVEL_MINUTES = 8
         private const val FIXED_STEP_SECONDS = 1f / 60f
@@ -167,6 +169,19 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun canAccessMedicalStation(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.MEDICAL_STATION, player.x, player.y, 1.5f)
 
+    /** Powered treatment at the medical station takes 12 game minutes and restores 50 health. */
+    fun canUseMedicalStation(): Boolean = canAccessMedicalStation() && bunkerPower.hasPower
+
+    fun treatAtMedicalStation(): Boolean {
+        if (!canUseMedicalStation() || needs.health >= 100f ||
+            inventory.count(ItemType.MEDICAL_KIT) < 1) return false
+        // Advance first: if survival needs trigger a checkpoint rollback, no kit or healing is lost.
+        if (!advanceGameMinutes(MEDICAL_STATION_TREATMENT_MINUTES)) return false
+        if (!inventory.remove(ItemType.MEDICAL_KIT, 1)) return false
+        needs.restoreHealth(MEDICAL_STATION_HEALING)
+        return true
+    }
+
     fun canUseRadio(): Boolean = zone == WorldZone.BUNKER && bunkerPower.hasPower &&
         tileMap.isNearTile(TileType.RADIO, player.x, player.y, 1.5f) && radioSystem.canListen(worldClock.day)
 
@@ -212,15 +227,19 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     }
 
     fun useBandage(): Boolean {
-        if (needs.health >= 100f || !inventory.remove(ItemType.BANDAGE, 1)) return false
+        if (needs.health >= 100f || inventory.count(ItemType.BANDAGE) < 1) return false
+        if (!advanceGameMinutes(3)) return false
+        if (!inventory.remove(ItemType.BANDAGE, 1)) return false
         needs.restoreHealth(BANDAGE_HEALING)
-        return advanceGameMinutes(3)
+        return true
     }
 
     fun useMedicalKit(): Boolean {
-        if (needs.health >= 100f || !inventory.remove(ItemType.MEDICAL_KIT, 1)) return false
+        if (needs.health >= 100f || inventory.count(ItemType.MEDICAL_KIT) < 1) return false
+        if (!advanceGameMinutes(5)) return false
+        if (!inventory.remove(ItemType.MEDICAL_KIT, 1)) return false
         needs.restoreHealth(MEDICAL_KIT_HEALING)
-        return advanceGameMinutes(5)
+        return true
     }
 
     /**
