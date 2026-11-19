@@ -32,7 +32,7 @@ class CheckpointTest {
         assertEquals(1, engine.bunkerStorage.count(ItemType.METAL))
         assertEquals(checkpointNeeds, engine.needs.snapshot())
         assertEquals(checkpointDay, engine.worldClock.day)
-        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 8])
+        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[1, 8])
     }
 
     @Test
