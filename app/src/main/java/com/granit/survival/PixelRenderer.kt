@@ -380,7 +380,6 @@ class PixelRenderer {
             val fireCenterY = screenHeight * 0.59f
             screenRectPx(actionCenterX - fireDiameter * 0.5f, fireCenterY - fireDiameter * 0.5f,
                 fireDiameter, fireDiameter, if (interacting) 0.58f else 0.36f, 0.25f, 0.20f, controlsOpacity)
-            drawText("PULSE", 0.0f, 0.0f, 0.01f, 0f, 0f, 0f)
         }
 
         flushTextureBatch()
