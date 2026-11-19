@@ -74,6 +74,24 @@ class BunkerPowerSystemTest {
     }
 
     @Test
+    fun workbenchRequiresPowerButManualReadingDoesNot() {
+        val engine = GameEngine()
+        engine.player.x = 17.5f
+        engine.player.y = 18.5f
+        assertTrue(engine.canUseWorkbench())
+
+        engine.player.x = 27.5f
+        engine.player.y = 5.5f
+        assertTrue(engine.toggleGenerator())
+        engine.player.x = 17.5f
+        engine.player.y = 18.5f
+        assertFalse(engine.canUseWorkbench())
+        engine.player.x = 22.5f
+        engine.player.y = 2.5f
+        assertTrue(engine.canAccessBookshelf())
+    }
+
+    @Test
     fun saveSnapshotRestoresGeneratorState() {
         val original = GameEngine()
         original.bunkerPower.toggleGenerator()
