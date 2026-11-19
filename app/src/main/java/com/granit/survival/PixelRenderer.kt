@@ -268,8 +268,8 @@ class PixelRenderer {
         )
         // Add fixed ceiling fixtures to the bunker room layout.
         val bunkerLamps = listOf(
-            4.5f to 7.0f, 18.5f to 7.0f, 27.5f to 7.0f,
-            5.5f to 15.0f, 17.5f to 15.0f, 31.0f to 15.0f
+            3.0f to 2.0f, 8.0f to 2.0f, 14.0f to 2.0f,
+            3.0f to 7.0f, 8.5f to 7.0f, 14.0f to 7.0f
         )
         // Fixtures are intentionally hidden: only their reflected light is visible on the floor and objects.
         worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
