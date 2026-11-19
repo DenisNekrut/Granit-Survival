@@ -381,35 +381,38 @@ class PixelRenderer {
                     if (nightBlue) 0.12f else 0.055f,
                     darkness)
             }
-            // A faint warm band at sunrise and sunset gives the transition a natural hue.
             val twilight = DayNightLighting.twilightTint(minute)
-            if (twilight > 0f) {
+            if (twilight > 0.001f) {
                 rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
                     0.34f, 0.19f, 0.10f, twilight)
             }
             return
         }
 
-        // Bunker ambient light remains steady regardless of the outside time.
+        // Stable low-level bunker ambience, with nested warm pools around each fixture.
         rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
-            0.025f, 0.032f, 0.04f, 0.16f)
+            0.025f, 0.032f, 0.04f, 0.13f)
         bunkerLamps.forEach { (x, y) ->
-            // Layered translucent rectangles create a soft, deliberately pixel-art light pool.
+            // Broad low-alpha bands form a stepped pixel-art falloff instead of a flat glow.
             val layers = listOf(
-                floatArrayOf(5.8f, 3.7f, 0.025f),
-                floatArrayOf(4.9f, 3.1f, 0.030f),
-                floatArrayOf(4.0f, 2.5f, 0.035f),
-                floatArrayOf(3.1f, 1.9f, 0.045f),
-                floatArrayOf(2.2f, 1.35f, 0.055f),
-                floatArrayOf(1.3f, 0.8f, 0.070f)
+                floatArrayOf(6.4f, 4.0f, 0.018f, 0.82f, 0.56f, 0.30f),
+                floatArrayOf(5.8f, 3.6f, 0.020f, 0.84f, 0.58f, 0.31f),
+                floatArrayOf(5.1f, 3.2f, 0.024f, 0.87f, 0.61f, 0.33f),
+                floatArrayOf(4.5f, 2.8f, 0.028f, 0.89f, 0.63f, 0.34f),
+                floatArrayOf(3.9f, 2.4f, 0.033f, 0.91f, 0.65f, 0.35f),
+                floatArrayOf(3.3f, 2.0f, 0.039f, 0.93f, 0.67f, 0.36f),
+                floatArrayOf(2.7f, 1.65f, 0.046f, 0.95f, 0.69f, 0.37f),
+                floatArrayOf(2.1f, 1.3f, 0.054f, 0.97f, 0.72f, 0.39f),
+                floatArrayOf(1.5f, 0.95f, 0.064f, 0.99f, 0.75f, 0.42f)
             )
             layers.forEach { layer ->
                 val width = layer[0]
                 val height = layer[1]
                 rect(x - width * 0.5f, y + 0.10f, width, height,
-                    0.98f, 0.70f, 0.36f, layer[2])
+                    layer[3], layer[4], layer[5], layer[2])
             }
-            rect(x - 0.18f, y + 0.18f, 0.36f, 0.05f, 1f, 0.79f, 0.48f, 0.18f)
+            // Small bright core directly beneath the ceiling fixture.
+            rect(x - 0.20f, y + 0.16f, 0.40f, 0.08f, 1f, 0.84f, 0.58f, 0.22f)
         }
     }
 
