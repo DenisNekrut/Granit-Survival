@@ -33,6 +33,22 @@ class ExtractedEngineSystemsTest {
         assertEquals(0, storage.count(ItemType.METAL))
     }
 
+
+    @Test
+    fun clockAndNeedsSystemAdvancesTheSharedTimelineForActions() {
+        val engine = GameEngine()
+        val system = ClockAndNeedsSystem(
+            engine.worldClock, engine.bunkerPower, engine.statistics,
+            engine.needs, engine.psychology
+        )
+        val start = engine.worldClock.totalMinutes
+
+        assertTrue(system.advanceActionMinutes(5, engine.zone, false) { })
+
+        assertEquals(start + 5L, engine.worldClock.totalMinutes)
+        assertEquals(100f - SurvivalNeeds.HUNGER_LOSS_PER_MINUTE * 5f, engine.needs.hunger, 0.001f)
+    }
+
     @Test
     fun zoneTransitionRulesChooseMatchingReturnDoors() {
         assertEquals(TileType.EXIT_TO_BUNKER,
