@@ -168,6 +168,8 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
         joystickPointerId = MotionEvent.INVALID_POINTER_ID
         actionPointerId = MotionEvent.INVALID_POINTER_ID
         firePointerId = MotionEvent.INVALID_POINTER_ID
+        thread.setJoystick(0f, 0f, false)
+        thread.setInteracting(false)
         thread.setFiring(false)
     }
 }
