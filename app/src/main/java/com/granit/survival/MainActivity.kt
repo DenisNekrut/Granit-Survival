@@ -2,6 +2,8 @@ package com.granit.survival
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
+import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -226,8 +228,15 @@ class MainActivity : Activity() {
         })
         panel.addView(menuButton("СОХРАНЕНИЯ") { showSaveSlots(false) })
         panel.addView(menuButton("НАСТРОЙКИ") { showSettings() })
+        panel.addView(menuButton("ОБНОВИТЬ") { openLatestUpdate() })
         panel.addView(menuButton("ВЫХОД") { finish() })
         showOverlay(panel)
+    }
+
+    private fun openLatestUpdate() {
+        val releasesUrl = "https://github.com/DenisNekrut/Granit-Survival/releases/latest"
+        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(releasesUrl))) }
+            .onFailure { Toast.makeText(this, "Не удалось открыть страницу обновлений", Toast.LENGTH_LONG).show() }
     }
 
     private fun startNewGame() {
@@ -238,7 +247,7 @@ class MainActivity : Activity() {
     private fun enterGame() {
         pausedGame = false
         activeGame = true
-        if (root.childCount > 1) root.removeViewAt(root.childCount - 1)
+        if (root.childCount > 1) root.removeViews(1, root.childCount - 1)
         gameSurface.visibility = View.VISIBLE
         addBackpackButton()
         gameSurface.resumeEngine()
@@ -248,7 +257,22 @@ class MainActivity : Activity() {
     }
 
     private fun addBackpackButton() {
-        if (root.childCount > 1) root.removeViewAt(1)
+        if (root.childCount > 1) root.removeViews(1, root.childCount - 1)
+        val pauseButton = menuButton("Ⅱ", action = { showPauseMenu() }).apply {
+            textSize = 22f
+            minWidth = dp(58)
+            minHeight = dp(54)
+            setPadding(dp(8), dp(2), dp(8), dp(2))
+            background = GradientDrawable().apply {
+                setColor(Color.argb(220, 28, 43, 39))
+                cornerRadius = dp(12).toFloat()
+                setStroke(dp(2), Color.rgb(170, 153, 111))
+            }
+        }
+        root.addView(pauseButton, FrameLayout.LayoutParams(dp(62), dp(58), Gravity.TOP or Gravity.START).apply {
+            topMargin = dp(14)
+            marginStart = dp(14)
+        })
         val button = menuButton("🎒", action = { showBackpack() }).apply {
             textSize = 23f
             minWidth = dp(58)
