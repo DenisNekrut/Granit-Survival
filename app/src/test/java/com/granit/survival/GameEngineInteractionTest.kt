@@ -98,7 +98,7 @@ class GameEngineInteractionTest {
         assertEquals(1, engine.inventory.count(ItemType.WOOD))
 
         engine.changeZone(WorldZone.BUNKER)
-        engine.player.x = 20.5f
+        engine.player.x = 17.5f
         engine.player.y = 0.8f
         engine.updateFrame(1f / 60f, EngineInput(interact = false))
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
@@ -122,7 +122,7 @@ class GameEngineInteractionTest {
             assertEquals(3, engine.inventory.count(ItemType.WATER))
         }
 
-        interactAt(20.5f, 1.5f) // bunker -> forest
+        interactAt(17.5f, 1.5f) // bunker -> forest
         assertEquals(WorldZone.FOREST, engine.zone)
         interactAt(1.5f, 12.5f) // forest -> ruins
         assertEquals(WorldZone.RUINS, engine.zone)
