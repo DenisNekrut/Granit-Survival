@@ -47,14 +47,13 @@ class BunkerRadioTest {
     @Test
     fun listeningStateRollsBackWithWakeCheckpoint() {
         val engine = GameEngine()
-        engine.sleepUntilMorning()
         engine.player.x = 24.5f
         engine.player.y = 2.5f
+        // Capture a powered wake checkpoint at the radio so this test isolates radio rollback.
+        engine.checkpointSystem.capture(engine)
         assertNotNull(engine.listenToRadio())
         assertTrue(engine.respawnAtWakeCheckpoint())
-        // Respawn restores the bunker checkpoint position; walk back to the radio before checking access.
-        engine.player.x = 24.5f
-        engine.player.y = 2.5f
+        // The checkpoint restores both the unspent daily broadcast and generator fuel.
         assertTrue(engine.canUseRadio())
     }
 }
