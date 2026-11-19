@@ -439,7 +439,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
                     wanderTarget = null
                     idleSeconds = 0f
                     null
-                } else tileMap.nextPathStep(player.x, player.y, target.first, target.second)
+                } else if (kotlin.math.floor(player.x).toInt() == kotlin.math.floor(target.first).toInt() &&
+                    kotlin.math.floor(player.y).toInt() == kotlin.math.floor(target.second).toInt()) target
+                else tileMap.nextPathStep(player.x, player.y, target.first, target.second)
             }
         } else null
         val moveX = if (manualLength > 0.08f) input.moveX else autoDirection?.let { (x, _) -> (x - player.x).coerceIn(-1f, 1f) } ?: 0f
