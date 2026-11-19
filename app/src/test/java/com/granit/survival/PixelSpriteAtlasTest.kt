@@ -13,6 +13,14 @@ class PixelSpriteAtlasTest {
     }
 
     @Test
+    fun playerHasFourDirectionalWalkFrames() {
+        listOf("player", "player_back", "player_side").forEach { id ->
+            assertTrue("$id should provide a four-frame walk cycle",
+                requireNotNull(PixelSpriteAtlas.sprite(id)).frames.size == 4)
+        }
+    }
+
+    @Test
     fun environmentSpritesFitTheGeneratedAtlasCell() {
         listOf("tree", "rubble", "road_barrier", "bunker_panel", "bush", "debris", "streetlamp", "floor_grate", "crate", "barrel", "wreck").forEach { id ->
             val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
