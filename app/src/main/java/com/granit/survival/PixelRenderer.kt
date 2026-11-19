@@ -229,6 +229,25 @@ class PixelRenderer {
                     rect(tileX + 0.46f, tileY + 0.32f, 0.08f, 0.46f, 0.40f, 0.34f, 0.22f)
                     rect(tileX + 0.40f, tileY + 0.46f, 0.20f, 0.10f, 0.58f, 0.50f, 0.30f)
                 }
+                TileType.DINING_TABLE -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.16f, 0.22f, 0.20f)
+                    rect(tileX + 0.08f, tileY + 0.22f, 0.84f, 0.56f, 0.43f, 0.31f, 0.19f)
+                    rect(tileX + 0.16f, tileY + 0.30f, 0.68f, 0.08f, 0.66f, 0.53f, 0.34f)
+                    rect(tileX + 0.16f, tileY + 0.58f, 0.68f, 0.08f, 0.66f, 0.53f, 0.34f)
+                }
+                TileType.GENERATOR -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.14f, 0.19f, 0.18f)
+                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.29f, 0.34f, 0.32f)
+                    rect(tileX + 0.22f, tileY + 0.22f, 0.56f, 0.30f, 0.12f, 0.16f, 0.16f)
+                    rect(tileX + 0.28f, tileY + 0.62f, 0.12f, 0.08f, 0.25f, 0.78f, 0.62f)
+                    rect(tileX + 0.48f, tileY + 0.62f, 0.12f, 0.08f, 0.72f, 0.58f, 0.27f)
+                }
+                TileType.MEDICAL_STATION -> {
+                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.24f, 0.22f)
+                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.55f, 0.57f, 0.50f)
+                    rect(tileX + 0.43f, tileY + 0.22f, 0.14f, 0.52f, 0.70f, 0.25f, 0.23f)
+                    rect(tileX + 0.24f, tileY + 0.41f, 0.52f, 0.14f, 0.70f, 0.25f, 0.23f)
+                }
                 TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
                 TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
