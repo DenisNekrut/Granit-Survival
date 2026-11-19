@@ -53,6 +53,14 @@ class BunkerPowerSystemTest {
     }
 
     @Test
+    fun sleepingConsumesGeneratorFuelAndFallsBackToEmergencyLighting() {
+        val engine = GameEngine()
+        engine.sleepUntilMorning()
+        assertEquals(0, engine.bunkerPower.fuelMinutesRemaining)
+        assertTrue(engine.bunkerPower.emergencyLighting)
+    }
+
+    @Test
     fun wakeCheckpointRestoresGeneratorAndFuel() {
         val engine = GameEngine()
         engine.player.x = 27.5f
