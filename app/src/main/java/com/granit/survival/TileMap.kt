@@ -43,7 +43,7 @@ class TileMap(
         for (y in 2 until height - 2) {
             if (y != 5 && y != 17) {
                 set(12, y, TileType.WALL)
-                set(24, y, TileType.WALL)
+                set(25, y, TileType.WALL)
             }
         }
 
@@ -59,7 +59,7 @@ class TileMap(
 
         // Generator room — upper-right.
         set(27, 4, TileType.GENERATOR)
-        set(31, 4, TileType.RADIO)
+        set(24, 2, TileType.RADIO)
 
         // Medical room — lower-left.
         set(5, 17, TileType.MEDICAL_STATION)
