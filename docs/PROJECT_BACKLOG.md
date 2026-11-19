@@ -434,8 +434,8 @@
 - [x] Добавлена проверка безопасного пути текстуры, уникальности ID, размеров кадров, pivot и выхода за границы изображения.
 - [x] Добавлен Android-загрузчик JSON-манифеста и PNG через `AssetManager` / `BitmapFactory` с проверкой фактических размеров bitmap.
 - [x] Добавлен пример JSON-манифеста и unit-тесты валидации и нормализованных UV-координат.
-- [ ] Следующий подэтап: GPU texture upload, GLES2 textured shader и пакетная отрисовка UV-квадратов в render thread.
+- [x] Добавлен GLES2 texture upload primitive с nearest/linear sampling, clamp-to-edge, bind и release; API явно ограничен render thread с активным EGL context.\n- [ ] Следующий подэтап: GLES2 textured shader и пакетная отрисовка UV-квадратов в render thread.
 - [ ] Добавить реальный PNG atlas asset и интегрировать его в игровой renderer; до этого текущий процедурный atlas остаётся fallback.
 - [ ] Проверить визуальную ориентацию UV, nearest filtering, прозрачность и восстановление текстур после пересоздания EGL context.
 
-**Граница готовности:** на этом этапе реализованы формат, валидация и Android bitmap loader. Текстурная отрисовка ещё не подключена, поэтому нельзя считать внешний atlas pipeline завершённым.
+**Граница готовности:** на этом этапе реализованы формат, валидация и Android bitmap loader. Загрузка bitmap в GPU реализована отдельным GLES2 ресурсом, но textured shader и отрисовка спрайтов по UV ещё не подключены; внешний atlas pipeline не завершён.
