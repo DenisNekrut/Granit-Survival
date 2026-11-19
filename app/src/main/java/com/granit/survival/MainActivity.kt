@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.KeyEvent
@@ -93,53 +94,99 @@ class MainActivity : Activity() {
         if (!activeGame || isFinishing) return
         val engine = session.engine
         when {
-            engine.canUseWorkbench() -> {
-                showPauseMenu()
-                showCrafting()
-            }
-            engine.canAccessStorage() -> {
-                showPauseMenu()
-                showStorage()
-            }
-            engine.canAccessBookshelf() -> {
-                showPauseMenu()
-                showBookLibrary()
-            }
+            engine.canUseWorkbench() -> showCrafting()
+            engine.canAccessStorage() -> showStorage()
+            engine.canAccessBookshelf() -> showBookLibrary()
             engine.canAccessDiningTable() -> {
-                showPauseMenu()
-                Toast.makeText(this, "Столовая: еда и вода доступны в меню паузы.", Toast.LENGTH_SHORT).show()
+                val panel = createPanel("СТОЛОВАЯ", "Запасы экспедиции")
+                panel.addView(label("Консервы: ${engine.inventory.count(ItemType.CANNED_FOOD)}", 15f, Color.WHITE))
+                panel.addView(label("Вода: ${engine.inventory.count(ItemType.WATER)}", 15f, Color.WHITE))
+                panel.addView(menuButton("СЪЕСТЬ КОНСЕРВЫ", enabled = engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
+                    if (session.consumeFood()) showDiningPanel()
+                })
+                panel.addView(menuButton("ВЫПИТЬ ВОДУ", enabled = engine.inventory.count(ItemType.WATER) > 0) {
+                    if (session.drinkWater()) showDiningPanel()
+                })
+                panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+                showOverlay(panel)
             }
             engine.canAccessMedicalStation() -> {
-                showPauseMenu()
-                Toast.makeText(this, "Медчасть: используй бинт или аптечку в меню паузы.", Toast.LENGTH_SHORT).show()
+                val panel = createPanel("МЕДЧАСТЬ", "Медицинские принадлежности")
+                panel.addView(label("Здоровье: ${engine.needs.health.toInt()}%", 16f, Color.WHITE))
+                panel.addView(menuButton("ИСПОЛЬЗОВАТЬ БИНТ", enabled = engine.inventory.count(ItemType.BANDAGE) > 0 && engine.needs.health < 100f) {
+                    if (engine.useBandage()) showMedicalPanel()
+                })
+                panel.addView(menuButton("ИСПОЛЬЗОВАТЬ АПТЕЧКУ", enabled = engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && engine.needs.health < 100f) {
+                    if (engine.useMedicalKit()) showMedicalPanel()
+                })
+                panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+                showOverlay(panel)
             }
             engine.canAccessGenerator() -> {
-                showPauseMenu()
-                AlertDialog.Builder(this)
-                    .setTitle("ГЕНЕРАТОРНАЯ")
-                    .setMessage("Энергосистема убежища исправна. Управление питанием и ремонт генератора будут добавлены отдельным этапом.")
-                    .setPositiveButton("ПОНЯТНО") { _, _ -> showPauseMenu() }
-                    .show()
+                val panel = createPanel("ГЕНЕРАТОРНАЯ", "Энергосистема убежища")
+                panel.addView(label("Система питания пока работает в базовом режиме.", 14f, Color.rgb(206, 215, 202)))
+                panel.addView(label("Управление генератором и резервное освещение будут подключены следующим этапом.", 12f, Color.rgb(151, 170, 157)))
+                panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+                showOverlay(panel)
             }
             engine.zone == WorldZone.BUNKER &&
                 engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f) -> {
-                showPauseMenu()
                 val event = engine.listenToRadio()
-                if (event != null) {
-                    AlertDialog.Builder(this)
-                        .setTitle(event.title)
-                        .setMessage(event.description)
-                        .setPositiveButton("ПОНЯТНО") { _, _ -> showPauseMenu() }
-                        .show()
-                } else {
-                    Toast.makeText(this, "Сегодня радиоприёмник молчит", Toast.LENGTH_SHORT).show()
-                }
+                if (event != null) showMessageWindow(event.title, event.description)
+                else showMessageWindow("РАДИОПРИЁМНИК", "Сегодня эфир остаётся пустым.")
             }
             engine.canSleep() -> {
-                showPauseMenu()
-                Toast.makeText(this, "Рядом кровать. Выбери «СОН ДО 07:00» в меню.", Toast.LENGTH_SHORT).show()
+                val panel = createPanel("СПАЛЬНЯ", "Можно завершить день и восстановить силы")
+                panel.addView(label("Сон завершит текущий день. После пробуждения будет создана контрольная точка.", 13f, Color.rgb(206, 215, 202)))
+                panel.addView(menuButton("СПАТЬ ДО 07:00") {
+                    runCatching { session.sleepAndAutosave() }
+                        .onSuccess { slept -> if (slept) { enterGame(); Toast.makeText(this, "Новый день. Автосохранение создано.", Toast.LENGTH_SHORT).show() } }
+                        .onFailure { Toast.makeText(this, "Не удалось сохранить игру: ${it.message}", Toast.LENGTH_LONG).show() }
+                })
+                panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+                showOverlay(panel)
             }
         }
+    }
+
+    private fun showDiningPanel() {
+        val engine = session.engine
+        val panel = createPanel("СТОЛОВАЯ", "Запасы экспедиции")
+        panel.addView(label("Консервы: ${engine.inventory.count(ItemType.CANNED_FOOD)}", 15f, Color.WHITE))
+        panel.addView(label("Вода: ${engine.inventory.count(ItemType.WATER)}", 15f, Color.WHITE))
+        panel.addView(menuButton("СЪЕСТЬ КОНСЕРВЫ", enabled = engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
+            if (session.consumeFood()) showDiningPanel()
+        })
+        panel.addView(menuButton("ВЫПИТЬ ВОДУ", enabled = engine.inventory.count(ItemType.WATER) > 0) {
+            if (session.drinkWater()) showDiningPanel()
+        })
+        panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+        showOverlay(panel)
+    }
+
+    private fun showMedicalPanel() {
+        val engine = session.engine
+        val panel = createPanel("МЕДЧАСТЬ", "Медицинские принадлежности")
+        panel.addView(label("Здоровье: ${engine.needs.health.toInt()}%", 16f, Color.WHITE))
+        panel.addView(menuButton("ИСПОЛЬЗОВАТЬ БИНТ", enabled = engine.inventory.count(ItemType.BANDAGE) > 0 && engine.needs.health < 100f) {
+            if (engine.useBandage()) showMedicalPanel()
+        })
+        panel.addView(menuButton("ИСПОЛЬЗОВАТЬ АПТЕЧКУ", enabled = engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && engine.needs.health < 100f) {
+            if (engine.useMedicalKit()) showMedicalPanel()
+        })
+        panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+        showOverlay(panel)
+    }
+
+    private fun showMessageWindow(title: String, message: String) {
+        val panel = createPanel(title, "СООБЩЕНИЕ")
+        panel.addView(label(message, 14f, Color.rgb(214, 221, 207)))
+        panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+        showOverlay(panel)
+    }
+
+    private fun closeStationPanel() {
+        if (activeGame) enterGame() else showPauseMenu()
     }
 
     private fun showMainMenu() {
@@ -276,7 +323,7 @@ class MainActivity : Activity() {
             panel.addView(label("• ${zone.displayName}", 13f, Color.LTGRAY))
         }
         panel.addView(label("Статистика откатывается вместе с контрольной точкой при гибели.", 12f, Color.rgb(190, 177, 145)))
-        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
         showOverlay(panel)
     }
 
@@ -379,7 +426,7 @@ class MainActivity : Activity() {
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(dp(12), dp(8), dp(12), dp(8))
-                setBackgroundColor(Color.rgb(34, 43, 42))
+                background = GradientDrawable().apply { setColor(Color.rgb(34, 47, 43)); cornerRadius = dp(9).toFloat(); setStroke(dp(1), Color.rgb(77, 100, 84)) }
             }
             val info = when {
                 slot.corrupted -> "СЛОТ ${slot.slot}  ·  ФАЙЛ ПОВРЕЖДЁН"
@@ -488,13 +535,21 @@ class MainActivity : Activity() {
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(24), dp(24), dp(24), dp(24))
-            setBackgroundColor(Color.rgb(19, 27, 27))
+            setPadding(dp(18), dp(18), dp(18), dp(16))
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(Color.rgb(30, 43, 41), Color.rgb(17, 27, 28))
+            ).apply {
+                cornerRadius = dp(14).toFloat()
+                setStroke(dp(1), Color.rgb(104, 126, 105))
+            }
         }
-        content.addView(label(title, 28f, Color.rgb(207, 194, 155), true))
-        content.addView(label(subtitle, 13f, Color.rgb(142, 155, 147)).apply {
+        content.addView(label(title, 22f, Color.rgb(230, 205, 151), true).apply {
+            letterSpacing = 0.045f
+        })
+        content.addView(label(subtitle, 12f, Color.rgb(165, 184, 169)).apply {
             gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, dp(16))
+            setPadding(dp(4), dp(3), dp(4), dp(12))
         })
         return content
     }
@@ -502,11 +557,25 @@ class MainActivity : Activity() {
     private fun showOverlay(content: LinearLayout) {
         val scroll = ScrollView(this).apply {
             isFillViewport = true
+            clipToPadding = false
+            setPadding(dp(8), dp(8), dp(8), dp(8))
             addView(content)
         }
-        val overlay = FrameLayout(this).apply {
-            setBackgroundColor(Color.rgb(10, 15, 16))
-            addView(scroll, FrameLayout.LayoutParams(dp(560), -1, Gravity.CENTER))
+        val overlay = FrameLayout(this)
+        if (activeGame) {
+            // Keep the world visible and running; the interaction card is a compact HUD layer.
+            overlay.setBackgroundColor(Color.argb(72, 3, 9, 10))
+            val cardWidth = minOf(dp(430), (resources.displayMetrics.widthPixels * 0.46f).toInt())
+            val cardHeight = minOf(dp(560), (resources.displayMetrics.heightPixels * 0.82f).toInt())
+            overlay.addView(scroll, FrameLayout.LayoutParams(cardWidth, cardHeight,
+                Gravity.END or Gravity.CENTER_VERTICAL).apply {
+                marginEnd = dp(22)
+                topMargin = dp(12)
+                bottomMargin = dp(12)
+            })
+        } else {
+            overlay.setBackgroundColor(Color.rgb(8, 14, 15))
+            overlay.addView(scroll, FrameLayout.LayoutParams(dp(560), -1, Gravity.CENTER))
         }
         if (root.childCount > 1) root.removeViewAt(1)
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1))
@@ -529,9 +598,11 @@ class MainActivity : Activity() {
             isEnabled = enabled
             textSize = 14f
             setTextColor(if (enabled) Color.WHITE else Color.GRAY)
-            backgroundTintList = android.content.res.ColorStateList.valueOf(
-                if (enabled) Color.rgb(65, 82, 74) else Color.rgb(42, 49, 47)
-            )
+            background = GradientDrawable().apply {
+                setColor(if (enabled) Color.rgb(57, 82, 68) else Color.rgb(39, 48, 45))
+                cornerRadius = dp(8).toFloat()
+                setStroke(dp(1), if (enabled) Color.rgb(112, 143, 112) else Color.rgb(65, 75, 68))
+            }
             minHeight = dp(48)
             setOnClickListener { action() }
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) }
