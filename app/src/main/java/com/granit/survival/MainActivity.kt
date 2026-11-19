@@ -258,18 +258,18 @@ class MainActivity : Activity() {
 
     private fun addBackpackButton() {
         if (root.childCount > 1) root.removeViews(1, root.childCount - 1)
-        val pauseButton = menuButton("Ⅱ", action = { showPauseMenu() }).apply {
-            textSize = 22f
-            minWidth = dp(58)
+        val pauseButton = menuButton("МЕНЮ", action = { confirmReturnToMainMenu() }).apply {
+            textSize = 12f
+            minWidth = dp(72)
             minHeight = dp(54)
-            setPadding(dp(8), dp(2), dp(8), dp(2))
+            setPadding(dp(6), dp(2), dp(6), dp(2))
             background = GradientDrawable().apply {
-                setColor(Color.argb(220, 28, 43, 39))
+                setColor(Color.argb(230, 28, 43, 39))
                 cornerRadius = dp(12).toFloat()
                 setStroke(dp(2), Color.rgb(170, 153, 111))
             }
         }
-        root.addView(pauseButton, FrameLayout.LayoutParams(dp(62), dp(58), Gravity.TOP or Gravity.START).apply {
+        root.addView(pauseButton, FrameLayout.LayoutParams(dp(78), dp(58), Gravity.TOP or Gravity.START).apply {
             topMargin = dp(14)
             marginStart = dp(14)
         })
