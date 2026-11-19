@@ -2,6 +2,7 @@ package com.granit.survival
 
 import android.content.Context
 import android.util.AtomicFile
+import android.util.Log
 import com.granit.survival.save.SaveCodec
 import com.granit.survival.save.SaveVersion
 import org.json.JSONArray
@@ -45,7 +46,12 @@ data class SaveSlotInfo(
  * from leaving a half-written save as the only copy.
  */
 class GameSaveRepository(context: Context) {
-    private val saveDirectory = File(context.filesDir, "saves").apply { mkdirs() }
+    private val saveDirectory = File(context.filesDir, "saves").apply {
+        if (!exists() && !mkdirs() && !isDirectory) {
+            throw IllegalStateException("Cannot create save directory: $absolutePath")
+        }
+        check(isDirectory) { "Save path is not a directory: $absolutePath" }
+    }
 
     fun listSlots(): List<SaveSlotInfo> = (1..MAX_SLOTS).map { slot ->
         val file = saveFile(slot)
@@ -70,8 +76,13 @@ class GameSaveRepository(context: Context) {
 
     @Throws(IOException::class)
     fun save(slot: Int, engine: GameEngine): SaveSlotInfo {
-        writeSnapshot(saveFile(slot), engine)
-        return listSlots().first { it.slot == slot }
+        val target = saveFile(slot)
+        writeSnapshot(target, engine)
+        val result = listSlots().first { it.slot == slot }
+        if (!result.exists || result.corrupted) {
+            throw IOException("Save verification failed for slot $slot (${target.absolutePath})")
+        }
+        return result
     }
 
     /** Dedicated checkpoint file; it never consumes or overwrites a manual slot. */
@@ -98,20 +109,32 @@ class GameSaveRepository(context: Context) {
             stream.write(serialized.toByteArray(Charsets.UTF_8))
             atomicFile.finishWrite(stream)
             stream = null
+            // Read back the committed file before reporting success.
+            val verified = AtomicFile(target).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
+            SaveCodec.decode(verified)
+            Log.i(TAG, "Verified save ${target.name}: ${target.length()} bytes")
         } catch (failure: Exception) {
             if (stream != null) atomicFile.failWrite(stream)
-            throw IOException("Unable to write save file", failure)
+            Log.e(TAG, "Unable to write or verify save ${target.absolutePath}", failure)
+            throw IOException("Unable to write or verify save ${target.name}: ${failure.message}", failure)
         }
     }
 
     private fun loadFromFile(target: File, engine: GameEngine): Boolean {
         if (!target.exists()) return false
-        val root = SaveCodec.decode(
-            AtomicFile(target).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
-        )
-        val snapshot = EngineSaveSnapshot.fromJson(root.getJSONObject("state"))
-        engine.restoreSaveSnapshot(snapshot)
-        return true
+        try {
+            val root = SaveCodec.decode(
+                AtomicFile(target).openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
+            )
+            val snapshot = EngineSaveSnapshot.fromJson(root.getJSONObject("state"))
+            // Parse and validate the complete snapshot before mutating the live engine.
+            engine.restoreSaveSnapshot(snapshot)
+            Log.i(TAG, "Loaded save ${target.name}: day=${snapshot.clock.day}, zone=${snapshot.zone}")
+            return true
+        } catch (failure: Exception) {
+            Log.e(TAG, "Unable to load save ${target.absolutePath}", failure)
+            throw IOException("Unable to load ${target.name}: ${failure.message}", failure)
+        }
     }
 
     fun delete(slot: Int): Boolean {
@@ -128,6 +151,7 @@ class GameSaveRepository(context: Context) {
     private fun autoSaveFile() = File(saveDirectory, "autosave.json")
 
     companion object {
+        private const val TAG = "GranitSave"
         const val MAX_SLOTS = 3
         const val SAVE_VERSION = SaveVersion.CURRENT
     }
