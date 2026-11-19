@@ -34,53 +34,47 @@ class TileMap(
     }
 
     private fun buildBunker() {
-        // Five connected rooms around a central corridor.
-        // Door gaps are intentionally left open in every partition.
-        for (x in 2 until width - 2) {
-            if (x !in setOf(6, 20, 30)) set(x, 10, TileType.WALL)
-            if (x !in setOf(6, 18, 30)) set(x, 13, TileType.WALL)
-        }
-        for (y in 2 until height - 2) {
-            if (y != 5 && y != 17) {
-                set(12, y, TileType.WALL)
-                set(25, y, TileType.WALL)
+        // Six compact rooms (three by two) connected through one-tile doorways.
+        for (y in 1 until height - 1) {
+            if (y != 2 && y != 7) {
+                set(5, y, TileType.WALL)
+                set(11, y, TileType.WALL)
             }
         }
+        for (x in 1 until width - 1) {
+            if (x != 2 && x != 8 && x != 14) set(x, 4, TileType.WALL)
+        }
 
-        // Bedroom — upper-left.
-        fill(2, 2, 5, 1, TileType.BED)
-        set(8, 4, TileType.STORAGE)
-        set(9, 1, TileType.WORKBENCH) // retained as the starter repair surface
+        // Bedroom — upper left.
+        set(3, 2, TileType.BED)
+        set(4, 2, TileType.STORAGE)
 
-        // Dining room — upper-middle.
-        fill(15, 2, 2, 2, TileType.STORAGE) // food and water pantry; keep the hatch landing clear
-        set(22, 2, TileType.BOOKSHELF)
-        set(17, 5, TileType.DINING_TABLE)
+        // Dining room and library — upper middle.
+        set(7, 2, TileType.DINING_TABLE)
+        set(9, 2, TileType.BOOKSHELF)
 
-        // Generator room — upper-right.
-        set(27, 4, TileType.GENERATOR)
-        set(24, 2, TileType.RADIO)
+        // Generator and radio room — upper right.
+        set(13, 2, TileType.GENERATOR)
+        set(14, 2, TileType.RADIO)
 
-        // Medical room — lower-left.
-        set(5, 17, TileType.MEDICAL_STATION)
-        set(8, 17, TileType.STORAGE)
+        // Medical room — lower left.
+        set(2, 6, TileType.MEDICAL_STATION)
 
-        // Workshop — lower-middle.
-        set(17, 17, TileType.WORKBENCH)
-        set(21, 17, TileType.BOOKSHELF)
+        // Workshop — lower middle.
+        set(8, 6, TileType.WORKBENCH)
 
-        // Utility storage room — lower-right.
-        set(30, 17, TileType.STORAGE)
+        // Storage room — lower right.
+        set(13, 6, TileType.STORAGE)
 
-        // Exit from the bunker opens into the first, fixed forest location.
+        // Bunker hatch; the arrival tile just inside is kept clear.
         set(width / 2, 1, TileType.EXIT_TO_FOREST)
 
-        // Small starter supplies remain available inside the safe room.
-        set(7, 8, TileType.RESOURCE_WOOD)
-        set(11, 8, TileType.RESOURCE_METAL)
-        set(10, 11, TileType.RESOURCE_FABRIC)
-        set(14, 9, TileType.RESOURCE_FOOD)
-        set(5, 9, TileType.RESOURCE_WATER)
+        // A small starter supply cache remains accessible inside the bunker.
+        set(2, 8, TileType.RESOURCE_WOOD)
+        set(4, 7, TileType.RESOURCE_METAL)
+        set(7, 8, TileType.RESOURCE_FABRIC)
+        set(10, 7, TileType.RESOURCE_FOOD)
+        set(14, 8, TileType.RESOURCE_WATER)
     }
 
     private fun buildForest() {
@@ -378,5 +372,5 @@ class TileMap(
 
 /** Creates the correctly sized map for each zone. The bunker footprint is intentionally compact. */
 internal fun createZoneMap(zone: WorldZone, seed: Long? = null): TileMap =
-    if (zone == WorldZone.BUNKER) TileMap(width = 34, height = 20, zone = zone, seed = seed)
+    if (zone == WorldZone.BUNKER) TileMap(width = 17, height = 10, zone = zone, seed = seed)
     else TileMap(zone = zone, seed = seed)
