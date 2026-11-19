@@ -32,7 +32,7 @@ class CraftingTest {
     }
 
     @Test
-    fun craftingFailsWithoutMaterialsOrWhenInventoryCannotFitOutput() {
+    fun craftingFailsWithoutMaterialsButUsesSlotsFreedByIngredients() {
         val engine = GameEngine()
         engine.player.x = 9.5f
         engine.player.y = 1.5f
@@ -43,7 +43,33 @@ class CraftingTest {
         full.add(ItemType.FABRIC, 2)
         full.add(ItemType.METAL, 1)
         full.add(ItemType.WOOD, 20)
-        assertFalse(recipe.canCraft(full))
+        assertTrue(recipe.canCraft(full))
+    }
+
+    @Test
+    fun craftingCanProduceAnItemFromACompletelyFullBackpack() {
+        val engine = GameEngine()
+        engine.player.x = 9.5f
+        engine.player.y = 1.5f
+        engine.player.x = 20.5f
+        engine.player.y = 2.5f
+        engine.inventory.add(ItemType.FABRIC, 2)
+        engine.inventory.add(ItemType.METAL, 1)
+        assertTrue(engine.readBook("field_first_aid"))
+        engine.player.x = 9.5f
+        engine.player.y = 1.5f
+
+        // Fill every remaining slot. Crafting consumes the fabric/metal stacks,
+        // so the result has room even though the backpack was full beforehand.
+        ItemType.values().filterNot { it == ItemType.FABRIC || it == ItemType.METAL }
+            .forEach { type -> engine.inventory.add(type, 20) }
+        engine.inventory.add(ItemType.WOOD, 20)
+        assertTrue(engine.inventory.slot(15) != null)
+        assertTrue(engine.canCraft("medical_kit"))
+        assertTrue(engine.craft("medical_kit"))
+        assertEquals(1, engine.inventory.count(ItemType.MEDICAL_KIT))
+        assertEquals(0, engine.inventory.count(ItemType.FABRIC))
+        assertEquals(0, engine.inventory.count(ItemType.METAL))
     }
 
     @Test
