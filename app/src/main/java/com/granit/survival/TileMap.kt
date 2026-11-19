@@ -237,13 +237,16 @@ class TileMap(
             val twiceError = error * 2
             if (twiceError > -dy) { error -= dy; x += stepX }
             if (twiceError < dx) { error += dx; y += stepY }
-            if ((x != endX || y != endY) && get(x, y) in setOf(
-                    TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE,
-                    TileType.BOOKSHELF, TileType.RADIO, TileType.DINING_TABLE,
-                    TileType.GENERATOR, TileType.MEDICAL_STATION
-                )) return false
+            if ((x != endX || y != endY) && blocksVision(get(x, y))) return false
         }
         return true
+    }
+
+    private fun blocksVision(type: TileType): Boolean = when (type) {
+        TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE,
+        TileType.BOOKSHELF, TileType.RADIO, TileType.DINING_TABLE,
+        TileType.GENERATOR, TileType.MEDICAL_STATION -> true
+        else -> false
     }
 
     fun nearestResource(worldX: Float, worldY: Float, maxDistance: Float): ResourceLocation? {
