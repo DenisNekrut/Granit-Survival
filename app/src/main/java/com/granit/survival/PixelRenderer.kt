@@ -162,8 +162,13 @@ class PixelRenderer {
         // Animated pixel-art character sprite selected from the logical atlas.
         val px = engine.player.x
         val py = engine.player.y
-        drawAtlasSprite("player", px, py - 0.48f, 0.06f,
-            if (engine.isMoving) (engine.simulationTimeSeconds * 4.0).toInt() else 0)
+        val playerFrame = if (engine.isMoving) (engine.simulationTimeSeconds * 4.0).toInt() else 0
+        when (engine.player.facing) {
+            PlayerFacing.DOWN -> drawAtlasSprite("player", px, py - 0.48f, 0.06f, playerFrame)
+            PlayerFacing.UP -> drawAtlasSprite("player_back", px, py - 0.48f, 0.06f, playerFrame)
+            PlayerFacing.RIGHT -> drawAtlasSprite("player_side", px, py - 0.48f, 0.06f, playerFrame)
+            PlayerFacing.LEFT -> drawAtlasSprite("player_side", px, py - 0.48f, 0.06f, playerFrame, flipX = true)
+        }
 
         // Screen-space HUD reads the live simulation values.
         screenRect(0.42f, 0.28f, 4.75f, 2.72f, 0.055f, 0.067f, 0.066f)
@@ -277,9 +282,17 @@ class PixelRenderer {
         rect(x + 0.34f, y + 0.46f, 0.32f, 0.08f, 0.72f, 0.67f, 0.49f)
     }
 
-    private fun drawAtlasSprite(id: String, centerX: Float, topY: Float, pixelSize: Float, frame: Int = 0) {
+    private fun drawAtlasSprite(
+        id: String,
+        centerX: Float,
+        topY: Float,
+        pixelSize: Float,
+        frame: Int = 0,
+        flipX: Boolean = false
+    ) {
         val sprite = PixelSpriteAtlas.sprite(id) ?: return
-        val rows = sprite.frames[Math.floorMod(frame, sprite.frames.size)]
+        val sourceRows = sprite.frames[Math.floorMod(frame, sprite.frames.size)]
+        val rows = if (flipX) sourceRows.map { it.reversed() } else sourceRows
         drawPixelSprite(rows, centerX, topY, pixelSize, sprite.palette)
     }
 
