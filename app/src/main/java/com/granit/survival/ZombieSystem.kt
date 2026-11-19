@@ -35,9 +35,9 @@ object ZombieSystem {
         zombies: MutableList<ZombieActor>,
         player: PlayerState,
         map: TileMap,
-        deltaSeconds: Float,
-        onContact: (Float) -> Unit
-    ) {
+        deltaSeconds: Float
+    ): Float {
+        var contactDamage = 0f
         zombies.forEach { zombie ->
             zombie.attackCooldown = (zombie.attackCooldown - deltaSeconds).coerceAtLeast(0f)
             zombie.hitFlash = (zombie.hitFlash - deltaSeconds).coerceAtLeast(0f)
@@ -52,9 +52,10 @@ object ZombieSystem {
                 if (map.isWalkable(zombie.x, nextY)) zombie.y = nextY
             } else if (zombie.attackCooldown <= 0f) {
                 zombie.attackCooldown = ATTACK_INTERVAL_SECONDS
-                onContact(CONTACT_DAMAGE)
+                contactDamage += CONTACT_DAMAGE
             }
         }
+        return contactDamage
     }
 
     fun pulseHit(zombies: MutableList<ZombieActor>, player: PlayerState, facing: PlayerFacing): ZombieActor? {
