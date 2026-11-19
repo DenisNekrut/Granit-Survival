@@ -189,7 +189,7 @@ class PixelRenderer {
         // Draw only non-floor tiles; the tile map is also used by movement collision.
         engine.tileMap.forEachTile { tileX, tileY, type ->
             when (type) {
-                TileType.FLOOR -> drawFloorDetail(tileX, tileY, engine.zone)
+                TileType.FLOOR -> if (engine.zone == WorldZone.BUNKER) drawBunkerFloor(tileX, tileY) else drawFloorDetail(tileX, tileY, engine.zone)
                 TileType.WALL -> Unit
                 TileType.BED, TileType.WORKBENCH, TileType.RADIO, TileType.BOOKSHELF, TileType.STORAGE,
                 TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> Unit
@@ -368,7 +368,6 @@ class PixelRenderer {
         drawNeedBar("FO", engine.needs.hunger, 1.52f, 0.64f, 0.43f, 0.22f)
         drawNeedBar("WT", engine.needs.thirst, 1.99f, 0.25f, 0.48f, 0.66f)
         drawNeedBar("EN", engine.needs.energy, 2.46f, 0.34f, 0.55f, 0.38f)
-        drawInventory(engine.inventory)
         engine.lastDiscoveryHudLabel?.let { label ->
             screenRect(5.7f, 0.42f, 8.6f, 0.72f, 0.08f, 0.12f, 0.10f, 0.94f)
             drawText("FOUND: $label", 5.95f, 0.68f, 0.075f, 0.78f, 0.76f, 0.62f)
@@ -459,6 +458,23 @@ class PixelRenderer {
                 rect(x - 0.24f, y + 0.20f, 0.48f, 0.08f, 0.92f, 0.35f, 0.16f, 0.13f)
             }
         }
+    }
+
+    private fun drawBunkerFloor(x: Int, y: Int) {
+        // Individual materials for all six rooms; corridors use dark steel.
+        val (r, g, b) = when {
+            x == 8 || y == 4 -> Triple(0.12f, 0.15f, 0.15f)
+            y < 4 && x < 5 -> Triple(0.20f, 0.24f, 0.27f)
+            y < 4 && x < 11 -> Triple(0.29f, 0.25f, 0.18f)
+            y < 4 -> Triple(0.22f, 0.25f, 0.19f)
+            x < 5 -> Triple(0.17f, 0.28f, 0.27f)
+            x < 11 -> Triple(0.25f, 0.25f, 0.23f)
+            else -> Triple(0.28f, 0.22f, 0.16f)
+        }
+        rect(x + 0.02f, y + 0.02f, 0.96f, 0.96f, r, g, b)
+        val seam = if (y == 4 || x == 8) 0.08f else 0.12f
+        if ((x + y) % 2 == 0) rect(x + 0.12f, y + 0.88f, 0.76f, 0.025f, seam, seam + 0.015f, seam + 0.01f)
+        if ((x * 3 + y * 5) % 11 == 0) rect(x + 0.22f, y + 0.28f, 0.12f, 0.06f, r + 0.045f, g + 0.04f, b + 0.035f)
     }
 
     private fun drawFloorDetail(x: Int, y: Int, zone: WorldZone) {
