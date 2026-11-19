@@ -29,14 +29,14 @@ class GameEngineInteractionTest {
     @Test
     fun interactionCanBeTriggeredAgainAfterTheSurfaceReleasesInput() {
         val engine = GameEngine()
-        engine.player.x = 7.5f
-        engine.player.y = 8.5f
+        engine.player.x = 3.5f
+        engine.player.y = 3.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(1, engine.inventory.count(ItemType.WOOD))
 
         engine.releaseInputState()
-        engine.player.x = 12.5f
-        engine.player.y = 8.5f
+        engine.player.x = 4.5f
+        engine.player.y = 3.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
 
         assertEquals(1, engine.inventory.count(ItemType.METAL))
@@ -45,8 +45,8 @@ class GameEngineInteractionTest {
     @Test
     fun characterStatisticsTrackCollectionMovementTimeAndVisitedZones() {
         val engine = GameEngine()
-        engine.player.x = 7.5f
-        engine.player.y = 8.5f
+        engine.player.x = 3.5f
+        engine.player.y = 3.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(1, engine.statistics.snapshot().resourcesCollected)
 
@@ -68,8 +68,8 @@ class GameEngineInteractionTest {
         assertFalse(engine.canAccessStorage())
         assertFalse(engine.transferToStorage(ItemType.WOOD))
 
-        engine.player.x = 15.5f
-        engine.player.y = 2.5f
+        engine.player.x = 14.5f
+        engine.player.y = 7.5f
         assertTrue(engine.canAccessStorage())
         assertTrue(engine.transferToStorage(ItemType.WOOD))
         assertEquals(0, engine.inventory.count(ItemType.WOOD))
@@ -81,16 +81,16 @@ class GameEngineInteractionTest {
         val engine = GameEngine()
         assertFalse(engine.canSleep())
 
-        engine.player.x = 6.0f
-        engine.player.y = 2.5f
+        engine.player.x = 2.5f
+        engine.player.y = 3.5f
         assertTrue(engine.canSleep())
     }
 
     @Test
     fun collectingResourcesAndChangingZonesConsumeGameTime() {
         val engine = GameEngine()
-        engine.player.x = 7.5f
-        engine.player.y = 8.5f
+        engine.player.x = 3.5f
+        engine.player.y = 3.5f
         val start = engine.worldClock.totalMinutes
 
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
@@ -98,8 +98,8 @@ class GameEngineInteractionTest {
         assertEquals(1, engine.inventory.count(ItemType.WOOD))
 
         engine.changeZone(WorldZone.BUNKER)
-        engine.player.x = 17.5f
-        engine.player.y = 0.8f
+        engine.player.x = 8.5f
+        engine.player.y = 2.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = false))
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(WorldZone.FOREST, engine.zone)
@@ -122,7 +122,7 @@ class GameEngineInteractionTest {
             assertEquals(3, engine.inventory.count(ItemType.WATER))
         }
 
-        interactAt(17.5f, 1.5f) // bunker -> forest
+        interactAt(8.5f, 2.5f) // bunker -> forest
         assertEquals(WorldZone.FOREST, engine.zone)
         interactAt(1.5f, 12.5f) // forest -> ruins
         assertEquals(WorldZone.RUINS, engine.zone)
@@ -132,16 +132,16 @@ class GameEngineInteractionTest {
         assertEquals(WorldZone.ROAD, engine.zone)
         interactAt(1.5f, 12.5f) // road -> forest
         assertEquals(WorldZone.FOREST, engine.zone)
-        interactAt(20.5f, 22.5f) // forest -> bunker
+        interactAt(8.5f, 2.5f) // forest -> bunker
         assertEquals(WorldZone.BUNKER, engine.zone)
     }
 
     @Test
     fun craftedItemsCannotBeCollectedAsWorldResourceNodes() {
         val map = TileMap()
-        assertFalse(map.collectResource(ResourceLocation(7, 8, ItemType.MEDICAL_KIT)))
-        assertFalse(map.collectResource(ResourceLocation(7, 8, ItemType.BANDAGE)))
-        assertEquals(TileType.RESOURCE_WOOD, map[7, 8])
+        assertFalse(map.collectResource(ResourceLocation(3, 3, ItemType.MEDICAL_KIT)))
+        assertFalse(map.collectResource(ResourceLocation(3, 3, ItemType.BANDAGE)))
+        assertEquals(TileType.RESOURCE_WOOD, map[3, 3])
     }
 
     @Test
