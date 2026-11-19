@@ -42,6 +42,7 @@ class PixelRenderer {
     private val textureVertexBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
     private val textureUvBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
     private var queuedTextureVertexCount = 0
+    private var frameDrawCalls = 0
 
     fun create(assets: AssetManager? = null) {
         val atlasErrors = PixelSpriteAtlas.validate()
@@ -170,6 +171,7 @@ class PixelRenderer {
         currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
         queuedVertexCount = 0
         queuedTextureVertexCount = 0
+        frameDrawCalls = 0
         textureVertexBuffer.clear()
         textureUvBuffer.clear()
         GLES20.glEnableVertexAttribArray(positionLocation)
@@ -618,6 +620,7 @@ class PixelRenderer {
         spriteTexture?.bind(0)
         GLES20.glUniform1i(textureSamplerLocation, 0)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, queuedTextureVertexCount)
+        frameDrawCalls++
         GLES20.glDisableVertexAttribArray(texturePositionLocation)
         GLES20.glDisableVertexAttribArray(textureUvLocation)
         GLES20.glUseProgram(program)
@@ -844,8 +847,11 @@ class PixelRenderer {
         GLES20.glVertexAttribPointer(positionLocation, 2, GLES20.GL_FLOAT, false, 0, vertexBuffer)
         GLES20.glVertexAttribPointer(vertexColorLocation, 4, GLES20.GL_FLOAT, false, 0, colorBuffer)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, queuedVertexCount)
+        frameDrawCalls++
         vertexBuffer.clear(); colorBuffer.clear(); queuedVertexCount = 0
     }
+
+    fun currentFrameDrawCalls(): Int = frameDrawCalls
 
     private fun allocateFloatBuffer(floatCount: Int): FloatBuffer =
         ByteBuffer.allocateDirect(floatCount * java.lang.Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer()
