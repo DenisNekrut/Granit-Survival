@@ -90,6 +90,8 @@ class GameSaveRepository(context: Context) {
     @Throws(IOException::class)
     fun saveAuto(engine: GameEngine) = writeSnapshot(autoSaveFile(), engine)
 
+    fun hasAutoSaveFile(): Boolean = autoSaveFile().isFile
+
     fun autoSaveTimestamp(): Long? = runCatching {
         val file = autoSaveFile()
         if (!file.exists()) null else SaveCodec.decode(
