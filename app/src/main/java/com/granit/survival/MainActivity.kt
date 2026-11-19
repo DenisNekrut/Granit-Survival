@@ -10,22 +10,15 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
-import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.util.Log
-import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.SeekBar
-import android.widget.Spinner
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
-import java.text.DateFormat
-import java.util.Date
 
 /** Native Android menus wrap the custom GLES game surface; no UI framework/engine dependency. */
 class MainActivity : Activity() {
@@ -34,7 +27,6 @@ class MainActivity : Activity() {
     private lateinit var session: GameSession
     private var activeGame = false
     private var pausedGame = false
-    private var canSaveFromSlots = false
     private val stationPanelRouter by lazy {
         StationPanelRouter(
             mapOf(
@@ -517,7 +509,6 @@ class MainActivity : Activity() {
         gameSurface.pauseEngine()
         session.audio.stop()
         gameSurface.visibility = View.GONE
-        canSaveFromSlots = allowSave
         SaveSlotsScreen(
             activity = this,
             saves = session.saves,
@@ -540,59 +531,18 @@ class MainActivity : Activity() {
         gameSurface.pauseEngine()
         session.audio.stop()
         gameSurface.visibility = View.GONE
-        val current = session.settings.load()
-        val panel = createPanel("НАСТРОЙКИ", "Параметры управления и отображения")
-        fun addSetting(name: String, initial: Float, max: Int, render: (Int) -> String, changed: (Int) -> Unit): SeekBar {
-            panel.addView(label(name, 14f, Color.LTGRAY))
-            val valueLabel = label(render(initial.toInt()), 12f, Color.rgb(190, 185, 160))
-            panel.addView(valueLabel)
-            val bar = SeekBar(this).apply {
-                this.max = max
-                progress = initial.toInt().coerceIn(0, max)
-                setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                        valueLabel.text = render(progress)
-                        changed(progress)
-                    }
-                    override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-                    override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-                })
-            }
-            panel.addView(bar)
-            return bar
-        }
-        var music = current.musicVolume
-        var effects = current.effectsVolume
-        var sensitivity = current.joystickSensitivity
-        var scale = current.joystickScale
-        var opacity = current.controlsOpacity
-        var displayScale = current.displayScale
-        addSetting("ГРОМКОСТЬ МУЗЫКИ", music * 100, 100, { "Уровень: $it%" }) { music = it / 100f }
-        addSetting("ГРОМКОСТЬ ЭФФЕКТОВ", effects * 100, 100, { "Уровень: $it%" }) { effects = it / 100f }
-        addSetting("ЧУВСТВИТЕЛЬНОСТЬ УПРАВЛЕНИЯ", (sensitivity * 50), 100, { "Множитель: ${(it / 50f).formatOneDecimal()}x" }) { sensitivity = it / 50f }
-        addSetting("РАЗМЕР ДЖОЙСТИКА", ((scale - 0.8f) * 166.66f), 100, { "Размер: ${(0.8f + it / 166.66f).formatOneDecimal()}x" }) { scale = 0.8f + it / 166.66f }
-        addSetting("ПРОЗРАЧНОСТЬ КНОПОК", ((opacity - 0.35f) / 0.65f * 100), 100, { "Прозрачность: ${(35 + it * 0.65f).toInt()}%" }) { opacity = 0.35f + it / 100f * 0.65f }
-        addSetting("МАСШТАБ ИГРОВОГО ЭКРАНА", ((displayScale - 0.8f) * 250f), 100, { "Масштаб: ${80 + it / 100f * 40f}%" }) { displayScale = 0.8f + it / 250f }
-        val quality = Spinner(this).apply {
-            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, GraphicsQuality.values().map { it.name })
-            setSelection(GraphicsQuality.values().indexOf(current.graphicsQuality).coerceAtLeast(0))
-        }
-        panel.addView(label("КАЧЕСТВО ГРАФИКИ", 14f, Color.LTGRAY))
-        panel.addView(quality)
-        val vibration = Switch(this).apply {
-            text = "ВИБРАЦИЯ"
-            setTextColor(Color.WHITE)
-            isChecked = current.vibrationEnabled
-        }
-        panel.addView(vibration)
-        panel.addView(menuButton("СОХРАНИТЬ НАСТРОЙКИ") {
-            session.settings.save(GameSettings(music, effects, sensitivity, scale, opacity,
-                GraphicsQuality.values()[quality.selectedItemPosition], vibration.isChecked, displayScale))
-            Toast.makeText(this, "Настройки сохранены", Toast.LENGTH_SHORT).show()
-            if (pausedGame) showPauseMenu() else showMainMenu()
-        })
-        panel.addView(menuButton("ОТМЕНА") { if (pausedGame) showPauseMenu() else showMainMenu() })
-        showOverlay(panel)
+        SettingsScreen(
+            activity = this,
+            current = session.settings.load(),
+            settings = session.settings,
+            createPanel = ::createPanel,
+            label = ::label,
+            menuButton = ::menuButton,
+            showOverlay = ::showOverlay,
+            dp = ::dp,
+            onSaved = { if (pausedGame) showPauseMenu() else showMainMenu() },
+            onCancel = { if (pausedGame) showPauseMenu() else showMainMenu() }
+        ).show()
     }
 
     private fun createPanel(title: String, subtitle: String): LinearLayout {
