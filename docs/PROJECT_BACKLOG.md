@@ -919,3 +919,10 @@
 6. Art-ресурсы и атласы имеют документированный, валидируемый и детерминированный формат.
 
 **Текущий фокус:** GS-080 — стабилизация PR #6 и CI. Остальные этапы не начинать параллельно, кроме документирования тестовых сценариев. Физические smoke-тесты и профилирование требуют реальных Android-устройств; не отмечать их выполненными только на основании unit-тестов или CI.
+
+
+### 2026-11-19 — PR stabilization and performance/art pipeline
+- [x] PR #6 merged as squash commit 8717550ae0b27835b0569bf3827eb7998ae42bb6; latest pre-merge SHA 6a5f27deb02eb6b9e62a1ce8ce5ebb177afb05be passed unit tests, Debug APK build and artifact upload (Actions run 44611419322).
+- [x] PR #3 reviewed against merged main and closed as superseded. Its useful changes are already present in main: render-failure callback, RGBA_8888/surface readiness, four-frame directional sprites, SpriteQuadGeometry and tests.
+- [ ] GS-091/092 — runtime telemetry added in follow-up work; real-device performance baseline across multiple phones/scenes remains pending.
+- [ ] GS-094/095/096 — asset convention and manifest validation added in follow-up work; external art source files and production atlas pages still need migration.
