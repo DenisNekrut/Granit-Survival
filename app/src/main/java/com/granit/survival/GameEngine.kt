@@ -5,10 +5,13 @@ import kotlin.math.sqrt
 /** Platform-independent simulation state for Granit Survival. */
 data class EngineInput(val moveX: Float = 0f, val moveY: Float = 0f, val interact: Boolean = false)
 
+enum class PlayerFacing { DOWN, UP, LEFT, RIGHT }
+
 data class PlayerState(
     var x: Float = 9.5f,
     var y: Float = 7.0f,
-    var speed: Float = 4.2f
+    var speed: Float = 4.2f,
+    var facing: PlayerFacing = PlayerFacing.DOWN
 )
 
 class GameEngine {
@@ -284,6 +287,7 @@ class GameEngine {
         gameMinuteAccumulator = 0f
         wasInteracting = false
         isMoving = false
+        player.facing = PlayerFacing.DOWN
     }
 
     private fun fixedUpdate(delta: Float, input: EngineInput) {
@@ -294,6 +298,13 @@ class GameEngine {
         val stepX = input.moveX * scale * effectiveSpeed * delta
         val stepY = input.moveY * scale * effectiveSpeed * delta
         isMoving = kotlin.math.abs(stepX) > 0.0001f || kotlin.math.abs(stepY) > 0.0001f
+        if (isMoving) {
+            player.facing = if (kotlin.math.abs(input.moveX) > kotlin.math.abs(input.moveY)) {
+                if (input.moveX < 0f) PlayerFacing.LEFT else PlayerFacing.RIGHT
+            } else {
+                if (input.moveY < 0f) PlayerFacing.UP else PlayerFacing.DOWN
+            }
+        }
 
         val nextX = (player.x + stepX).coerceIn(0.65f, WORLD_WIDTH - 0.65f)
         if (tileMap.isWalkable(nextX, player.y)) player.x = nextX
