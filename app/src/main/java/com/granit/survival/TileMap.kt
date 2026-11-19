@@ -46,16 +46,19 @@ class TileMap(
             if (x != 2 && x != 8 && x != 14) set(x, 4, TileType.WALL)
         }
 
-        // Furniture is anchored along room perimeter walls; the bedroom doorway remains clear.
+        // Furniture is anchored to room perimeter walls; keep the bedroom exit lane open.
         set(2, 1, TileType.BED)
-        set(4, 1, TileType.STORAGE)
-        set(7, 1, TileType.DINING_TABLE)
-        set(10, 1, TileType.BOOKSHELF)
-        set(13, 1, TileType.GENERATOR)
-        set(15, 1, TileType.RADIO)
+        set(7, 3, TileType.DINING_TABLE)
+        set(9, 3, TileType.BOOKSHELF)
+        set(13, 3, TileType.GENERATOR)
+        set(14, 3, TileType.RADIO)
         set(2, 8, TileType.MEDICAL_STATION)
         set(8, 8, TileType.WORKBENCH)
-        set(14, 8, TileType.STORAGE)
+
+        // The shared storage is in the lower-right room, not in the bedroom.
+        // A short wall segment anchors it while preserving a clear approach tile.
+        set(15, 6, TileType.WALL)
+        set(14, 6, TileType.STORAGE)
 
         // Bunker hatch; the arrival tile just inside is kept clear.
         set(width / 2, 1, TileType.EXIT_TO_FOREST)
