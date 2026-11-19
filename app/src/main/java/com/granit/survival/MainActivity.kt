@@ -263,7 +263,7 @@ class MainActivity : Activity() {
         panel.addView(label("ТЕКУЩЕЕ СОСТОЯНИЕ", 15f, Color.rgb(207, 194, 155), true))
         panel.addView(label("Здоровье: ${engine.needs.health.toInt()}  ·  Голод: ${engine.needs.hunger.toInt()}  ·  Жажда: ${engine.needs.thirst.toInt()}", 13f, Color.LTGRAY))
         panel.addView(label("Энергия: ${engine.needs.energy.toInt()}  ·  Стресс: ${engine.psychology.stress.toInt()}  ·  Мораль: ${engine.psychology.morale.toInt()}", 13f, Color.LTGRAY))
-        panel.addView(label("Экипировка: " + if (engine.equipment.weaponDrawn) "сигнальный излучатель в руках" else "убрана", 13f, Color.LTGRAY))
+        panel.addView(label("Экипировка: " + (if (engine.equipment.weaponDrawn) "сигнальный излучатель в руках" else "убрана"), 13f, Color.LTGRAY))
         panel.addView(label("ИСТОРИЯ ВЫЖИВАНИЯ", 15f, Color.rgb(207, 194, 155), true))
         panel.addView(label("Дней выживания: ${stats.daysSurvived}", 15f, Color.WHITE))
         panel.addView(label("Время в экспедициях: ${expeditionHours} ч ${expeditionMinutes} мин", 14f, Color.LTGRAY))
