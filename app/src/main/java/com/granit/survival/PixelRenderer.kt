@@ -340,6 +340,9 @@ class PixelRenderer {
             WorldZone.ROAD -> "ROAD"
         }
         drawText(zoneLabel, 0.68f, 0.80f, 0.055f, 0.57f, 0.68f, 0.60f)
+        if (engine.zombies.isNotEmpty()) {
+            drawText("INFECTED: ${engine.zombies.size}", 2.05f, 1.12f, 0.045f, 0.78f, 0.42f, 0.32f)
+        }
         if (engine.equipment.weaponDrawn) {
             drawText("PULSE: READY", 2.05f, 0.80f, 0.045f, 0.35f, 0.75f, 0.76f)
         }
