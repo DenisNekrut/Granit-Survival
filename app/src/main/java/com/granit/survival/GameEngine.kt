@@ -136,7 +136,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     /** Sleep is only available beside a bed in the bunker. */
     fun canSleep(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.BED, player.x, player.y, 1.5f)
 
-    fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 1.5f)
+    fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 1.75f)
 
     fun canUseWorkbench(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.WORKBENCH, player.x, player.y, 1.5f)
@@ -409,7 +409,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         wasInteracting = input.interact
 
         gameMinuteAccumulator += delta
-        while (gameMinuteAccumulator >= GAME_MINUTE_REAL_SECONDS) {
+        while (gameMinuteAccumulator + 0.00001f >= GAME_MINUTE_REAL_SECONDS) {
             worldClock.advanceMinutes(1)
             statistics.recordMinutes(1, zone, worldClock.day)
             needs.advanceAwake(1)
