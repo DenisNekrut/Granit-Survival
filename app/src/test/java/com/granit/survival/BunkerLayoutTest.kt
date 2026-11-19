@@ -81,6 +81,15 @@ class BunkerLayoutTest {
     }
 
     @Test
+    fun initialPlayerSpawnIsInsideTheBunkerNearTheHatchNotBesideTheBed() {
+        val engine = GameEngine()
+        assertEquals(8.5f, engine.player.x, 0.001f)
+        assertEquals(2.5f, engine.player.y, 0.001f)
+        assertTrue(engine.tileMap.isWalkable(engine.player.x, engine.player.y))
+        assertTrue(!engine.canSleep())
+    }
+
+    @Test
     fun idleCharacterStartsRoomToRoomWanderingAfterFifteenSeconds() {
         val engine = GameEngine()
         val startX = engine.player.x
