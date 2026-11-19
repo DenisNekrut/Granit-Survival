@@ -27,7 +27,7 @@ class WorldZoneTest {
         assertTrue(TileType.WORKBENCH in types)
 
         engine.player.x = 7.5f
-        engine.player.y = 3.5f
+        engine.player.y = 2.5f
         assertTrue(engine.canAccessDiningTable())
 
         engine.player.x = 13.5f
@@ -157,6 +157,17 @@ class WorldZoneTest {
             exits.getValue(zone).forEach { (x, y) ->
                 assertTrue("$zone exit ($x,$y) must be reachable from spawn", (x to y) in visited)
             }
+        }
+    }
+
+    @Test
+    fun outdoorZonesHaveConnectedRoomPartitionsAndClearDoorways() {
+        listOf(WorldZone.FOREST, WorldZone.RUINS, WorldZone.ROAD).forEach { zone ->
+            val map = TileMap(zone = zone)
+            assertEquals(TileType.WALL, map[13, 3])
+            assertEquals(TileType.FLOOR, map[13, 12])
+            assertEquals(TileType.WALL, map[26, 18])
+            assertEquals(TileType.FLOOR, map[20, 7])
         }
     }
 
