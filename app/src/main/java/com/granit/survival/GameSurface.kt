@@ -91,7 +91,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     @Synchronized
     private fun startIfReady() {
         if (!resumed || !holder.surface.isValid || renderThread?.isAlive == true) return
-        val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight, session)
+        val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight, session, context.applicationContext)
         renderThread = thread
         thread.start()
     }
