@@ -164,8 +164,8 @@ class MainActivity : Activity() {
             menuButton = ::menuButton,
             showOverlay = ::showOverlay,
             hasSavedGame = {
-                session.saves.autoSaveTimestamp() != null ||
-                    session.saves.listSlots().any { it.exists && !it.corrupted }
+                session.saves.hasAutoSaveFile() ||
+                    session.saves.listSlots().any { it.exists }
             },
             startNewGame = ::startNewGame,
             loadMostRecent = session::loadMostRecent,
