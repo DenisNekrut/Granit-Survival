@@ -16,14 +16,16 @@ data class GameSettings(
     val joystickScale: Float = 1f,
     val controlsOpacity: Float = 0.8f,
     val graphicsQuality: GraphicsQuality = GraphicsQuality.MEDIUM,
-    val vibrationEnabled: Boolean = true
+    val vibrationEnabled: Boolean = true,
+    val displayScale: Float = 1f
 ) {
     fun normalized() = copy(
         musicVolume = musicVolume.coerceIn(0f, 1f),
         effectsVolume = effectsVolume.coerceIn(0f, 1f),
         joystickSensitivity = joystickSensitivity.coerceIn(0.5f, 2f),
         joystickScale = joystickScale.coerceIn(0.8f, 1.4f),
-        controlsOpacity = controlsOpacity.coerceIn(0.35f, 1f)
+        controlsOpacity = controlsOpacity.coerceIn(0.35f, 1f),
+        displayScale = displayScale.coerceIn(0.8f, 1.2f)
     )
 }
 
@@ -40,7 +42,8 @@ class GameSettingsRepository(context: Context) {
         graphicsQuality = runCatching {
             GraphicsQuality.valueOf(preferences.getString(KEY_GRAPHICS, GraphicsQuality.MEDIUM.name)!!)
         }.getOrDefault(GraphicsQuality.MEDIUM),
-        vibrationEnabled = preferences.getBoolean(KEY_VIBRATION, true)
+        vibrationEnabled = preferences.getBoolean(KEY_VIBRATION, true),
+        displayScale = preferences.getFloat(KEY_DISPLAY_SCALE, 1f)
     ).normalized()
 
     fun save(settings: GameSettings) {
@@ -53,6 +56,7 @@ class GameSettingsRepository(context: Context) {
             .putFloat(KEY_CONTROLS_OPACITY, safe.controlsOpacity)
             .putString(KEY_GRAPHICS, safe.graphicsQuality.name)
             .putBoolean(KEY_VIBRATION, safe.vibrationEnabled)
+            .putFloat(KEY_DISPLAY_SCALE, safe.displayScale)
             .apply()
     }
 
@@ -65,5 +69,6 @@ class GameSettingsRepository(context: Context) {
         private const val KEY_CONTROLS_OPACITY = "controls_opacity"
         private const val KEY_GRAPHICS = "graphics_quality"
         private const val KEY_VIBRATION = "vibration_enabled"
+        private const val KEY_DISPLAY_SCALE = "display_scale"
     }
 }
