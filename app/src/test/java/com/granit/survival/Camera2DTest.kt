@@ -36,6 +36,19 @@ class Camera2DTest {
     }
 
     @Test
+    fun bunkerViewportIsNarrowEnoughToFollowAcrossLandscapeAspects() {
+        val height = BunkerCameraProfile.viewportHeight(2400, 1080)
+        val width = 2400f / (1080f / height)
+        assertTrue(width < 17f)
+        val camera = Camera2D(width, height)
+        camera.snapTo(8.5f, 2.5f, 17f, 10f)
+        val beforeX = camera.x
+        camera.follow(13.5f, 7.5f, 17f, 10f, 0.1f)
+        assertTrue(camera.x > beforeX)
+        assertTrue(camera.y > 2.5f)
+    }
+
+    @Test
     fun cameraSmoothlyMovesTowardPlayer() {
         val camera = Camera2D(10f, 6f)
         camera.snapTo(5f, 3f, 100f, 60f)
