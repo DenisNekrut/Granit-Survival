@@ -79,4 +79,18 @@ class Camera2DTest {
         assertEquals(8f, camera.x, 0.001f)
         assertEquals(4f, camera.y, 0.001f)
     }
+    @Test
+    fun followSmoothingIsIndependentOfUpdateFrequency() {
+        val thirtyFps = Camera2D(10f, 6f)
+        val sixtyFps = Camera2D(10f, 6f)
+        thirtyFps.snapTo(5f, 3f, 100f, 60f)
+        sixtyFps.snapTo(5f, 3f, 100f, 60f)
+
+        repeat(2) { thirtyFps.follow(50f, 30f, 100f, 60f, 1f / 30f) }
+        repeat(4) { sixtyFps.follow(50f, 30f, 100f, 60f, 1f / 60f) }
+
+        assertEquals(thirtyFps.x, sixtyFps.x, 0.001f)
+        assertEquals(thirtyFps.y, sixtyFps.y, 0.001f)
+    }
+
 }
