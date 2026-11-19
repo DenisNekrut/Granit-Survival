@@ -17,9 +17,17 @@ data class CraftingRecipe(
 
     fun isUnlocked(library: BookLibrary): Boolean = requiredBookId == null || library.hasRead(requiredBookId)
 
-    fun canCraft(inventory: Inventory): Boolean =
-        ingredients.all { (type, amount) -> inventory.count(type) >= amount } &&
-            inventory.canAdd(output, outputAmount)
+    fun canCraft(inventory: Inventory): Boolean {
+        if (!ingredients.all { (type, amount) -> inventory.count(type) >= amount }) return false
+
+        // Check capacity after consuming ingredients. A full backpack can still craft
+        // when the consumed stacks free a slot for the result.
+        val projected = Inventory(inventory.columns, inventory.rows).also {
+            it.restore(inventory.snapshot())
+        }
+        ingredients.forEach { (type, amount) -> projected.remove(type, amount) }
+        return projected.canAdd(output, outputAmount)
+    }
 
     companion object {
         val all = listOf(
