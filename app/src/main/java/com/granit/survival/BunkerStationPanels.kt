@@ -17,7 +17,8 @@ internal class BunkerStationPanels(
     private val showOverlay: (LinearLayout) -> Unit,
     private val enterGame: () -> Unit,
     private val closeStationPanel: () -> Unit,
-    private val showMessage: (String, String) -> Unit
+    private val showMessage: (String, String) -> Unit,
+    private val weightedParams: () -> LinearLayout.LayoutParams
 ) {
     fun showRadio() {
         val engine = session.engine
@@ -97,6 +98,83 @@ internal class BunkerStationPanels(
             if (session.drinkWater()) showDining()
         })
         panel.addView(menuButton("ЗАКРЫТЬ", true) { enterGame() })
+        showOverlay(panel)
+    }
+
+
+    fun showLibrary() {
+        val panel = createPanel(
+            "БИБЛИОТЕКА УБЕЖИЩА",
+            "Чтение занимает игровое время. Новые знания закрепляются при следующем пробуждении."
+        )
+        BookCatalog.all.forEach { book ->
+            val read = session.engine.bookLibrary.hasRead(book.id)
+            panel.addView(label(book.title + " · " + book.category.displayName, 15f, Color.WHITE, false))
+            panel.addView(label(book.description + " · " + book.readMinutes + " мин.", 12f, Color.LTGRAY, false))
+            panel.addView(menuButton(if (read) "ПРОЧИТАНО" else "ЧИТАТЬ", !read) {
+                if (session.engine.readBook(book.id)) {
+                    Toast.makeText(activity, "Книга прочитана", Toast.LENGTH_SHORT).show()
+                    showLibrary()
+                } else {
+                    Toast.makeText(activity, "Не удалось прочитать книгу", Toast.LENGTH_SHORT).show()
+                }
+            })
+        }
+        panel.addView(menuButton("ЗАКРЫТЬ", true) { closeStationPanel() })
+        showOverlay(panel)
+    }
+
+    fun showWorkshop() {
+        val engine = session.engine
+        val panel = createPanel("МАСТЕРСКАЯ", "Рецепты доступны рядом с верстаком")
+        if (!engine.bunkerPower.hasPower) {
+            panel.addView(label("Нет питания: генератор необходимо запустить.", 13f, Color.rgb(230, 165, 116), false))
+        }
+        CraftingRecipe.all.forEach { recipe ->
+            val costs = recipe.ingredients.entries.joinToString(" · ") { entry ->
+                entry.key.displayName + ": " + entry.value
+            }
+            panel.addView(label(recipe.title + " — " + recipe.output.displayName, 16f, Color.WHITE, false))
+            panel.addView(label(
+                "Материалы: " + costs + " · Время: " + recipe.craftMinutes + " мин.",
+                13f, Color.LTGRAY, false
+            ))
+            panel.addView(menuButton("СОЗДАТЬ", engine.canUseWorkbench() && engine.canCraft(recipe.id)) {
+                if (engine.craft(recipe.id)) {
+                    Toast.makeText(activity, recipe.title + ": готово", Toast.LENGTH_SHORT).show()
+                    showWorkshop()
+                } else {
+                    val message = if (!engine.bunkerPower.hasPower) "Нет питания: запустите генератор"
+                        else "Не хватает материалов или места"
+                    Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
+                }
+            })
+        }
+        panel.addView(menuButton("ЗАКРЫТЬ", true) { closeStationPanel() })
+        showOverlay(panel)
+    }
+
+    fun showStorage() {
+        val panel = createPanel("ХРАНИЛИЩЕ УБЕЖИЩА", "Перенос ресурсов между рюкзаком и контейнером")
+        ItemType.values().forEach { type ->
+            val backpack = session.engine.inventory.count(type)
+            val stored = session.engine.bunkerStorage.count(type)
+            panel.addView(label(
+                "${type.displayName}:  рюкзак $backpack  ·  хранилище $stored",
+                14f, Color.WHITE, false
+            ))
+            val row = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
+            row.addView(menuButton("ПОЛОЖИТЬ ВСЁ", backpack > 0) {
+                if (session.transferToStorage(type)) showStorage()
+                else Toast.makeText(activity, "Не удалось переместить предметы", Toast.LENGTH_SHORT).show()
+            }, weightedParams())
+            row.addView(menuButton("ЗАБРАТЬ ВСЁ", stored > 0) {
+                if (session.transferFromStorage(type)) showStorage()
+                else Toast.makeText(activity, "В рюкзаке недостаточно места", Toast.LENGTH_SHORT).show()
+            }, weightedParams())
+            panel.addView(row)
+        }
+        panel.addView(menuButton("ЗАКРЫТЬ", true) { closeStationPanel() })
         showOverlay(panel)
     }
 
