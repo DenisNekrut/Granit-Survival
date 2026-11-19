@@ -71,8 +71,23 @@ class Camera2DTest {
             camera.follow(0f, 0f, 100f, 60f, 1f / 60f)
         }
 
-        assertEquals(5f, camera.x, 0.001f)
-        assertEquals(3f, camera.y, 0.001f)
+        assertEquals(3.5f, camera.x, 0.001f)
+        assertEquals(1.5f, camera.y, 0.001f)
+    }
+
+    @Test
+    fun cameraShowsNeutralMarginOutsideMapInsteadOfPuttingMapEdgeOnScreen() {
+        val camera = Camera2D(10f, 6f)
+        camera.snapTo(50f, 30f, 100f, 60f)
+
+        repeat(100) {
+            camera.follow(0f, 0f, 100f, 60f, 1f / 60f)
+        }
+
+        assertEquals(-Camera2D.WORLD_EDGE_PADDING,
+            camera.x - camera.viewportWidth * 0.5f, 0.001f)
+        assertEquals(-Camera2D.WORLD_EDGE_PADDING,
+            camera.y - camera.viewportHeight * 0.5f, 0.001f)
     }
 
     @Test
