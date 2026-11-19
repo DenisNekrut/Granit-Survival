@@ -122,13 +122,7 @@ class MainActivity : Activity() {
                 panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
                 showOverlay(panel)
             }
-            engine.canAccessGenerator() -> {
-                val panel = createPanel("ГЕНЕРАТОРНАЯ", "Энергосистема убежища")
-                panel.addView(label("Система питания пока работает в базовом режиме.", 14f, Color.rgb(206, 215, 202)))
-                panel.addView(label("Управление генератором и резервное освещение будут подключены следующим этапом.", 12f, Color.rgb(151, 170, 157)))
-                panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
-                showOverlay(panel)
-            }
+            engine.canAccessGenerator() -> showGeneratorPanel()
             engine.zone == WorldZone.BUNKER &&
                 engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f) -> {
                 val event = engine.listenToRadio()
@@ -149,6 +143,29 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun showGeneratorPanel() {
+        val engine = session.engine
+        val panel = createPanel("ГЕНЕРАТОРНАЯ", "Энергосистема убежища")
+        val powered = engine.bunkerPower.hasPower
+        panel.addView(label(if (powered) "ПИТАНИЕ: ОСНОВНАЯ СЕТЬ" else "ПИТАНИЕ: АВАРИЙНЫЙ РЕЖИМ",
+            15f, if (powered) Color.rgb(164, 210, 170) else Color.rgb(230, 165, 116)))
+        panel.addView(label("Запас топлива: " + engine.bunkerPower.fuelHoursRemaining + " ч", 14f, Color.WHITE))
+        panel.addView(label("Генератор: " + if (engine.bunkerPower.generatorRunning) "работает" else "остановлен",
+            13f, Color.rgb(190, 198, 190)))
+        panel.addView(menuButton(if (engine.bunkerPower.generatorRunning) "ОСТАНОВИТЬ ГЕНЕРАТОР" else "ЗАПУСТИТЬ ГЕНЕРАТОР",
+            enabled = engine.bunkerPower.generatorRunning || engine.bunkerPower.fuelMinutesRemaining > 0) {
+            engine.toggleGenerator()
+            showGeneratorPanel()
+        })
+        panel.addView(menuButton("ЗАГРУЗИТЬ ДРОВА (+4 ЧАСА)", enabled = engine.inventory.count(ItemType.WOOD) > 0 &&
+            engine.bunkerPower.fuelMinutesRemaining < BunkerPowerSystem.MAX_FUEL_MINUTES) {
+            if (engine.refuelGenerator()) showGeneratorPanel()
+        })
+        panel.addView(label("При отключении генератора остаётся слабое аварийное освещение.", 12f,
+            Color.rgb(151, 170, 157)))
+        panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+        showOverlay(panel)
+    }
     private fun showDiningPanel() {
         val engine = session.engine
         val panel = createPanel("СТОЛОВАЯ", "Запасы экспедиции")
