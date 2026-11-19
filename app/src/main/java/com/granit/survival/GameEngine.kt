@@ -65,6 +65,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         private set
     private var wasInteracting = false
     val zombies = mutableListOf<ZombieActor>()
+    val autoAimTarget: ZombieActor? get() = if (zone == WorldZone.BUNKER) null else
+        ZombieSystem.findVisibleTarget(zombies, player, tileMap)
     private var pulseCooldownSeconds = 0f
     private var idleSeconds = 0f
     private var wanderRoomIndex = 0
@@ -145,8 +147,10 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
     fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 2.1f)
 
-    fun canUseWorkbench(): Boolean = zone == WorldZone.BUNKER && bunkerPower.hasPower &&
+    fun canAccessWorkbench(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.WORKBENCH, player.x, player.y, 1.5f)
+
+    fun canUseWorkbench(): Boolean = canAccessWorkbench() && bunkerPower.hasPower
 
     fun canAccessBookshelf(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.BOOKSHELF, player.x, player.y, 1.5f)
@@ -474,7 +478,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (input.interact && !wasInteracting) interact()
         if (input.fire && pulseCooldownSeconds <= 0f && zone != WorldZone.BUNKER && equipment.weaponDrawn) {
             pulseCooldownSeconds = 0.55f
-            ZombieSystem.pulseHit(zombies, player, player.facing)
+            val selectedTarget = autoAimTarget
+            if (selectedTarget != null) ZombieSystem.pulseHitTarget(zombies, selectedTarget)
+            else ZombieSystem.pulseHit(zombies, player, player.facing)
         }
         pulseCooldownSeconds = (pulseCooldownSeconds - delta).coerceAtLeast(0f)
         val contactDamage = ZombieSystem.update(zombies, player, tileMap, delta)
