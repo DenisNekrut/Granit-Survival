@@ -25,6 +25,8 @@ class PixelRenderer {
     private var textureSamplerLocation = -1
     private var spriteTexture: GlesTexture? = null
     private var spriteManifest: SpriteAtlasManifest? = null
+    private val textureVertexBuffer: FloatBuffer = allocateFloatBuffer(12)
+    private val textureUvBuffer: FloatBuffer = allocateFloatBuffer(12)
 
     fun create() {
         val atlasErrors = PixelSpriteAtlas.validate()
@@ -79,11 +81,14 @@ class PixelRenderer {
 
         runCatching {
             val generatedAtlas = PixelSpriteTextureAtlas.build()
-            val texture = GlesTexture()
-            texture.upload(generatedAtlas.bitmap, generatedAtlas.manifest.filter)
-            spriteManifest = generatedAtlas.manifest
-            spriteTexture = texture
-            generatedAtlas.bitmap.recycle()
+            try {
+                val texture = GlesTexture()
+                texture.upload(generatedAtlas.bitmap, generatedAtlas.manifest.filter)
+                spriteManifest = generatedAtlas.manifest
+                spriteTexture = texture
+            } finally {
+                generatedAtlas.bitmap.recycle()
+            }
         }
     }
 
@@ -385,13 +390,15 @@ class PixelRenderer {
             uvLeft, uv.top, uvLeft, uv.bottom, uvRight, uv.top,
             uvRight, uv.top, uvLeft, uv.bottom, uvRight, uv.bottom
         )
-        val positionBuffer = allocateFloatBuffer(positions.size).put(positions).apply { position(0) }
-        val uvBuffer = allocateFloatBuffer(coordinates.size).put(coordinates).apply { position(0) }
+        textureVertexBuffer.clear()
+        textureVertexBuffer.put(positions).position(0)
+        textureUvBuffer.clear()
+        textureUvBuffer.put(coordinates).position(0)
         GLES20.glUseProgram(textureProgram)
         GLES20.glEnableVertexAttribArray(texturePositionLocation)
         GLES20.glEnableVertexAttribArray(textureUvLocation)
-        GLES20.glVertexAttribPointer(texturePositionLocation, 2, GLES20.GL_FLOAT, false, 0, positionBuffer)
-        GLES20.glVertexAttribPointer(textureUvLocation, 2, GLES20.GL_FLOAT, false, 0, uvBuffer)
+        GLES20.glVertexAttribPointer(texturePositionLocation, 2, GLES20.GL_FLOAT, false, 0, textureVertexBuffer)
+        GLES20.glVertexAttribPointer(textureUvLocation, 2, GLES20.GL_FLOAT, false, 0, textureUvBuffer)
         texture.bind(0)
         GLES20.glUniform1i(textureSamplerLocation, 0)
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6)
