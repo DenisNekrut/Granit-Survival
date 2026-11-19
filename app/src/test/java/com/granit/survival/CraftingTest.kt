@@ -13,15 +13,15 @@ class CraftingTest {
         engine.inventory.add(ItemType.METAL, 1)
         assertFalse(engine.craft("medical_kit"))
 
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
         assertTrue(engine.canUseWorkbench())
         assertFalse(engine.craft("medical_kit"))
 
-        engine.player.x = 7.5f
+        engine.player.x = 9.5f
         engine.player.y = 2.5f
         assertTrue(engine.readBook("field_first_aid"))
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
         val startTime = engine.worldClock.totalMinutes
         assertTrue(engine.craft("medical_kit"))
@@ -36,7 +36,7 @@ class CraftingTest {
     @Test
     fun craftingFailsWithoutMaterialsButUsesSlotsFreedByIngredients() {
         val engine = GameEngine()
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
         assertFalse(engine.craft("medical_kit"))
 
@@ -51,12 +51,12 @@ class CraftingTest {
     @Test
     fun craftingCanProduceAnItemFromACompletelyFullBackpack() {
         val engine = GameEngine()
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
-        engine.player.x = 7.5f
+        engine.player.x = 9.5f
         engine.player.y = 2.5f
         assertTrue(engine.readBook("field_first_aid"))
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
 
         // Fourteen full wood stacks plus the two ingredient stacks fill all 16 slots.
@@ -85,7 +85,7 @@ class CraftingTest {
     @Test
     fun bandageCanBeCraftedAndUsedForSmallHealing() {
         val engine = GameEngine()
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
         engine.inventory.add(ItemType.FABRIC, 1)
         val start = engine.worldClock.totalMinutes
@@ -116,14 +116,14 @@ class CraftingTest {
     @Test
     fun fatalCraftingCostRollsBackAndReportsFailure() {
         val engine = GameEngine()
-        engine.player.x = 7.5f
+        engine.player.x = 9.5f
         engine.player.y = 2.5f
         engine.inventory.add(ItemType.FABRIC, 2)
         engine.inventory.add(ItemType.METAL, 1)
         assertTrue(engine.readBook("field_first_aid"))
         engine.sleepUntilMorning()
 
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
         engine.needs.restore(SurvivalNeedsSnapshot(0.1f, 0f, 0f, 80f))
 
