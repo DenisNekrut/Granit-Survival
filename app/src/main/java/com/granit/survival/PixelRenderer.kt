@@ -190,64 +190,8 @@ class PixelRenderer {
             when (type) {
                 TileType.FLOOR -> drawFloorDetail(tileX, tileY, engine.zone)
                 TileType.WALL -> Unit
-                TileType.BED -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.31f, 0.25f, 0.18f)
-                    rect(tileX + 0.08f, tileY + 0.12f, 0.84f, 0.18f, 0.43f, 0.35f, 0.23f)
-                    rect(tileX + 0.13f, tileY + 0.35f, 0.28f, 0.20f, 0.62f, 0.58f, 0.45f)
-                    rect(tileX + 0.48f, tileY + 0.34f, 0.38f, 0.07f, 0.20f, 0.17f, 0.14f)
-                }
-                TileType.WORKBENCH -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.26f)
-                    rect(tileX + 0.12f, tileY + 0.18f, 0.76f, 0.18f, 0.48f, 0.35f, 0.20f)
-                    rect(tileX + 0.18f, tileY + 0.38f, 0.10f, 0.48f, 0.28f, 0.23f, 0.16f)
-                    rect(tileX + 0.72f, tileY + 0.38f, 0.10f, 0.48f, 0.28f, 0.23f, 0.16f)
-                    rect(tileX + 0.40f, tileY + 0.08f, 0.20f, 0.06f, 0.66f, 0.60f, 0.42f)
-                }
-                TileType.RADIO -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.18f, 0.22f, 0.20f)
-                    rect(tileX + 0.10f, tileY + 0.24f, 0.80f, 0.52f, 0.28f, 0.31f, 0.27f)
-                    rect(tileX + 0.18f, tileY + 0.32f, 0.34f, 0.18f, 0.13f, 0.20f, 0.19f)
-                    rect(tileX + 0.62f, tileY + 0.32f, 0.08f, 0.08f, 0.72f, 0.56f, 0.30f)
-                    rect(tileX + 0.62f, tileY + 0.48f, 0.08f, 0.08f, 0.72f, 0.56f, 0.30f)
-                    rect(tileX + 0.20f, tileY + 0.58f, 0.60f, 0.06f, 0.10f, 0.13f, 0.12f)
-                }
-                TileType.BOOKSHELF -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.24f, 0.19f, 0.14f)
-                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.39f, 0.28f, 0.18f)
-                    rect(tileX + 0.18f, tileY + 0.34f, 0.64f, 0.07f, 0.15f, 0.14f, 0.12f)
-                    rect(tileX + 0.18f, tileY + 0.62f, 0.64f, 0.07f, 0.15f, 0.14f, 0.12f)
-                    rect(tileX + 0.23f, tileY + 0.16f, 0.10f, 0.17f, 0.58f, 0.36f, 0.23f)
-                    rect(tileX + 0.39f, tileY + 0.16f, 0.12f, 0.17f, 0.30f, 0.45f, 0.39f)
-                    rect(tileX + 0.58f, tileY + 0.16f, 0.13f, 0.17f, 0.58f, 0.51f, 0.36f)
-                    rect(tileX + 0.28f, tileY + 0.43f, 0.12f, 0.17f, 0.31f, 0.40f, 0.52f)
-                    rect(tileX + 0.49f, tileY + 0.43f, 0.16f, 0.17f, 0.63f, 0.55f, 0.34f)
-                }
-                TileType.STORAGE -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.34f, 0.27f, 0.17f)
-                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.18f, 0.20f, 0.19f)
-                    rect(tileX + 0.18f, tileY + 0.20f, 0.64f, 0.08f, 0.43f, 0.35f, 0.22f)
-                    rect(tileX + 0.46f, tileY + 0.32f, 0.08f, 0.46f, 0.40f, 0.34f, 0.22f)
-                    rect(tileX + 0.40f, tileY + 0.46f, 0.20f, 0.10f, 0.58f, 0.50f, 0.30f)
-                }
-                TileType.DINING_TABLE -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.16f, 0.22f, 0.20f)
-                    rect(tileX + 0.08f, tileY + 0.22f, 0.84f, 0.56f, 0.43f, 0.31f, 0.19f)
-                    rect(tileX + 0.16f, tileY + 0.30f, 0.68f, 0.08f, 0.66f, 0.53f, 0.34f)
-                    rect(tileX + 0.16f, tileY + 0.58f, 0.68f, 0.08f, 0.66f, 0.53f, 0.34f)
-                }
-                TileType.GENERATOR -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.14f, 0.19f, 0.18f)
-                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.29f, 0.34f, 0.32f)
-                    rect(tileX + 0.22f, tileY + 0.22f, 0.56f, 0.30f, 0.12f, 0.16f, 0.16f)
-                    rect(tileX + 0.28f, tileY + 0.62f, 0.12f, 0.08f, 0.25f, 0.78f, 0.62f)
-                    rect(tileX + 0.48f, tileY + 0.62f, 0.12f, 0.08f, 0.72f, 0.58f, 0.27f)
-                }
-                TileType.MEDICAL_STATION -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.24f, 0.22f)
-                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.55f, 0.57f, 0.50f)
-                    rect(tileX + 0.43f, tileY + 0.22f, 0.14f, 0.52f, 0.70f, 0.25f, 0.23f)
-                    rect(tileX + 0.24f, tileY + 0.41f, 0.52f, 0.14f, 0.70f, 0.25f, 0.23f)
-                }
+                TileType.BED, TileType.WORKBENCH, TileType.RADIO, TileType.BOOKSHELF, TileType.STORAGE,
+                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> Unit
                 TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
                 TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
@@ -281,6 +225,9 @@ class PixelRenderer {
                 TileType.STORAGE -> "storage"
                 TileType.BOOKSHELF -> "bookshelf"
                 TileType.RADIO -> "radio"
+                TileType.DINING_TABLE -> "dining_table"
+                TileType.GENERATOR -> "generator"
+                TileType.MEDICAL_STATION -> "medical_station"
                 else -> null
             }
             if (furnitureSprite != null) {
@@ -309,12 +256,12 @@ class PixelRenderer {
         val (playerSprite, playerFlipX) = when (engine.player.facing) {
             PlayerFacing.DOWN -> "player" to false
             PlayerFacing.UP -> "player_back" to false
-            PlayerFacing.RIGHT -> "player_side" to false
-            PlayerFacing.LEFT -> "player_side" to true
+            PlayerFacing.RIGHT -> "player_side_right" to false
+            PlayerFacing.LEFT -> "player_side_left" to false
         }
         worldSprites += WorldSpriteCommand(
             sortY = py + 0.48f, sortOrder = 1, spriteId = playerSprite,
-            centerX = px, topY = py - 0.48f, pixelSize = 0.06f,
+            centerX = px, topY = py - 0.48f, pixelSize = 0.04f,
             frame = playerFrame, flipX = playerFlipX
         )
         worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
@@ -436,10 +383,7 @@ class PixelRenderer {
     }
 
     private fun drawExitTile(x: Int, y: Int) {
-        rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.12f, 0.22f, 0.23f)
-        rect(x + 0.12f, y + 0.08f, 0.76f, 0.84f, 0.28f, 0.43f, 0.42f)
-        rect(x + 0.22f, y + 0.18f, 0.56f, 0.64f, 0.12f, 0.20f, 0.20f)
-        rect(x + 0.34f, y + 0.46f, 0.32f, 0.08f, 0.72f, 0.67f, 0.49f)
+        drawAtlasSprite("exit_hatch", x + 0.5f, y.toFloat(), 0.0625f)
     }
 
     private fun drawAtlasSprite(
