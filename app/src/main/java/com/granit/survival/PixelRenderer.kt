@@ -188,8 +188,9 @@ class PixelRenderer {
 
         // Draw only non-floor tiles; the tile map is also used by movement collision.
         engine.tileMap.forEachTile { tileX, tileY, type ->
+            if (engine.zone == WorldZone.BUNKER && type != TileType.WALL) drawBunkerFloor(tileX, tileY)
             when (type) {
-                TileType.FLOOR -> if (engine.zone == WorldZone.BUNKER) drawBunkerFloor(tileX, tileY) else drawFloorDetail(tileX, tileY, engine.zone)
+                TileType.FLOOR -> if (engine.zone != WorldZone.BUNKER) drawFloorDetail(tileX, tileY, engine.zone) else Unit
                 TileType.WALL -> Unit
                 TileType.BED, TileType.WORKBENCH, TileType.RADIO, TileType.BOOKSHELF, TileType.STORAGE,
                 TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> Unit
