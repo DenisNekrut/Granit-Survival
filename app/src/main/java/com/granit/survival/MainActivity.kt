@@ -110,18 +110,7 @@ class MainActivity : Activity() {
                 panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
                 showOverlay(panel)
             }
-            engine.canAccessMedicalStation() -> {
-                val panel = createPanel("МЕДЧАСТЬ", "Медицинские принадлежности")
-                panel.addView(label("Здоровье: ${engine.needs.health.toInt()}%", 16f, Color.WHITE))
-                panel.addView(menuButton("ИСПОЛЬЗОВАТЬ БИНТ", enabled = engine.inventory.count(ItemType.BANDAGE) > 0 && engine.needs.health < 100f) {
-                    if (engine.useBandage()) showMedicalPanel()
-                })
-                panel.addView(menuButton("ИСПОЛЬЗОВАТЬ АПТЕЧКУ", enabled = engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && engine.needs.health < 100f) {
-                    if (engine.useMedicalKit()) showMedicalPanel()
-                })
-                panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
-                showOverlay(panel)
-            }
+            engine.canAccessMedicalStation() -> showMedicalPanel()
             engine.canAccessGenerator() -> showGeneratorPanel()
             engine.zone == WorldZone.BUNKER &&
                 engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f) -> {
@@ -187,14 +176,23 @@ class MainActivity : Activity() {
 
     private fun showMedicalPanel() {
         val engine = session.engine
-        val panel = createPanel("МЕДЧАСТЬ", "Медицинские принадлежности")
+        val panel = createPanel("МЕДЧАСТЬ", "Медицинская станция и расходные материалы")
+        val hurt = engine.needs.health < 100f
         panel.addView(label("Здоровье: ${engine.needs.health.toInt()}%", 16f, Color.WHITE))
-        panel.addView(menuButton("ИСПОЛЬЗОВАТЬ БИНТ", enabled = engine.inventory.count(ItemType.BANDAGE) > 0 && engine.needs.health < 100f) {
+        panel.addView(label(if (engine.bunkerPower.hasPower) "Станция запитана" else "Нет питания: доступна только ручная помощь",
+            12f, if (engine.bunkerPower.hasPower) Color.rgb(164, 210, 170) else Color.rgb(230, 165, 116)))
+        panel.addView(menuButton("ПРОВЕСТИ ОБРАБОТКУ (+50 ЗДОРОВЬЯ, 12 МИН.)",
+            enabled = engine.canUseMedicalStation() && hurt && engine.inventory.count(ItemType.MEDICAL_KIT) > 0) {
+            if (engine.treatAtMedicalStation()) showMedicalPanel()
+        })
+        panel.addView(menuButton("ИСПОЛЬЗОВАТЬ БИНТ (+15)", enabled = engine.inventory.count(ItemType.BANDAGE) > 0 && hurt) {
             if (engine.useBandage()) showMedicalPanel()
         })
-        panel.addView(menuButton("ИСПОЛЬЗОВАТЬ АПТЕЧКУ", enabled = engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && engine.needs.health < 100f) {
+        panel.addView(menuButton("ИСПОЛЬЗОВАТЬ АПТЕЧКУ (+35)", enabled = engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && hurt) {
             if (engine.useMedicalKit()) showMedicalPanel()
         })
+        panel.addView(label("Обработка на станции требует генератор и одну аптечку. Ручная помощь работает и без питания.", 11f,
+            Color.rgb(151, 170, 157)))
         panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
         showOverlay(panel)
     }
