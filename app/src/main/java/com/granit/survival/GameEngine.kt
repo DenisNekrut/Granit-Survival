@@ -398,8 +398,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             ZombieSystem.pulseHit(zombies, player, player.facing)
         }
         pulseCooldownSeconds = (pulseCooldownSeconds - delta).coerceAtLeast(0f)
-        ZombieSystem.update(zombies, player, tileMap, delta) { damage ->
-            needs.applyDamage(damage)
+        val contactDamage = ZombieSystem.update(zombies, player, tileMap, delta)
+        if (contactDamage > 0f) {
+            needs.applyDamage(contactDamage)
             if (needs.health <= 0f) {
                 checkpointSystem.restore(this)
                 gameMinuteAccumulator = 0f
