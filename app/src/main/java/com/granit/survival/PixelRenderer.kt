@@ -1,5 +1,6 @@
 package com.granit.survival
 
+import android.content.res.AssetManager
 import android.opengl.GLES20
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -29,7 +30,7 @@ class PixelRenderer {
     private val textureUvBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
     private var queuedTextureVertexCount = 0
 
-    fun create() {
+    fun create(assets: AssetManager? = null) {
         val atlasErrors = PixelSpriteAtlas.validate()
         check(atlasErrors.isEmpty()) { "Invalid pixel sprite atlas: ${atlasErrors.joinToString()}" }
         val vertexShader = compileShader(
@@ -80,15 +81,33 @@ class PixelRenderer {
             "Texture shader inputs are unavailable"
         }
 
-        runCatching {
-            val generatedAtlas = PixelSpriteTextureAtlas.build()
+        val externalAtlas = assets?.let { assetManager ->
+            runCatching { AndroidSpriteAtlasLoader(assetManager).load("sprites/atlas-manifest.json") }
+                .onFailure { android.util.Log.i("GranitRenderer", "External atlas unavailable; using built-in sprites: ${it.message}") }
+                .getOrNull()
+        }
+        if (externalAtlas != null) {
             try {
                 val texture = GlesTexture()
-                texture.upload(generatedAtlas.bitmap, generatedAtlas.manifest.filter)
-                spriteManifest = generatedAtlas.manifest
+                texture.upload(externalAtlas.bitmap, externalAtlas.manifest.filter)
+                spriteManifest = externalAtlas.manifest
                 spriteTexture = texture
             } finally {
-                generatedAtlas.bitmap.recycle()
+                externalAtlas.bitmap.recycle()
+            }
+        } else {
+            runCatching {
+                val generatedAtlas = PixelSpriteTextureAtlas.build()
+                try {
+                    val texture = GlesTexture()
+                    texture.upload(generatedAtlas.bitmap, generatedAtlas.manifest.filter)
+                    spriteManifest = generatedAtlas.manifest
+                    spriteTexture = texture
+                } finally {
+                    generatedAtlas.bitmap.recycle()
+                }
+            }.onFailure {
+                android.util.Log.e("GranitRenderer", "Unable to build fallback sprite atlas", it)
             }
         }
     }
