@@ -54,6 +54,7 @@ class EngineRenderThread(
         var eglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
         var renderer: PixelRenderer? = null
         try {
+            Log.i("GranitEngine", "Render thread starting (${viewportWidth}x${viewportHeight})")
             display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             check(display != EGL14.EGL_NO_DISPLAY) { "Unable to get EGL display" }
             val versions = IntArray(2)
@@ -82,13 +83,16 @@ class EngineRenderThread(
             check(EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) {
                 "Unable to make EGL context current"
             }
+            Log.i("GranitEngine", "EGL context is current; initializing renderer")
 
             GLES20.glDisable(GLES20.GL_DEPTH_TEST)
             renderer = PixelRenderer()
             renderer.create(appContext.assets)
+            check(GLES20.glGetError() == GLES20.GL_NO_ERROR) { "OpenGL error after renderer initialization" }
             renderer.resize(viewportWidth, viewportHeight)
             val engine = session.engine
             val gameSettings = session.settings.load()
+            Log.i("GranitEngine", "Renderer ready; entering game frame loop for zone ${engine.zone}")
             val fixedFrameDelayNanos = 16_000_000L
             var previousFrame = System.nanoTime()
 
@@ -140,8 +144,9 @@ class EngineRenderThread(
                 }
             }
         } catch (failure: Throwable) {
-            Log.e("GranitEngine", "Render thread failed", failure)
+            Log.e("GranitEngine", "Render thread failed before or during frame rendering", failure)
         } finally {
+            Log.i("GranitEngine", "Render thread shutting down")
             if (display != EGL14.EGL_NO_DISPLAY) {
                 if (context != EGL14.EGL_NO_CONTEXT && eglSurface != EGL14.EGL_NO_SURFACE &&
                     EGL14.eglMakeCurrent(display, eglSurface, eglSurface, context)) {
