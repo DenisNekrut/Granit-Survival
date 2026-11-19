@@ -65,13 +65,13 @@ class MedicalStationTest {
         val engine = GameEngine()
         placeAtMedicalStation(engine)
         engine.needs.applyDamage(99f)
-        engine.needs.applyDamage(0f)
         engine.inventory.add(ItemType.MEDICAL_KIT, 1)
-        // Drain the remaining health through the normal needs simulation before attempting treatment.
+        // Preserve the item in the wake checkpoint, then force the timed action to trigger rollback.
+        engine.checkpointSystem.capture(engine)
         engine.needs.advanceAwake(100000)
-        val startInventory = engine.inventory.count(ItemType.MEDICAL_KIT)
 
         assertFalse(engine.treatAtMedicalStation())
-        assertEquals(startInventory, engine.inventory.count(ItemType.MEDICAL_KIT))
+        assertEquals(1, engine.inventory.count(ItemType.MEDICAL_KIT))
+        assertEquals(1f, engine.needs.health, 0.001f)
     }
 }
