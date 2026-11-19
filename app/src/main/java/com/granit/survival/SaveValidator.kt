@@ -18,9 +18,17 @@ internal object SaveValidator {
         val clock = state.optJSONObject("clock")
             ?: throw IllegalArgumentException("Save is missing clock data")
 
-        require(player.optDouble("x", Double.NaN).isFinite() &&
-            player.optDouble("y", Double.NaN).isFinite() &&
-            player.optDouble("speed", Double.NaN).isFinite()) { "Invalid player coordinates or speed" }
+        val playerX = player.optDouble("x", Double.NaN)
+        val playerY = player.optDouble("y", Double.NaN)
+        val playerSpeed = player.optDouble("speed", Double.NaN)
+        val isBunker = state.optString("zone", WorldZone.BUNKER.name) == WorldZone.BUNKER.name
+        val maxX = if (isBunker) 16.35 else GameEngine.WORLD_WIDTH.toDouble() - 0.65
+        val maxY = if (isBunker) 9.2 else GameEngine.WORLD_HEIGHT.toDouble() - 0.8
+        require(playerX.isFinite() && playerX in 0.65..maxX &&
+            playerY.isFinite() && playerY in 0.8..maxY &&
+            playerSpeed.isFinite() && playerSpeed in 0.1..20.0) {
+            "Invalid player coordinates or speed"
+        }
         require(listOf("health", "hunger", "thirst", "energy").all {
             needs.optDouble(it, Double.NaN).let { value -> value.isFinite() && value in 0.0..100.0 }
         }) { "Invalid survival needs values" }
