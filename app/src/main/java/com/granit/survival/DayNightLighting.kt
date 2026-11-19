@@ -2,27 +2,48 @@ package com.granit.survival
 
 /** Deterministic outdoor light levels derived from the in-game clock (minute 0..1439). */
 internal object DayNightLighting {
-    fun outdoorDarkness(minuteOfDay: Int): Float {
-        val minute = minuteOfDay.coerceIn(0, WorldClock.MINUTES_PER_DAY - 1)
-        return when (minute) {
-            in 0..269 -> 0.62f
-            in 270..329 -> 0.62f - (minute - 270) / 60f * 0.30f
-            in 330..419 -> 0.32f - (minute - 330) / 90f * 0.22f
-            in 420..539 -> 0.10f - (minute - 420) / 120f * 0.10f
-            in 540..959 -> 0f
-            in 960..1079 -> (minute - 960) / 120f * 0.12f
-            in 1080..1199 -> 0.12f + (minute - 1080) / 120f * 0.25f
-            in 1200..1319 -> 0.37f + (minute - 1200) / 120f * 0.25f
-            else -> 0.62f
-        }.coerceIn(0f, 0.62f)
-    }
+    private val darknessKeys = listOf(
+        0 to 0.62f,
+        270 to 0.62f,
+        330 to 0.32f,
+        420 to 0.10f,
+        540 to 0f,
+        960 to 0f,
+        1080 to 0.12f,
+        1200 to 0.37f,
+        1320 to 0.62f,
+        1439 to 0.62f
+    )
 
-    fun twilightTint(minuteOfDay: Int): Float {
+    private val twilightKeys = listOf(
+        0 to 0f,
+        330 to 0f,
+        375 to 0.10f,
+        420 to 0f,
+        990 to 0f,
+        1080 to 0.12f,
+        1140 to 0f,
+        1439 to 0f
+    )
+
+    fun outdoorDarkness(minuteOfDay: Int): Float =
+        interpolate(minuteOfDay, darknessKeys).coerceIn(0f, 0.62f)
+
+    fun twilightTint(minuteOfDay: Int): Float =
+        interpolate(minuteOfDay, twilightKeys).coerceIn(0f, 0.12f)
+
+    /** Smoothstep interpolation avoids visible brightness jumps at phase boundaries. */
+    private fun interpolate(minuteOfDay: Int, keys: List<Pair<Int, Float>>): Float {
         val minute = minuteOfDay.coerceIn(0, WorldClock.MINUTES_PER_DAY - 1)
-        return when (minute) {
-            in 330..419 -> 0.10f
-            in 1020..1139 -> 0.12f
-            else -> 0f
+        val upperIndex = keys.indexOfFirst { it.first >= minute }.let {
+            if (it < 0) keys.lastIndex else it
         }
+        if (upperIndex == 0) return keys.first().second
+        val (startMinute, startValue) = keys[upperIndex - 1]
+        val (endMinute, endValue) = keys[upperIndex]
+        val span = (endMinute - startMinute).coerceAtLeast(1)
+        val linear = ((minute - startMinute).toFloat() / span).coerceIn(0f, 1f)
+        val eased = linear * linear * (3f - 2f * linear)
+        return startValue + (endValue - startValue) * eased
     }
 }
