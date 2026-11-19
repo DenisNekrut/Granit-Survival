@@ -45,7 +45,8 @@ data class WakeCheckpoint(
     val zone: WorldZone,
     val zoneResources: List<ZoneResourceSnapshot> = emptyList(),
     val discoveredPoiIds: Set<String> = emptySet(),
-    val equipment: PlayerEquipmentSnapshot = PlayerEquipmentSnapshot()
+    val equipment: PlayerEquipmentSnapshot = PlayerEquipmentSnapshot(),
+    val statistics: CharacterStatisticsSnapshot = CharacterStatisticsSnapshot()
 )
 
 /** Captures the complete reversible run state at wake-up. */
@@ -66,7 +67,8 @@ class CheckpointSystem {
             zone = engine.zone,
             zoneResources = engine.zoneResourceSnapshot(),
             discoveredPoiIds = engine.discoveredPointsOfInterest(),
-            equipment = engine.equipment.snapshot()
+            equipment = engine.equipment.snapshot(),
+            statistics = engine.statistics.snapshot()
         )
     }
 
@@ -83,6 +85,7 @@ class CheckpointSystem {
         engine.restoreZoneResources(saved.zoneResources)
         engine.changeZone(saved.zone, regenerate = false)
         engine.equipment.restore(saved.equipment)
+        engine.statistics.restore(saved.statistics)
         if (saved.zoneResources.isEmpty()) engine.tileMap.restoreResources(saved.remainingResources)
         engine.player.x = saved.player.x
         engine.player.y = saved.player.y
