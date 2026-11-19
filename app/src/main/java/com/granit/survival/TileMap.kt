@@ -54,7 +54,7 @@ class TileMap(
 
         // Dining room — upper-middle.
         fill(16, 2, 2, 2, TileType.STORAGE) // food and water pantry
-        set(20, 2, TileType.BOOKSHELF)
+        set(22, 2, TileType.BOOKSHELF)
         set(17, 5, TileType.DINING_TABLE)
 
         // Generator room — upper-right.
