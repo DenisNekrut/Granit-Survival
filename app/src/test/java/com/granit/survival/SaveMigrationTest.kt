@@ -1,5 +1,7 @@
 package com.granit.survival
 
+import com.granit.survival.save.SaveCodec
+import com.granit.survival.save.SaveVersion
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
