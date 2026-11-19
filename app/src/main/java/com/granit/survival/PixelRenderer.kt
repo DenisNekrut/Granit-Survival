@@ -154,7 +154,7 @@ class PixelRenderer {
         controlsOpacity: Float = 0.8f,
         joystickScale: Float = 1f
     ) {
-        GLES20.glClearColor(0.035f, 0.047f, 0.055f, 1f)
+        GLES20.glClearColor(0.055f, 0.065f, 0.067f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (program == 0) return
         GLES20.glUseProgram(program)
@@ -171,18 +171,18 @@ class PixelRenderer {
 
         // Each zone has its own floor tone to make transitions immediately readable.
         val floorTone = when (engine.zone) {
-            WorldZone.BUNKER -> floatArrayOf(0.12f, 0.15f, 0.16f)
-            WorldZone.FOREST -> floatArrayOf(0.15f, 0.19f, 0.14f)
-            WorldZone.RUINS -> floatArrayOf(0.17f, 0.16f, 0.15f)
-            WorldZone.ROAD -> floatArrayOf(0.13f, 0.15f, 0.18f)
+            WorldZone.BUNKER -> floatArrayOf(0.19f, 0.21f, 0.20f)
+            WorldZone.FOREST -> floatArrayOf(0.20f, 0.27f, 0.18f)
+            WorldZone.RUINS -> floatArrayOf(0.25f, 0.22f, 0.19f)
+            WorldZone.ROAD -> floatArrayOf(0.20f, 0.23f, 0.26f)
         }
-        rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
+        rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
             floorTone[0], floorTone[1], floorTone[2])
-        for (x in 1 until GameEngine.WORLD_WIDTH.toInt()) {
-            rect(x.toFloat(), 0f, 0.025f, GameEngine.WORLD_HEIGHT, 0.16f, 0.18f, 0.17f)
+        for (x in 1 until engine.tileMap.width) {
+            rect(x.toFloat(), 0f, 0.025f, engine.tileMap.height.toFloat(), 0.22f, 0.24f, 0.22f)
         }
-        for (y in 1 until GameEngine.WORLD_HEIGHT.toInt()) {
-            rect(0f, y.toFloat(), GameEngine.WORLD_WIDTH, 0.025f, 0.16f, 0.18f, 0.17f)
+        for (y in 1 until engine.tileMap.height) {
+            rect(0f, y.toFloat(), engine.tileMap.width.toFloat(), 0.025f, 0.22f, 0.24f, 0.22f)
         }
 
         // Draw only non-floor tiles; the tile map is also used by movement collision.
@@ -269,14 +269,7 @@ class PixelRenderer {
             4.5f to 7.0f, 18.5f to 7.0f, 27.5f to 7.0f,
             5.5f to 15.0f, 17.5f to 15.0f, 31.0f to 15.0f
         )
-        if (engine.zone == WorldZone.BUNKER) {
-            bunkerLamps.forEach { (x, y) ->
-                worldSprites += WorldSpriteCommand(
-                    sortY = y + 0.18f, sortOrder = 2, spriteId = "ceiling_lamp",
-                    centerX = x, topY = y, pixelSize = 0.045f
-                )
-            }
-        }
+        // Fixtures are intentionally hidden: only their reflected light is visible on the floor and objects.
         worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
         worldSprites.forEach { command ->
             if (command.contactShadow) {
@@ -375,7 +368,7 @@ class PixelRenderer {
             val darkness = DayNightLighting.outdoorDarkness(minute)
             if (darkness > 0.001f) {
                 val nightBlue = minute < 360 || minute >= 1200
-                rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
+                rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
                     if (nightBlue) 0.035f else 0.12f,
                     if (nightBlue) 0.055f else 0.075f,
                     if (nightBlue) 0.12f else 0.055f,
@@ -383,36 +376,34 @@ class PixelRenderer {
             }
             val twilight = DayNightLighting.twilightTint(minute)
             if (twilight > 0.001f) {
-                rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
+                rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
                     0.34f, 0.19f, 0.10f, twilight)
             }
             return
         }
 
-        // Stable low-level bunker ambience, with nested warm pools around each fixture.
-        rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
-            0.025f, 0.032f, 0.04f, 0.13f)
+        // Dark bunker ambience first; the warm pools below illuminate only the nearby floor and props.
+        rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
+            0.012f, 0.018f, 0.020f, 0.56f)
         bunkerLamps.forEach { (x, y) ->
-            // Broad low-alpha bands form a stepped pixel-art falloff instead of a flat glow.
             val layers = listOf(
-                floatArrayOf(6.4f, 4.0f, 0.018f, 0.82f, 0.56f, 0.30f),
-                floatArrayOf(5.8f, 3.6f, 0.020f, 0.84f, 0.58f, 0.31f),
-                floatArrayOf(5.1f, 3.2f, 0.024f, 0.87f, 0.61f, 0.33f),
-                floatArrayOf(4.5f, 2.8f, 0.028f, 0.89f, 0.63f, 0.34f),
-                floatArrayOf(3.9f, 2.4f, 0.033f, 0.91f, 0.65f, 0.35f),
-                floatArrayOf(3.3f, 2.0f, 0.039f, 0.93f, 0.67f, 0.36f),
-                floatArrayOf(2.7f, 1.65f, 0.046f, 0.95f, 0.69f, 0.37f),
-                floatArrayOf(2.1f, 1.3f, 0.054f, 0.97f, 0.72f, 0.39f),
-                floatArrayOf(1.5f, 0.95f, 0.064f, 0.99f, 0.75f, 0.42f)
+                floatArrayOf(6.0f, 3.8f, 0.035f, 0.72f, 0.48f, 0.25f),
+                floatArrayOf(5.3f, 3.4f, 0.045f, 0.76f, 0.51f, 0.27f),
+                floatArrayOf(4.7f, 3.0f, 0.055f, 0.80f, 0.55f, 0.29f),
+                floatArrayOf(4.1f, 2.6f, 0.065f, 0.84f, 0.59f, 0.31f),
+                floatArrayOf(3.5f, 2.2f, 0.078f, 0.88f, 0.63f, 0.33f),
+                floatArrayOf(2.9f, 1.8f, 0.090f, 0.92f, 0.67f, 0.35f),
+                floatArrayOf(2.3f, 1.4f, 0.105f, 0.96f, 0.71f, 0.37f),
+                floatArrayOf(1.7f, 1.0f, 0.120f, 1.00f, 0.76f, 0.40f)
             )
             layers.forEach { layer ->
                 val width = layer[0]
                 val height = layer[1]
-                rect(x - width * 0.5f, y + 0.10f, width, height,
+                rect(x - width * 0.5f, y + 0.12f, width, height,
                     layer[3], layer[4], layer[5], layer[2])
             }
-            // Small bright core directly beneath the ceiling fixture.
-            rect(x - 0.20f, y + 0.16f, 0.40f, 0.08f, 1f, 0.84f, 0.58f, 0.22f)
+            // A low, broad floor reflection replaces the visible ceiling fixture.
+            rect(x - 0.62f, y + 0.28f, 1.24f, 0.16f, 1.0f, 0.78f, 0.47f, 0.10f)
         }
     }
 
