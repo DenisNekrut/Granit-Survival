@@ -5,8 +5,10 @@ import android.graphics.PixelFormat
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.util.Log
 
 class GameSurface(context: Context, private val session: GameSession) : SurfaceView(context), SurfaceHolder.Callback {
+    companion object { private const val TAG = "GranitSurface" }
     @Volatile private var renderThread: EngineRenderThread? = null
     @Volatile private var resumed = false
     @Volatile var onRenderFailure: ((Throwable) -> Unit)? = null
@@ -30,10 +32,12 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
 
     fun resumeEngine() {
         resumed = true
+        Log.i(TAG, "resumeEngine: surfaceReady=$surfaceReady size=${surfaceWidth}x$surfaceHeight valid=${holder.surface.isValid}")
         startIfReady()
     }
 
     fun pauseEngine() {
+        Log.i(TAG, "pauseEngine: stopping render thread")
         resumed = false
         stopThread()
     }
@@ -45,6 +49,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        Log.i(TAG, "surfaceCreated: format=${holder.surfaceFrame} valid=${holder.surface.isValid}")
         startIfReady()
     }
 
@@ -52,11 +57,13 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
         surfaceWidth = width.coerceAtLeast(1)
         surfaceHeight = height.coerceAtLeast(1)
         surfaceReady = true
+        Log.i(TAG, "surfaceChanged: format=$format size=${surfaceWidth}x$surfaceHeight holderFrame=${holder.surfaceFrame.width()}x${holder.surfaceFrame.height()}")
         renderThread?.setViewport(surfaceWidth, surfaceHeight)
         startIfReady()
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
+        Log.i(TAG, "surfaceDestroyed: stopping render thread")
         surfaceReady = false
         stopThread()
     }
@@ -119,6 +126,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     private fun startIfReady() {
         if (!resumed || !surfaceReady || surfaceWidth <= 1 || surfaceHeight <= 1 ||
             !holder.surface.isValid || renderThread?.isAlive == true) return
+        Log.i(TAG, "startIfReady: starting render thread with viewport=${surfaceWidth}x$surfaceHeight")
         val thread = EngineRenderThread(
             holder, surfaceWidth, surfaceHeight, session, context.applicationContext,
             onInteractionProcessed = { post { onInteractionProcessed?.invoke() } }
@@ -132,12 +140,14 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     @Synchronized
     private fun stopThread() {
         val thread = renderThread ?: return
+        Log.i(TAG, "stopThread: requesting stop for ${thread.name}, alive=${thread.isAlive}")
         thread.requestStop()
         try {
             thread.join(1500)
         } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
         }
+        Log.i(TAG, "stopThread: joined ${thread.name}, alive=${thread.isAlive}")
         renderThread = null
         if (!thread.isAlive) session.engine.releaseInputState()
         joystickPointerId = MotionEvent.INVALID_POINTER_ID
