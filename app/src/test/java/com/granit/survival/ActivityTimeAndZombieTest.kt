@@ -17,7 +17,7 @@ class ActivityTimeAndZombieTest {
     @Test
     fun readingBookConsumesItsFullReadingDuration() {
         val engine = GameEngine()
-        engine.player.x = 22.5f
+        engine.player.x = 7.5f
         engine.player.y = 2.5f
         val start = engine.worldClock.totalMinutes
 
@@ -29,7 +29,7 @@ class ActivityTimeAndZombieTest {
     @Test
     fun storageTransfersConsumeTimeOnlyWhenTransferSucceeds() {
         val engine = GameEngine()
-        engine.player.x = 8.5f
+        engine.player.x = 4.5f
         engine.player.y = 2.5f
         engine.inventory.add(ItemType.WOOD, 2)
         val start = engine.worldClock.totalMinutes
