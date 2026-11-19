@@ -12,7 +12,7 @@ class BunkerRadioTest {
     fun radioRequiresBunkerAndNearbyRadioObject() {
         val engine = GameEngine()
         assertFalse(engine.canUseRadio())
-        engine.player.x = 13.5f
+        engine.player.x = 14.5f
         engine.player.y = 2.5f
         assertTrue(engine.canUseRadio())
         engine.changeZone(WorldZone.FOREST)
@@ -22,7 +22,7 @@ class BunkerRadioTest {
     @Test
     fun oneBroadcastIsAvailablePerDayAndConsumesTime() {
         val engine = GameEngine()
-        engine.player.x = 13.5f
+        engine.player.x = 14.5f
         engine.player.y = 2.5f
         val start = engine.worldClock.totalMinutes
         val event = engine.listenToRadio()
@@ -37,7 +37,7 @@ class BunkerRadioTest {
     fun broadcastNearMidnightDoesNotConsumeTheNextDaysTransmission() {
         val engine = GameEngine()
         engine.worldClock.advanceMinutes(23 * 60 + 55 - 7 * 60)
-        engine.player.x = 13.5f
+        engine.player.x = 14.5f
         engine.player.y = 2.5f
         assertNotNull(engine.listenToRadio())
         assertEquals(2, engine.worldClock.day)
@@ -47,7 +47,7 @@ class BunkerRadioTest {
     @Test
     fun listeningStateRollsBackWithWakeCheckpoint() {
         val engine = GameEngine()
-        engine.player.x = 13.5f
+        engine.player.x = 14.5f
         engine.player.y = 2.5f
         // Capture a powered wake checkpoint at the radio so this test isolates radio rollback.
         engine.checkpointSystem.capture(engine)
