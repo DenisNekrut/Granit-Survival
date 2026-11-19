@@ -87,11 +87,12 @@ class EngineRenderThread(
             GLES20.glDisable(GLES20.GL_DEPTH_TEST)
             renderer = PixelRenderer()
             renderer.create(appContext.assets)
-            renderer.resize(viewportWidth, viewportHeight)
             val engine = session.engine
             val gameSettings = session.settings.load()
+            session.audio.setVolumes(gameSettings.musicVolume, gameSettings.effectsVolume)
+            renderer.resize(viewportWidth, viewportHeight, gameSettings.displayScale)
             val fixedFrameDelayNanos = 16_000_000L
-            var previousFrame = System.nanoTime()
+            var previousFrame = System.nanoTime()\n            var wasInteracting = false
 
             while (running.get() && surfaceHolder.surface.isValid) {
                 val frameStart = System.nanoTime()
@@ -102,7 +103,7 @@ class EngineRenderThread(
                 val width = viewportWidth.coerceAtLeast(1)
                 val height = viewportHeight.coerceAtLeast(1)
                 GLES20.glViewport(0, 0, width, height)
-                renderer.resize(width, height)
+                renderer.resize(width, height, gameSettings.displayScale)
 
                 val active = joystickActive
                 val dx = touchX - width * 0.16f
@@ -119,8 +120,7 @@ class EngineRenderThread(
                     EngineInput()
                 }
 
-                engine.updateFrame(deltaSeconds, input.copy(interact = interacting))
-                renderer?.render(
+                engine.updateFrame(deltaSeconds, input.copy(interact = interacting))\n                if (interacting && !wasInteracting) session.audio.playAction()\n                wasInteracting = interacting\n                session.audio.setMoving(engine.isMoving)\n                renderer?.render(
                     engine, touchX, touchY, active, interacting,
                     controlsOpacity = gameSettings.controlsOpacity,
                     joystickScale = gameSettings.joystickScale
