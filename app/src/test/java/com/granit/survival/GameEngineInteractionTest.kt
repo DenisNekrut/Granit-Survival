@@ -29,7 +29,7 @@ class GameEngineInteractionTest {
     @Test
     fun interactionCanBeTriggeredAgainAfterTheSurfaceReleasesInput() {
         val engine = GameEngine()
-        engine.player.x = 2.5f
+        engine.player.x = 1.5f
         engine.player.y = 8.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(1, engine.inventory.count(ItemType.WOOD))
@@ -139,9 +139,9 @@ class GameEngineInteractionTest {
     @Test
     fun craftedItemsCannotBeCollectedAsWorldResourceNodes() {
         val map = TileMap()
-        assertFalse(map.collectResource(ResourceLocation(2, 8, ItemType.MEDICAL_KIT)))
-        assertFalse(map.collectResource(ResourceLocation(2, 8, ItemType.BANDAGE)))
-        assertEquals(TileType.RESOURCE_WOOD, map[2, 8])
+        assertFalse(map.collectResource(ResourceLocation(1, 8, ItemType.MEDICAL_KIT)))
+        assertFalse(map.collectResource(ResourceLocation(1, 8, ItemType.BANDAGE)))
+        assertEquals(TileType.RESOURCE_WOOD, map[1, 8])
     }
 
     @Test
