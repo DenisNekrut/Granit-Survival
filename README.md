@@ -15,7 +15,7 @@
 ### Engine and gameplay
 - Android application shell, SurfaceView lifecycle and EGL render thread.
 - Fixed-step simulation, camera, collision, virtual joystick and multitouch input.
-- Four connected areas: bunker, fixed first forest area, ruins and road; exits are reachable from each zone's spawn.
+- Four connected areas: bunker, fixed first forest area, ruins and road; when crossing a hatch, the player arrives on the safe walkable cell immediately inside the matching exit in the destination zone (not at the map centre). Save/load and checkpoint restore preserve the exact player coordinates.
 - Ruins and road are regenerated from a new deterministic seed on every new entry; bunker and first forest map stay fixed. The current map seed and remaining resources are preserved by save/checkpoint restore.
 - Gathering and travelling consume in-game time.
 - 4×4 inventory, resource collection, bunker storage and item transfer.
@@ -36,9 +36,9 @@
 - Psychological indicators: stress, loneliness, fatigue and morale. Sleep/return aid recovery; fatigue and stress gently reduce movement speed.
 
 ### Graphics and settings
-- PixelSpriteAtlas with player idle/walk frames, resource and medical-item sprites.
+- PixelSpriteAtlas + GeneratedPixelSprites with original project artwork: 16×24 character frames in four directions (four walk frames per direction), plus 16×16 hatches, bunker furniture, control console, generator, medical station, trees, bushes, rubble, streetlamp and crate.
+- Distinct hatch artwork for bunker ladder entry and outdoor transitions; hatch sprites are used in the world renderer.
 - Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
-- Pixel-art bed, storage, workbench, bookshelf, radio, dining table, generator and medical station.
 - Bunker is divided into connected bedroom, dining room, generator room, medical room, workshop and utility storage room; each room has contextual access.
 - HUD displays live survival meters, day/time, current zone and weather.
 - Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored but still need integration.
@@ -51,7 +51,7 @@ The older Unity-oriented plan is retained for historical reference and is supers
 
 ## Remaining work
 
-This is still a playable prototype, not a finished game. The next work includes a complete art pass and external sprite sheets, richer procedural map variety and points of interest, a fully functional generator/medical/dining system, more recipes and bunker upgrades, richer weather/story events, NPCs and expedition objectives, a broader equipment system, and physical Android device testing.
+This is still a playable prototype, not a finished game. The next work includes a full art pass for remaining tiles, richer environment animations and visual QA on Android, richer procedural map variety and points of interest, a fully functional generator/medical/dining system, more recipes and bunker upgrades, richer weather/story events, NPCs and expedition objectives, a broader equipment system, and physical Android device testing.
 
 ## Downloading a test APK
 
