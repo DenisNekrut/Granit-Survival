@@ -179,6 +179,89 @@ object PixelSpriteAtlas {
             "................",
             "................"
         )), mapOf('W' to floatArrayOf(0.25f, 0.29f, 0.27f), 'C' to floatArrayOf(0.38f, 0.43f, 0.39f), 'M' to floatArrayOf(0.12f, 0.16f, 0.15f), 'A' to floatArrayOf(0.76f, 0.59f, 0.30f), 'B' to floatArrayOf(0.18f, 0.20f, 0.18f))),
+        "tree" to PixelSprite(listOf(listOf(
+            ".......GG.......",
+            ".....GGGGGG.....",
+            "....GGGGGGGG....",
+            "...GGGGGGGGGG...",
+            "..GGGGGGGGGGGG..",
+            ".GGGGGGGGGGGGGG.",
+            ".GGGGDDGGGGGGGG.",
+            "..GGGGGGGGGGGG..",
+            "...GGGGGGGGGG...",
+            "....GGGGGGGG....",
+            ".....GGGGGG.....",
+            ".......TT.......",
+            ".......TT.......",
+            "......TTTT......",
+            "......TTTT......",
+            "................"
+        )), mapOf(
+            'G' to floatArrayOf(0.18f, 0.31f, 0.20f),
+            'D' to floatArrayOf(0.12f, 0.23f, 0.16f),
+            'T' to floatArrayOf(0.37f, 0.25f, 0.16f)
+        )),
+        "rubble" to PixelSprite(listOf(listOf(
+            "................",
+            "....MMMM........",
+            "...MMMMMM.......",
+            "..MM..MMMM......",
+            ".MMMMMMMMMM.....",
+            ".MMMMMMMMMMMM...",
+            "..MMMMMMMMMMMM..",
+            "...MMMMMMMMMM...",
+            "....MMMMMMMM....",
+            "..MM..MMMM......",
+            ".MMMMMMMM.......",
+            ".MMMMMMM........",
+            "..MMMM..........",
+            "................",
+            "................",
+            "................"
+        )), mapOf('M' to floatArrayOf(0.39f, 0.38f, 0.35f))),
+        "road_barrier" to PixelSprite(listOf(listOf(
+            "................",
+            "................",
+            "..RRRRRRRRRRRR..",
+            "..RWWRRWWRRWWR..",
+            "..RRWWRRWWRRWW..",
+            "..RWWRRWWRRWWR..",
+            "..RRRRRRRRRRRR..",
+            "....BBBBBBBB....",
+            "....BB....BB....",
+            "....BB....BB....",
+            "...BBBB..BBBB...",
+            "................",
+            "................",
+            "................",
+            "................",
+            "................"
+        )), mapOf(
+            'R' to floatArrayOf(0.62f, 0.25f, 0.19f),
+            'W' to floatArrayOf(0.72f, 0.68f, 0.55f),
+            'B' to floatArrayOf(0.20f, 0.22f, 0.21f)
+        )),
+        "bunker_panel" to PixelSprite(listOf(listOf(
+            "MMMMMMMMMMMMMMMM",
+            "MBBBBBBBBBBBBBBM",
+            "MBMMMMMMMMMMMMBM",
+            "MBM..........MBM",
+            "MBM..........MBM",
+            "MBM....MMMM..MBM",
+            "MBM....MMMM..MBM",
+            "MBM..........MBM",
+            "MBM..........MBM",
+            "MBMMMMMMMMMMMMBM",
+            "MBBBBBBBBBBBBBBM",
+            "MMMMMMMMMMMMMMMM",
+            "................",
+            "................",
+            "................",
+            "................"
+        )), mapOf(
+            'M' to floatArrayOf(0.35f, 0.39f, 0.37f),
+            'B' to floatArrayOf(0.16f, 0.19f, 0.18f)
+        ))
         "water" to PixelSprite(listOf(listOf(
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
