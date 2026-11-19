@@ -87,7 +87,7 @@ class SpriteAtlasManifestValidationTest {
     }
 
     @Test fun rejectsUnsafeTexturePaths() {
-        listOf("../outside.png", "/outside.png").forEach { path ->
+        listOf("../outside.png", "/outside.png", "sprites\\\\..\\\\outside.png").forEach { path ->
             val errors = SpriteAtlasManifestValidator.validate(validManifest(texture = path))
             org.junit.Assert.assertTrue(errors.any { it.contains("inside the assets") })
         }
