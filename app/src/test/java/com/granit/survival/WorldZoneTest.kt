@@ -30,7 +30,7 @@ class WorldZoneTest {
         engine.player.y = 3.5f
         assertTrue(engine.canAccessDiningTable())
 
-        engine.player.x = 14.5f
+        engine.player.x = 13.5f
         engine.player.y = 2.5f
         assertTrue(engine.canAccessGenerator())
 
@@ -38,7 +38,7 @@ class WorldZoneTest {
         engine.player.y = 7.5f
         assertTrue(engine.canAccessMedicalStation())
 
-        engine.player.x = 9.5f
+        engine.player.x = 8.5f
         engine.player.y = 7.5f
         assertTrue(engine.canUseWorkbench())
     }
