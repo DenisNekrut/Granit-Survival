@@ -384,14 +384,16 @@ class PixelRenderer {
 
         // Transparent HUD: all four status bars share one horizontal row at the top.
         val hudWidth = screenWidth / worldScale
-        val columnWidth = (hudWidth - 1.2f) / 4f
+        // Keep the left/right corners clear for the always-visible menu and backpack buttons.
+        val hudMargin = 2.5f
+        val columnWidth = (hudWidth - hudMargin * 2f) / 4f
         val barY = 0.34f
-        drawNeedBar("HP", engine.needs.health, 0.6f, barY, columnWidth - 0.18f, 0.78f, 0.24f, 0.20f)
-        drawNeedBar("FO", engine.needs.hunger, 0.6f + columnWidth, barY, columnWidth - 0.18f, 0.64f, 0.43f, 0.22f)
-        drawNeedBar("WT", engine.needs.thirst, 0.6f + columnWidth * 2f, barY, columnWidth - 0.18f, 0.25f, 0.48f, 0.66f)
-        drawNeedBar("EN", engine.needs.energy, 0.6f + columnWidth * 3f, barY, columnWidth - 0.18f, 0.34f, 0.55f, 0.38f)
+        drawNeedBar("HP", engine.needs.health, hudMargin, barY, columnWidth - 0.10f, 0.78f, 0.24f, 0.20f)
+        drawNeedBar("FO", engine.needs.hunger, hudMargin + columnWidth, barY, columnWidth - 0.10f, 0.64f, 0.43f, 0.22f)
+        drawNeedBar("WT", engine.needs.thirst, hudMargin + columnWidth * 2f, barY, columnWidth - 0.10f, 0.25f, 0.48f, 0.66f)
+        drawNeedBar("EN", engine.needs.energy, hudMargin + columnWidth * 3f, barY, columnWidth - 0.10f, 0.34f, 0.55f, 0.38f)
         drawText("D${engine.worldClock.day} ${engine.worldClock.hour.toString().padStart(2, '0')}:${engine.worldClock.minute.toString().padStart(2, '0')}",
-            0.62f, 1.04f, 0.060f, 0.78f, 0.76f, 0.65f)
+            hudMargin, 1.04f, 0.060f, 0.78f, 0.76f, 0.65f)
         val zoneLabel = when (engine.zone) {
             WorldZone.BUNKER -> "BUNKER"
             WorldZone.FOREST -> "FOREST"
