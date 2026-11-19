@@ -267,6 +267,23 @@ class PixelRenderer {
                     pixelSize = 0.052f
                 )
             }
+
+            if (type == TileType.FLOOR) {
+                val pattern = Math.floorMod(tileX * 7 + tileY * 11, 13)
+                val propSprite = when (engine.zone) {
+                    WorldZone.BUNKER -> if (pattern == 0) "crate" else null
+                    WorldZone.FOREST -> if (pattern == 0) "bush" else null
+                    WorldZone.RUINS -> if (pattern % 4 == 0) "debris" else if (pattern == 0) "barrel" else null
+                    WorldZone.ROAD -> if (pattern == 0) "streetlamp" else if (pattern == 6) "wreck" else null
+                }
+                if (propSprite != null) {
+                    worldSprites += WorldSpriteCommand(
+                        sortY = tileY + 0.96f, sortOrder = 0, spriteId = propSprite,
+                        centerX = tileX + 0.5f, topY = tileY.toFloat(),
+                        pixelSize = 0.0625f, contactShadow = true
+                    )
+                }
+            }
         }
 
         val px = engine.player.x
@@ -361,20 +378,17 @@ class PixelRenderer {
             WorldZone.FOREST -> {
                 if (pattern % 3 == 0) rect(x + 0.18f, y + 0.30f, 0.12f, 0.06f, 0.20f, 0.27f, 0.16f)
                 if (pattern % 5 == 0) rect(x + 0.66f, y + 0.68f, 0.08f, 0.08f, 0.25f, 0.25f, 0.19f)
-                if (pattern == 0) drawAtlasSprite("bush", x + 0.5f, y + 0.16f, 0.05f)
             }
             WorldZone.RUINS -> {
                 if (pattern % 4 == 0) {
                     rect(x + 0.18f, y + 0.20f, 0.42f, 0.035f, 0.22f, 0.21f, 0.19f)
                     rect(x + 0.55f, y + 0.20f, 0.035f, 0.28f, 0.22f, 0.21f, 0.19f)
-                    drawAtlasSprite("debris", x + 0.5f, y + 0.18f, 0.05f)
                 }
             }
             WorldZone.ROAD -> {
                 if (y % 5 == 0) rect(x + 0.12f, y + 0.48f, 0.76f, 0.025f, 0.18f, 0.20f, 0.22f)
                 if (pattern == 0) {
                     rect(x + 0.40f, y + 0.22f, 0.06f, 0.06f, 0.27f, 0.29f, 0.30f)
-                    drawAtlasSprite("streetlamp", x + 0.5f, y + 0.05f, 0.05f)
                 }
             }
         }
