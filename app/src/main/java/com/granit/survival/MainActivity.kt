@@ -182,6 +182,8 @@ class MainActivity : Activity() {
         panel.addView(label("Стресс: " + session.engine.psychology.stress.toInt() + "  ·  Одиночество: " + session.engine.psychology.loneliness.toInt(), 13f, Color.LTGRAY))
         panel.addView(label("Усталость: " + session.engine.psychology.fatigue.toInt() + "  ·  Мораль: " + session.engine.psychology.morale.toInt(), 13f, Color.LTGRAY))
         panel.addView(menuButton("ПРОДОЛЖИТЬ") { enterGame() })
+        panel.addView(menuButton("СТАТИСТИКА ПЕРСОНАЖА") { showCharacterStatistics() })
+        panel.addView(menuButton("ГЛАВНОЕ МЕНЮ") { confirmReturnToMainMenu() })
         panel.addView(menuButton("ЖУРНАЛ ЭКСПЕДИЦИЙ") { showJournal() })
         panel.addView(menuButton("ЕСТЬ КОНСЕРВЫ", enabled = session.engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
             if (session.consumeFood()) { Toast.makeText(this, "Консервы использованы", Toast.LENGTH_SHORT).show(); showPauseMenu() }
@@ -224,14 +226,35 @@ class MainActivity : Activity() {
         panel.addView(menuButton("СОХРАНИТЬ ИГРУ") { showSaveSlots(true) })
         panel.addView(menuButton("СОХРАНЕНИЯ") { showSaveSlots(false) })
         panel.addView(menuButton("НАСТРОЙКИ") { showSettings() })
-        panel.addView(menuButton("ГЛАВНОЕ МЕНЮ") {
-            AlertDialog.Builder(this)
-                .setTitle("Вернуться в главное меню?")
-                .setMessage("Несохранённый прогресс текущей вылазки будет потерян.")
-                .setNegativeButton("ОСТАТЬСЯ", null)
-                .setPositiveButton("В МЕНЮ") { _, _ -> showMainMenu() }
-                .show()
-        })
+        showOverlay(panel)
+    }
+
+    private fun confirmReturnToMainMenu() {
+        AlertDialog.Builder(this)
+            .setTitle("Вернуться в главное меню?")
+            .setMessage("Несохранённый прогресс текущей вылазки будет потерян. Сохранённые слоты и контрольная точка останутся без изменений.")
+            .setNegativeButton("ОСТАТЬСЯ", null)
+            .setPositiveButton("В МЕНЮ") { _, _ -> showMainMenu() }
+            .show()
+    }
+
+    private fun showCharacterStatistics() {
+        val stats = session.engine.statistics.snapshot()
+        val expeditionHours = stats.expeditionMinutes / 60L
+        val expeditionMinutes = stats.expeditionMinutes % 60L
+        val panel = createPanel("СТАТИСТИКА ПЕРСОНАЖА", "Показатели текущей временной линии")
+        panel.addView(label("Дней выживания: ${stats.daysSurvived}", 15f, Color.WHITE))
+        panel.addView(label("Время в экспедициях: ${expeditionHours} ч ${expeditionMinutes} мин", 14f, Color.LTGRAY))
+        panel.addView(label("Пройдено: ${String.format(java.util.Locale.ROOT, "%.1f", stats.distanceTravelled)} м", 14f, Color.LTGRAY))
+        panel.addView(label("Собрано ресурсов: ${stats.resourcesCollected}", 14f, Color.LTGRAY))
+        panel.addView(label("Создано предметов: ${stats.itemsCrafted}", 14f, Color.LTGRAY))
+        panel.addView(label("Прочитано книг: ${stats.booksRead}", 14f, Color.LTGRAY))
+        panel.addView(label("Посещённые зоны", 15f, Color.WHITE, true))
+        WorldZone.values().filter { it in stats.visitedZones }.forEach { zone ->
+            panel.addView(label("• ${zone.displayName}", 13f, Color.LTGRAY))
+        }
+        panel.addView(label("Статистика откатывается вместе с контрольной точкой при гибели.", 12f, Color.rgb(190, 177, 145)))
+        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
         showOverlay(panel)
     }
 
