@@ -95,12 +95,15 @@ class GameEngine {
         checkpointSystem.capture(this)
     }
 
-    fun updateFrame(frameDeltaSeconds: Float, input: EngineInput) {
+    fun updateFrame(frameDeltaSeconds: Float, input: EngineInput): Int {
         accumulator += frameDeltaSeconds.coerceIn(0f, MAX_FRAME_SECONDS)
+        var steps = 0
         while (accumulator >= FIXED_STEP_SECONDS) {
             fixedUpdate(FIXED_STEP_SECONDS, input)
             accumulator -= FIXED_STEP_SECONDS
+            steps++
         }
+        return steps
     }
 
     /** Sleep until 07:00, restore energy, begin the next wake cycle and save a checkpoint. */
