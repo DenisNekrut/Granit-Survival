@@ -93,6 +93,11 @@ class SurvivalNeeds {
         }
     }
 
+    fun applyDamage(amount: Float) {
+        require(amount >= 0f)
+        health = (health - amount).coerceAtLeast(0f)
+    }
+
     fun restoreHealth(amount: Float) {
         require(amount >= 0f)
         health = (health + amount).coerceAtMost(100f)
