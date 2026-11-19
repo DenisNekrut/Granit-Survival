@@ -310,6 +310,28 @@ class PixelRenderer {
             )
         }
 
+        // A small abstract signal emitter is shown in the character's hand while outside.
+        if (engine.equipment.weaponDrawn) {
+            when (engine.player.facing) {
+                PlayerFacing.DOWN -> {
+                    rect(px + 0.22f, py + 0.10f, 0.09f, 0.25f, 0.24f, 0.34f, 0.34f)
+                    rect(px + 0.22f, py + 0.28f, 0.09f, 0.07f, 0.20f, 0.72f, 0.78f)
+                }
+                PlayerFacing.UP -> {
+                    rect(px - 0.30f, py + 0.10f, 0.09f, 0.25f, 0.24f, 0.34f, 0.34f)
+                    rect(px - 0.30f, py + 0.10f, 0.09f, 0.07f, 0.20f, 0.72f, 0.78f)
+                }
+                PlayerFacing.RIGHT -> {
+                    rect(px + 0.22f, py + 0.10f, 0.25f, 0.09f, 0.24f, 0.34f, 0.34f)
+                    rect(px + 0.40f, py + 0.10f, 0.07f, 0.09f, 0.20f, 0.72f, 0.78f)
+                }
+                PlayerFacing.LEFT -> {
+                    rect(px - 0.47f, py + 0.10f, 0.25f, 0.09f, 0.24f, 0.34f, 0.34f)
+                    rect(px - 0.47f, py + 0.10f, 0.07f, 0.09f, 0.20f, 0.72f, 0.78f)
+                }
+            }
+        }
+
         // Screen-space HUD reads the live simulation values.
         screenRect(0.42f, 0.28f, 4.75f, 2.72f, 0.055f, 0.067f, 0.066f)
         drawText(
@@ -323,6 +345,9 @@ class PixelRenderer {
             WorldZone.ROAD -> "ROAD"
         }
         drawText(zoneLabel, 0.68f, 0.80f, 0.055f, 0.57f, 0.68f, 0.60f)
+        if (engine.equipment.weaponDrawn) {
+            drawText("SIGNAL: READY", 2.05f, 0.80f, 0.045f, 0.35f, 0.75f, 0.76f)
+        }
         drawText("W:" + engine.weather.shortCode, 3.55f, 0.43f, 0.055f, 0.60f, 0.72f, 0.76f)
         drawNeedBar("HP", engine.needs.health, 1.05f, 0.68f, 0.24f, 0.20f)
         drawNeedBar("FO", engine.needs.hunger, 1.52f, 0.64f, 0.43f, 0.22f)
