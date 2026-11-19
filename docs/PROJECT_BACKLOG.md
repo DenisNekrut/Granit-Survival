@@ -926,3 +926,11 @@
 - [x] PR #3 reviewed against merged main and closed as superseded. Its useful changes are already present in main: render-failure callback, RGBA_8888/surface readiness, four-frame directional sprites, SpriteQuadGeometry and tests.
 - [ ] GS-091/092 — runtime telemetry added in follow-up work; real-device performance baseline across multiple phones/scenes remains pending.
 - [ ] GS-094/095/096 — asset convention and manifest validation added in follow-up work; external art source files and production atlas pages still need migration.
+
+
+### Исправления по обратной связи — 2026-11-19
+- [x] Исправлено кадрирование камеры бункера: ширина области обзора ограничена 12.5 мировыми клетками, чтобы камера следила за героем и на широких экранах; добавлен тест профиля камеры.
+- [x] Минимальная длительность чтения любой книги установлена в 8 игровых часов (480 минут); время проходит через общую систему часов и потребностей, UI показывает часы.
+- [x] Сохранение слота теперь проверяется повторным чтением и декодированием после атомарной записи; повреждённый результат больше не может показываться как успешный.
+- [x] Добавлены логи чтения/записи и ошибок слотов в Logcat (тег GranitSave); интерфейс показывает конкретную причину ошибки загрузки.
+- [ ] Проверить ручное сохранение, автосохранение после сна и загрузку на физическом Android-устройстве.
