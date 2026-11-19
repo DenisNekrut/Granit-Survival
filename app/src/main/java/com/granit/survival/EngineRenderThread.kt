@@ -146,7 +146,7 @@ class EngineRenderThread(
                 wasInteracting = interactionHeld
                 session.audio.setMoving(engine.isMoving)
                 renderer?.render(
-                    engine, touchX, touchY, active, interacting,
+                    engine, touchX, touchY, active, interacting, firing,
                     controlsOpacity = gameSettings.controlsOpacity,
                     joystickScale = gameSettings.joystickScale
                 )
