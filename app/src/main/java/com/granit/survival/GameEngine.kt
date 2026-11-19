@@ -9,8 +9,9 @@ data class EngineInput(val moveX: Float = 0f, val moveY: Float = 0f, val interac
 enum class PlayerFacing { DOWN, UP, LEFT, RIGHT }
 
 data class PlayerState(
-    var x: Float = 1.5f,
-    var y: Float = 1.5f,
+    // Start just inside the bunker hatch; the bedroom bed is not the initial spawn point.
+    var x: Float = 8.5f,
+    var y: Float = 2.5f,
     var speed: Float = 4.2f,
     var facing: PlayerFacing = PlayerFacing.DOWN
 )
