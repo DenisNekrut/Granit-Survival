@@ -37,6 +37,7 @@ class MainActivity : Activity() {
         session = GameSession(this)
         root = FrameLayout(this)
         gameSurface = GameSurface(this, session)
+        gameSurface.onActionButtonReleased = { handleContextAction() }
         gameSurface.onRenderFailure = { failure ->
             if (activeGame && !isFinishing) {
                 activeGame = false
@@ -81,6 +82,47 @@ class MainActivity : Activity() {
             activeGame -> showPauseMenu()
             pausedGame -> showPauseMenu()
             else -> showMainMenu()
+        }
+    }
+
+    /**
+     * Route the on-screen action button to the nearby station's native panel.
+     * World collection and exits are still processed by GameEngine on the render thread.
+     */
+    private fun handleContextAction() {
+        if (!activeGame || isFinishing) return
+        val engine = session.engine
+        when {
+            engine.canUseWorkbench() -> {
+                showPauseMenu()
+                showCrafting()
+            }
+            engine.canAccessStorage() -> {
+                showPauseMenu()
+                showStorage()
+            }
+            engine.canAccessBookshelf() -> {
+                showPauseMenu()
+                showBookLibrary()
+            }
+            engine.zone == WorldZone.BUNKER &&
+                engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f) -> {
+                showPauseMenu()
+                val event = engine.listenToRadio()
+                if (event != null) {
+                    AlertDialog.Builder(this)
+                        .setTitle(event.title)
+                        .setMessage(event.description)
+                        .setPositiveButton("ПОНЯТНО") { _, _ -> showPauseMenu() }
+                        .show()
+                } else {
+                    Toast.makeText(this, "Сегодня радиоприёмник молчит", Toast.LENGTH_SHORT).show()
+                }
+            }
+            engine.canSleep() -> {
+                showPauseMenu()
+                Toast.makeText(this, "Рядом кровать. Выбери «СОН ДО 07:00» в меню.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
