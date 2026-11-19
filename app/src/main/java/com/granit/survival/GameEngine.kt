@@ -169,8 +169,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun readBook(bookId: String): Boolean {
         if (!canAccessBookshelf()) return false
         val book = BookCatalog.byId(bookId) ?: return false
-        if (!bookLibrary.markRead(book.id)) return false
+        if (bookLibrary.hasRead(book.id)) return false
         if (!advanceGameMinutes(book.readMinutes)) return false
+        bookLibrary.markRead(book.id)
         statistics.recordBookRead()
         psychology.applyReading(book.moraleGain, book.stressRelief)
         return true
@@ -185,11 +186,11 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (!canUseWorkbench()) return false
         val recipe = CraftingRecipe.byId(recipeId) ?: return false
         if (!recipe.isUnlocked(bookLibrary) || !recipe.canCraft(inventory)) return false
+        if (!advanceGameMinutes(recipe.craftMinutes)) return false
         recipe.ingredients.forEach { (type, amount) -> inventory.remove(type, amount) }
         check(inventory.add(recipe.output, recipe.outputAmount) == 0) {
             "Crafting output did not fit after ingredient validation"
         }
-        if (!advanceGameMinutes(recipe.craftMinutes)) return false
         statistics.recordCrafted(recipe.outputAmount)
         return true
     }
@@ -253,11 +254,15 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         zoneMaps.putIfAbsent(WorldZone.BUNKER, createZoneMap(WorldZone.BUNKER))
     }
 
-    fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean =
-        canAccessStorage() && bunkerStorage.deposit(inventory, type, amount)
+    fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean {
+        if (!canAccessStorage() || amount <= 0 || !bunkerStorage.deposit(inventory, type, amount)) return false
+        return advanceGameMinutes(1)
+    }
 
-    fun transferFromStorage(type: ItemType, amount: Int = bunkerStorage.count(type)): Boolean =
-        canAccessStorage() && bunkerStorage.withdraw(inventory, type, amount)
+    fun transferFromStorage(type: ItemType, amount: Int = bunkerStorage.count(type)): Boolean {
+        if (!canAccessStorage() || amount <= 0 || !bunkerStorage.withdraw(inventory, type, amount)) return false
+        return advanceGameMinutes(1)
+    }
 
     fun consumeFood(): Boolean {
         if (!inventory.remove(ItemType.CANNED_FOOD, 1)) return false
