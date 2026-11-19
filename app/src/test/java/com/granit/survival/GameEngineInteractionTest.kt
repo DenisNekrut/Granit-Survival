@@ -107,4 +107,26 @@ class GameEngineInteractionTest {
         assertEquals(0, engine.inventory.count(ItemType.WATER))
         assertEquals(startMinutes + 10, engine.worldClock.totalMinutes)
     }
+
+    @Test
+    fun inventoryPersistsAcrossZoneTransitionsAndSaveRestore() {
+        val engine = GameEngine()
+        engine.inventory.add(ItemType.WOOD, 7)
+        engine.inventory.add(ItemType.WATER, 3)
+
+        listOf(WorldZone.FOREST, WorldZone.RUINS, WorldZone.ROAD, WorldZone.BUNKER).forEach { zone ->
+            engine.changeZone(zone)
+            assertEquals(7, engine.inventory.count(ItemType.WOOD))
+            assertEquals(3, engine.inventory.count(ItemType.WATER))
+        }
+
+        val snapshot = engine.createSaveSnapshot()
+        engine.inventory.remove(ItemType.WOOD, 7)
+        engine.inventory.remove(ItemType.WATER, 3)
+        engine.restoreSaveSnapshot(snapshot)
+
+        assertEquals(7, engine.inventory.count(ItemType.WOOD))
+        assertEquals(3, engine.inventory.count(ItemType.WATER))
+        assertEquals(WorldZone.BUNKER, engine.zone)
+    }
 }
