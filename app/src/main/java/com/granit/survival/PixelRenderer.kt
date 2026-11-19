@@ -372,17 +372,7 @@ class PixelRenderer {
     private fun drawWorldLighting(engine: GameEngine, bunkerLamps: List<Pair<Float, Float>>) {
         val minute = engine.worldClock.minuteOfDay
         if (engine.zone != WorldZone.BUNKER) {
-            val darkness = when (minute) {
-                in 0..269 -> 0.62f
-                in 270..329 -> 0.62f - (minute - 270) / 60f * 0.30f
-                in 330..419 -> 0.32f - (minute - 330) / 90f * 0.22f
-                in 420..539 -> 0.10f - (minute - 420) / 120f * 0.10f
-                in 540..959 -> 0f
-                in 960..1079 -> (minute - 960) / 120f * 0.12f
-                in 1080..1199 -> 0.12f + (minute - 1080) / 120f * 0.25f
-                in 1200..1319 -> 0.37f + (minute - 1200) / 120f * 0.25f
-                else -> 0.62f
-            }.coerceIn(0f, 0.62f)
+            val darkness = DayNightLighting.outdoorDarkness(minute)
             if (darkness > 0.001f) {
                 val nightBlue = minute < 360 || minute >= 1200
                 rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
@@ -392,11 +382,7 @@ class PixelRenderer {
                     darkness)
             }
             // A faint warm band at sunrise and sunset gives the transition a natural hue.
-            val twilight = when (minute) {
-                in 330..419 -> 0.10f
-                in 1020..1139 -> 0.12f
-                else -> 0f
-            }
+            val twilight = DayNightLighting.twilightTint(minute)
             if (twilight > 0f) {
                 rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
                     0.34f, 0.19f, 0.10f, twilight)
