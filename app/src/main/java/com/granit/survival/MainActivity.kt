@@ -169,6 +169,7 @@ class MainActivity : Activity() {
             },
             startNewGame = ::startNewGame,
             loadMostRecent = session::loadMostRecent,
+            loadError = { session.lastLoadError },
             enterGame = ::enterGame,
             showSaveSlots = { showSaveSlots(false) },
             showSettings = ::showSettings,
