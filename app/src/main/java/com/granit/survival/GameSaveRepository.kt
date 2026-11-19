@@ -20,6 +20,7 @@ data class EngineSaveSnapshot(
     val zone: WorldZone = WorldZone.BUNKER,
     val zoneResources: List<ZoneResourceSnapshot> = emptyList(),
     val discoveredPoiIds: Set<String> = emptySet(),
+    val equipment: PlayerEquipmentSnapshot = PlayerEquipmentSnapshot(),
     val wakeCheckpoint: WakeCheckpoint?
 ) {
     companion object
@@ -143,6 +144,7 @@ private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("zone", zone.name)
     .put("zoneResources", zoneResources.toZoneResourcesJson())
     .put("discoveredPoiIds", JSONArray(discoveredPoiIds.toList()))
+    .put("equipment", equipment.toJson())
     .put("wakeCheckpoint", wakeCheckpoint?.toJson() ?: JSONObject.NULL)
 
 private fun PlayerSnapshot.toJson() = JSONObject()
@@ -157,6 +159,10 @@ private fun SurvivalNeedsSnapshot.toJson() = JSONObject()
 private fun BookLibrarySnapshot.toJson() = JSONObject().put("readBookIds", JSONArray(readBookIds.toList()))
 
 private fun BunkerRadioSnapshot.toJson() = JSONObject().put("lastListenedDay", lastListenedDay)
+
+private fun PlayerEquipmentSnapshot.toJson() = JSONObject()
+    .put("weapon", weapon?.name ?: JSONObject.NULL)
+    .put("weaponDrawn", weaponDrawn)
 
 private fun PsychologicalStateSnapshot.toJson() = JSONObject()
     .put("stress", stress.toDouble())
@@ -206,9 +212,12 @@ private fun WakeCheckpoint.toJson() = JSONObject()
     .put("zone", zone.name)
     .put("zoneResources", zoneResources.toZoneResourcesJson())
     .put("discoveredPoiIds", JSONArray(discoveredPoiIds.toList()))
+    .put("equipment", equipment.toJson())
 
 private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveSnapshot {
     val checkpointJson = json.optJSONObject("wakeCheckpoint")
+    val restoredZone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }
+        .getOrDefault(WorldZone.BUNKER)
     return EngineSaveSnapshot(
         player = json.getJSONObject("player").toPlayerSnapshot(),
         inventory = json.getJSONArray("inventory").toItemStacks(),
@@ -219,9 +228,11 @@ private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveS
         radio = json.optJSONObject("radio")?.toBunkerRadioSnapshot() ?: BunkerRadioSnapshot(),
         clock = json.getJSONObject("clock").toClockSnapshot(),
         remainingResources = json.getJSONArray("remainingResources").toResources(),
-        zone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
+        zone = restoredZone,
         zoneResources = json.optJSONArray("zoneResources")?.toZoneResources() ?: emptyList(),
         discoveredPoiIds = json.optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet(),
+        equipment = json.optJSONObject("equipment")?.toEquipmentSnapshot()
+            ?: PlayerEquipmentSnapshot(weaponDrawn = restoredZone != WorldZone.BUNKER),
         wakeCheckpoint = checkpointJson?.toWakeCheckpoint()
     )
 }
@@ -241,6 +252,11 @@ private fun JSONObject.toNeedsSnapshot() = SurvivalNeedsSnapshot(
 
 private fun JSONObject.toBunkerRadioSnapshot() = BunkerRadioSnapshot(
     lastListenedDay = optInt("lastListenedDay", 0).coerceAtLeast(0)
+)
+
+private fun JSONObject.toEquipmentSnapshot() = PlayerEquipmentSnapshot(
+    weapon = runCatching { optString("weapon").takeIf { it.isNotBlank() && it != "null" }?.let(WeaponType::valueOf) }.getOrNull(),
+    weaponDrawn = optBoolean("weaponDrawn", false)
 )
 
 private fun JSONObject.toBookLibrarySnapshot() = BookLibrarySnapshot(
@@ -291,7 +307,10 @@ private fun JSONArray.toResources(): List<ResourceLocation> = List(length()) { i
     }
 }
 
-private fun JSONObject.toWakeCheckpoint() = WakeCheckpoint(
+private fun JSONObject.toWakeCheckpoint(): WakeCheckpoint {
+    val restoredZone = runCatching { WorldZone.valueOf(optString("zone", WorldZone.BUNKER.name)) }
+        .getOrDefault(WorldZone.BUNKER)
+    return WakeCheckpoint(
     player = getJSONObject("player").toPlayerSnapshot(),
     inventory = getJSONArray("inventory").toItemStacks(),
     bunkerStorage = getJSONArray("bunkerStorage").toItemStacks(),
@@ -301,7 +320,10 @@ private fun JSONObject.toWakeCheckpoint() = WakeCheckpoint(
     radio = optJSONObject("radio")?.toBunkerRadioSnapshot() ?: BunkerRadioSnapshot(),
     clock = getJSONObject("clock").toClockSnapshot(),
     remainingResources = getJSONArray("remainingResources").toResources(),
-    zone = runCatching { WorldZone.valueOf(optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
+    zone = restoredZone,
     zoneResources = optJSONArray("zoneResources")?.toZoneResources() ?: emptyList(),
-    discoveredPoiIds = optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet()
-)
+    discoveredPoiIds = optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet(),
+    equipment = optJSONObject("equipment")?.toEquipmentSnapshot()
+        ?: PlayerEquipmentSnapshot(weaponDrawn = restoredZone != WorldZone.BUNKER)
+    )
+}
