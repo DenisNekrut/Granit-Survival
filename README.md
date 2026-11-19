@@ -25,7 +25,7 @@
 - Dynamic outdoor lighting follows the in-game clock using smoothstep transitions: cold dark nights, gradual dawn, bright daytime, warm dusk and a smooth return to night. Unit tests cover every minute and adjacent-minute continuity.
 
 ### Bunker, knowledge and events
-- Main menu, pause menu with a prominent return-to-menu action, expedition journal, character statistics, save-slot manager, settings, storage and workbench screens.
+- Main menu, pause menu with a prominent return-to-menu action, expedition journal, character statistics, save-slot manager and settings. Contextual station panels appear as compact in-game cards over the live world instead of replacing the game screen.
 - Three manual save slots and a separate atomic autosave; JSON schema v8 reads older versions 1–7.
 - Workbench recipes for bandage and medical kit; medical kit recipe unlocks after reading a technical manual.
 - Bunker library with fiction, science, technical manuals, diaries and magazines. Reading consumes game time and may affect morale/stress.
@@ -40,8 +40,8 @@
 - PixelSpriteAtlas + GeneratedPixelSprites with original project artwork: 16×24 character frames in four directions (four walk frames per direction), plus 16×16 hatches, bunker furniture, control console, generator, medical station, trees, bushes, rubble, streetlamp and crate.
 - Distinct hatch artwork for bunker ladder entry and outdoor transitions; hatch sprites are used in the world renderer.
 - Zone-specific floor and obstacle visuals for bunker, forest, ruins and road.
-- Time-of-day lighting is applied to outdoor zones with smooth interpolation. The bunker uses permanent warm artificial lighting from six ceiling fixtures, with layered pixel-art light falloff and separate warm pools in its rooms regardless of outdoor time. Generator-linked power and emergency lighting are the next planned systems.
-- Bunker is divided into connected bedroom, dining room, generator room, medical room, workshop and utility storage room; each room has contextual access.
+- Time-of-day lighting is applied to outdoor zones with smooth interpolation. In the bunker, ceiling fixtures are hidden; only warm floor/object light pools are visible, with darker unlit areas between them. Generator-linked power and emergency lighting are the next planned systems.
+- Bunker is divided into connected bedroom, dining room, generator room, medical room, workshop and utility storage room; the bunker footprint is compact (34×20 tiles) while expedition zones remain 40×24. Each room has contextual access.
 - HUD displays live survival meters, day/time, current zone and weather.
 - Joystick sensitivity, scale and controls opacity are applied. Audio volume, vibration and graphics quality are stored but still need integration.
 
@@ -68,3 +68,11 @@ The APK is a debug build for testing, not a signed production release. A success
 - Масштаб игрового мира настраивается в диапазоне 80–120% в меню настроек.
 - Виртуальный джойстик закреплён у левого края экрана, кнопка действия — у правого; позиции рассчитываются относительно реального размера SurfaceView.
 - Фоновая ambient-музыка и короткие звуки шагов/взаимодействия синтезируются локально. Громкости музыки и эффектов регулируются независимо; аудио приостанавливается вместе с игрой.
+
+
+### Visual interface pass
+
+- Compact bunker map: 34×20 tiles; outdoor expedition maps remain 40×24.
+- Hidden ceiling fixtures with warm light reflected onto floors and nearby objects; unlit bunker areas remain darker.
+- Contextual station windows are compact overlays over the active game, with a refreshed industrial field-console visual theme.
+- Original sprite palette and zone floor colors have been brightened for clearer material separation.
