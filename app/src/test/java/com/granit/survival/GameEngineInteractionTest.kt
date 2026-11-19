@@ -74,6 +74,35 @@ class GameEngineInteractionTest {
     }
 
     @Test
+    fun inventorySurvivesRealExitInteractionsAcrossAllZones() {
+        val engine = GameEngine()
+        engine.inventory.add(ItemType.WOOD, 7)
+        engine.inventory.add(ItemType.WATER, 3)
+
+        fun interactAt(x: Float, y: Float) {
+            engine.player.x = x
+            engine.player.y = y
+            engine.updateFrame(1f / 60f, EngineInput(interact = false))
+            engine.updateFrame(1f / 60f, EngineInput(interact = true))
+            assertEquals(7, engine.inventory.count(ItemType.WOOD))
+            assertEquals(3, engine.inventory.count(ItemType.WATER))
+        }
+
+        interactAt(20.5f, 1.5f) // bunker -> forest
+        assertEquals(WorldZone.FOREST, engine.zone)
+        interactAt(1.5f, 12.5f) // forest -> ruins
+        assertEquals(WorldZone.RUINS, engine.zone)
+        interactAt(38.5f, 12.5f) // ruins -> forest
+        assertEquals(WorldZone.FOREST, engine.zone)
+        interactAt(38.5f, 12.5f) // forest -> road
+        assertEquals(WorldZone.ROAD, engine.zone)
+        interactAt(1.5f, 12.5f) // road -> forest
+        assertEquals(WorldZone.FOREST, engine.zone)
+        interactAt(20.5f, 22.5f) // forest -> bunker
+        assertEquals(WorldZone.BUNKER, engine.zone)
+    }
+
+    @Test
     fun craftedItemsCannotBeCollectedAsWorldResourceNodes() {
         val map = TileMap()
         assertFalse(map.collectResource(ResourceLocation(7, 8, ItemType.MEDICAL_KIT)))
