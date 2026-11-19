@@ -30,7 +30,6 @@ class MainActivity : Activity() {
             activity = this,
             session = session,
             createPanel = ::createPanel,
-            label = ::label,
             menuButton = ::menuButton,
             showOverlay = ::showOverlay,
             enterGame = ::enterGame,
@@ -551,5 +550,4 @@ class MainActivity : Activity() {
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
-    private fun Float.formatOneDecimal() = String.format("%.1f", this)
 }
