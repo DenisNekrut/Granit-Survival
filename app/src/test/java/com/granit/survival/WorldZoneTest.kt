@@ -8,14 +8,14 @@ class WorldZoneTest {
     @Test
     fun bunkerUsesCompactDimensionsAndCenteredExit() {
         val engine = GameEngine()
-        assertEquals(34, engine.tileMap.width)
-        assertEquals(20, engine.tileMap.height)
-        assertEquals(TileType.EXIT_TO_FOREST, engine.tileMap[17, 1])
-        assertEquals(17.5f, engine.tileMap.spawnBesideExit(TileType.EXIT_TO_FOREST)!!.first, 0.01f)
+        assertEquals(17, engine.tileMap.width)
+        assertEquals(10, engine.tileMap.height)
+        assertEquals(TileType.EXIT_TO_FOREST, engine.tileMap[8, 1])
+        assertEquals(8.5f, engine.tileMap.spawnBesideExit(TileType.EXIT_TO_FOREST)!!.first, 0.01f)
     }
 
     @Test
-    fun bunkerHasFiveRoomsWithReachableEquipmentStations() {
+    fun bunkerHasSixRoomsWithReachableEquipmentStations() {
         val engine = GameEngine()
         val types = mutableSetOf<TileType>()
         engine.tileMap.forEachTile { _, _, type -> types += type }
@@ -26,20 +26,20 @@ class WorldZoneTest {
         assertTrue(TileType.MEDICAL_STATION in types)
         assertTrue(TileType.WORKBENCH in types)
 
-        engine.player.x = 17.5f
-        engine.player.y = 6.5f
+        engine.player.x = 7.5f
+        engine.player.y = 3.5f
         assertTrue(engine.canAccessDiningTable())
 
-        engine.player.x = 27.5f
-        engine.player.y = 5.5f
+        engine.player.x = 14.5f
+        engine.player.y = 2.5f
         assertTrue(engine.canAccessGenerator())
 
-        engine.player.x = 5.5f
-        engine.player.y = 18.5f
+        engine.player.x = 2.5f
+        engine.player.y = 7.5f
         assertTrue(engine.canAccessMedicalStation())
 
-        engine.player.x = 17.5f
-        engine.player.y = 18.5f
+        engine.player.x = 9.5f
+        engine.player.y = 7.5f
         assertTrue(engine.canUseWorkbench())
     }
 
@@ -54,14 +54,14 @@ class WorldZoneTest {
             engine.updateFrame(1f / 60f, EngineInput(interact = true))
         }
 
-        interactAt(17.5f, 1.5f)
+        interactAt(8.5f, 2.5f)
         assertEquals(WorldZone.FOREST, engine.zone)
         assertEquals(20.5f, engine.player.x, 0.01f)
         assertEquals(21.5f, engine.player.y, 0.01f)
 
         interactAt(20.5f, 22.5f)
         assertEquals(WorldZone.BUNKER, engine.zone)
-        assertEquals(17.5f, engine.player.x, 0.01f)
+        assertEquals(8.5f, engine.player.x, 0.01f)
         assertEquals(2.5f, engine.player.y, 0.01f)
 
         engine.changeZone(WorldZone.FOREST)
@@ -89,8 +89,8 @@ class WorldZoneTest {
     @Test
     fun playerCanTravelFromBunkerToForestAndBack() {
         val engine = GameEngine()
-        engine.player.x = 17.5f
-        engine.player.y = 1.5f
+        engine.player.x = 8.5f
+        engine.player.y = 2.5f
         engine.updateFrame(1f / 60f, EngineInput(interact = true))
         assertEquals(WorldZone.FOREST, engine.zone)
 
@@ -134,7 +134,7 @@ class WorldZoneTest {
     @Test
     fun everyZoneSpawnCanReachAllItsExitsWithoutCrossingWalls() {
         val exits = mapOf(
-            WorldZone.BUNKER to listOf(20 to 1),
+            WorldZone.BUNKER to listOf(8 to 1),
             WorldZone.FOREST to listOf(20 to 22, 1 to 12, 38 to 12),
             WorldZone.RUINS to listOf(38 to 12),
             WorldZone.ROAD to listOf(1 to 12)
@@ -281,7 +281,7 @@ class WorldZoneTest {
         engine.tileMap.collectResource(ResourceLocation(7, 5, ItemType.WOOD))
         assertTrue(engine.respawnAtWakeCheckpoint())
         assertEquals(WorldZone.BUNKER, engine.zone)
-        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 8])
+        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[3, 3])
         engine.changeZone(WorldZone.FOREST)
         assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 5])
     }
