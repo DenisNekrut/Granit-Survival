@@ -42,7 +42,7 @@ class MainActivity : Activity() {
                 activeGame = false
                 AlertDialog.Builder(this)
                     .setTitle("Не удалось запустить игровой экран")
-                    .setMessage("Рендер остановился: ${failure.javaClass.simpleName}: ${failure.message ?: "без подробностей"}\\n\\nПодробности доступны в Android Logcat по тегу GranitEngine.")
+                    .setMessage("Рендер остановился: ${failure.javaClass.simpleName}: ${failure.message ?: "без подробностей"}\n\nПодробности доступны в Android Logcat по тегу GranitEngine.")
                     .setPositiveButton("В ГЛАВНОЕ МЕНЮ") { _, _ -> showMainMenu() }
                     .setCancelable(false)
                     .show()
