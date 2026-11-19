@@ -185,6 +185,13 @@ class PixelRenderer {
             WorldZone.RUINS -> floatArrayOf(0.25f, 0.22f, 0.19f)
             WorldZone.ROAD -> floatArrayOf(0.20f, 0.23f, 0.26f)
         }
+        // Extend the ground beyond the solid map perimeter. The camera can reveal this
+        // neutral margin near map edges instead of cutting the location flush against the screen.
+        val edgePadding = Camera2D.WORLD_EDGE_PADDING
+        rect(-edgePadding, -edgePadding,
+            engine.tileMap.width + edgePadding * 2f,
+            engine.tileMap.height + edgePadding * 2f,
+            floorTone[0] * 0.58f, floorTone[1] * 0.58f, floorTone[2] * 0.58f)
         rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
             floorTone[0], floorTone[1], floorTone[2])
         for (x in 1 until engine.tileMap.width) {
