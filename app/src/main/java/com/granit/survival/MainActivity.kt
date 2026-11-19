@@ -37,7 +37,7 @@ class MainActivity : Activity() {
         session = GameSession(this)
         root = FrameLayout(this)
         gameSurface = GameSurface(this, session)
-        gameSurface.onActionButtonReleased = { handleContextAction() }
+        gameSurface.onInteractionProcessed = { handleContextAction() }
         gameSurface.onRenderFailure = { failure ->
             if (activeGame && !isFinishing) {
                 activeGame = false
