@@ -18,6 +18,10 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
 /** Native Android menus wrap the custom GLES game surface; no UI framework/engine dependency. */
 class MainActivity : Activity() {
@@ -26,6 +30,7 @@ class MainActivity : Activity() {
     private lateinit var session: GameSession
     private var activeGame = false
     private var pausedGame = false
+    private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val bunkerStationPanels by lazy {
         BunkerStationPanels(
             activity = this,
@@ -103,6 +108,7 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         if (::gameSurface.isInitialized) gameSurface.releaseEngine()
         if (::session.isInitialized) session.audio.stop()
+        activityScope.cancel()
         super.onDestroy()
     }
 
@@ -354,6 +360,7 @@ class MainActivity : Activity() {
         SaveSlotsScreen(
             activity = this,
             saves = session.saves,
+            scope = activityScope,
             createPanel = ::createPanel,
             label = ::label,
             menuButton = ::menuButton,
