@@ -87,3 +87,10 @@ The APK is a debug build for testing, not a signed production release. A success
 
 ### Infected variants
 Outdoor expeditions now feature three original infected archetypes: shamblers, runners, and brutes. They have distinct silhouettes, movement speeds, durability, and abstract contact pressure. Bunker interiors remain safe from infected spawns. The pulse-carbine remains a fictional energy effect with simplified hit detection.
+
+
+### Medical station
+- Powered treatment at the bunker medical station consumes one medical kit and 12 in-game minutes, restoring 50 health.
+- Manual bandage and medical-kit use remains available during a generator outage.
+- Timed medical actions advance world time and survival needs before consuming supplies or applying healing, so a checkpoint rollback does not silently spend an item.
+- Medical treatment is covered by unit tests for power requirements, inventory, time/fuel cost and rollback behavior.
