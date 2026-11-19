@@ -55,3 +55,11 @@ This is still a playable prototype, not a finished game. The next work includes 
 Every successful GitHub Actions build uploads an artifact named **GranitSurvival-debug-apk**. Open the latest successful [Android Debug Build](https://github.com/DenisNekrut/Granit-Survival/actions), find the **Artifacts** section at the bottom of the run page, and download the ZIP. It contains `app-debug.apk`.
 
 The APK is a debug build for testing, not a signed production release. A successful CI build does not mean the game has been tested on a physical phone.
+
+
+## Адаптивное управление и звук
+
+- Игровая камера подстраивает видимую область под фактическое соотношение сторон экрана, не растягивая пиксельную графику.
+- Масштаб игрового мира настраивается в диапазоне 80–120% в меню настроек.
+- Виртуальный джойстик закреплён у левого края экрана, кнопка действия — у правого; позиции рассчитываются относительно реального размера SurfaceView.
+- Фоновая ambient-музыка и короткие звуки шагов/взаимодействия синтезируются локально. Громкости музыки и эффектов регулируются независимо; аудио приостанавливается вместе с игрой.
