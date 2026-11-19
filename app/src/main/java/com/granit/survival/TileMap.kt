@@ -313,3 +313,9 @@ class TileMap(
         for (tileY in y until y + h) for (tileX in x until x + w) set(tileX, tileY, type)
     }
 }
+
+
+/** Creates the correctly sized map for each zone. The bunker footprint is intentionally compact. */
+internal fun createZoneMap(zone: WorldZone, seed: Long? = null): TileMap =
+    if (zone == WorldZone.BUNKER) TileMap(width = 34, height = 20, zone = zone, seed = seed)
+    else TileMap(zone = zone, seed = seed)
