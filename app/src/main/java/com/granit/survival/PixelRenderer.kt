@@ -193,7 +193,7 @@ class PixelRenderer {
                 TileType.BED, TileType.WORKBENCH, TileType.RADIO, TileType.BOOKSHELF, TileType.STORAGE,
                 TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> Unit
                 TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
-                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY)
+                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY, type)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
                 TileType.RESOURCE_METAL -> drawResource(tileX, tileY, "metal")
                 TileType.RESOURCE_FABRIC -> drawResource(tileX, tileY, "fabric")
@@ -382,8 +382,9 @@ class PixelRenderer {
         }
     }
 
-    private fun drawExitTile(x: Int, y: Int) {
-        drawAtlasSprite("exit_hatch", x + 0.5f, y.toFloat(), 0.0625f)
+    private fun drawExitTile(x: Int, y: Int, type: TileType) {
+        val sprite = if (type == TileType.EXIT_TO_BUNKER) "ladder_hatch" else "exit_hatch"
+        drawAtlasSprite(sprite, x + 0.5f, y.toFloat(), 0.0625f)
     }
 
     private fun drawAtlasSprite(
