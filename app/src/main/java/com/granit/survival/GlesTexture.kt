@@ -52,6 +52,9 @@ class GlesTexture {
     fun bind(textureUnit: Int = 0) {
         check(isUploaded) { "Texture has not been uploaded" }
         require(textureUnit >= 0) { "Texture unit must not be negative" }
+        val maxUnits = IntArray(1)
+        GLES20.glGetIntegerv(GLES20.GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, maxUnits, 0)
+        require(textureUnit < maxUnits[0]) { "Texture unit $textureUnit exceeds device limit ${maxUnits[0]}" }
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + textureUnit)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
     }
