@@ -230,3 +230,6 @@ Quad vertex and UV emission is extracted into the platform-independent `SpriteQu
 ### Zone-specific environment sprite pass
 
 The generated atlas now includes distinct 16×16 environment props for bunker bulkhead panels, forest trees, ruin masonry rubble and roadside barriers. `PixelRenderer.drawZoneWall` selects the sprite by active `WorldZone`, with a small contact shadow. This replaces the previous generic colored wall blocks while keeping TileMap collision semantics unchanged. Atlas validation and unit tests enforce the generated 16×16 cell limit. These are procedural pixel-art placeholders; final authored art and device visual review remain open.
+
+
+The four zones also use deterministic floor-decoration sprites: bunker floor grates, forest bushes, ruin debris and roadside lamps. Placement is derived from tile coordinates, so decorations remain stable across save/load without introducing additional mutable world state.
