@@ -210,3 +210,8 @@
 Atlas sprite calls resolve their manifest frame, convert pixel coordinates to normalized UVs and draw a textured quad. Horizontal facing is implemented by reversing the U coordinates. Pending flat geometry is flushed before a textured quad, preserving painter's order; the flat shader is restored after each sprite. Small direct buffers are reused instead of allocating new ones per sprite. Renderer GPU resources are released while the EGL context is still current.
 
 Current limitation: the GPU path is live, but the atlas source is generated from the existing code-defined sprites. The Android JSON/PNG loader is implemented but not yet selected as the production source. Per-sprite textured draws are also still immediate; a future UV batcher must preserve interleaved flat/textured painter order before it can reduce those calls.
+
+
+### Textured sprite batching update
+
+Consecutive textured quads from the active atlas are now accumulated in reusable position and UV buffers and submitted together with one `glDrawArrays`. The renderer flushes pending flat geometry before adding textured quads, and flushes pending textured quads before appending flat geometry. This boundary-based approach preserves painter's order for overlapping scene objects. It batches only adjacent textured draws; interleaved flat geometry intentionally splits batches.
