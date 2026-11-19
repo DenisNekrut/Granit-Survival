@@ -53,7 +53,7 @@ class TileMap(
         set(9, 1, TileType.WORKBENCH) // retained as the starter repair surface
 
         // Dining room — upper-middle.
-        fill(16, 2, 2, 2, TileType.STORAGE) // food and water pantry
+        fill(15, 2, 2, 2, TileType.STORAGE) // food and water pantry; keep the hatch landing clear
         set(22, 2, TileType.BOOKSHELF)
         set(17, 5, TileType.DINING_TABLE)
 
