@@ -10,6 +10,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     @Volatile private var renderThread: EngineRenderThread? = null
     @Volatile private var resumed = false
     @Volatile var onRenderFailure: ((Throwable) -> Unit)? = null
+    @Volatile var onActionButtonReleased: (() -> Unit)? = null
     @Volatile private var surfaceWidth = 0
     @Volatile private var surfaceHeight = 0
     @Volatile private var surfaceReady = false
@@ -86,6 +87,9 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
                 if (pointerId == actionPointerId) {
                     actionPointerId = MotionEvent.INVALID_POINTER_ID
                     thread.setInteracting(false)
+                    // The render thread handles world collection/transitions; the activity
+                    // opens the matching native panel after the action press has been released.
+                    post { onActionButtonReleased?.invoke() }
                 }
             }
             MotionEvent.ACTION_CANCEL -> {
