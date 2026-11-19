@@ -45,7 +45,7 @@ object SpriteAtlasManifestValidator {
         val errors = mutableListOf<String>()
         if (manifest.version != 1) errors += "Unsupported manifest version: ${manifest.version}"
         if (manifest.texture.isBlank()) errors += "Texture path is empty"
-        if (manifest.texture.startsWith("/") || manifest.texture.split('/').any { it == ".." }) {
+        if (manifest.texture.startsWith("/") || manifest.texture.contains('\\\\') || manifest.texture.split('/').any { it == ".." }) {
             errors += "Texture path must stay inside the assets directory"
         }
         if (manifest.textureWidth <= 0 || manifest.textureHeight <= 0) errors += "Texture dimensions must be positive"
