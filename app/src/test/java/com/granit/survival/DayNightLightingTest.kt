@@ -34,4 +34,26 @@ class DayNightLightingTest {
             assertTrue("twilight out of range at $minute", DayNightLighting.twilightTint(minute) in 0f..0.12f)
         }
     }
+
+    @Test
+    fun adjacentMinutesDoNotProduceAbruptLightingJumps() {
+        for (minute in 0 until WorldClock.MINUTES_PER_DAY - 1) {
+            val darknessDelta = kotlin.math.abs(
+                DayNightLighting.outdoorDarkness(minute + 1) -
+                    DayNightLighting.outdoorDarkness(minute)
+            )
+            val twilightDelta = kotlin.math.abs(
+                DayNightLighting.twilightTint(minute + 1) -
+                    DayNightLighting.twilightTint(minute)
+            )
+            assertTrue("darkness jump at $minute: $darknessDelta", darknessDelta < 0.02f)
+            assertTrue("twilight jump at $minute: $twilightDelta", twilightDelta < 0.02f)
+        }
+    }
+
+    @Test
+    fun outOfRangeTimesAreClampedSafely() {
+        assertEquals(DayNightLighting.outdoorDarkness(0), DayNightLighting.outdoorDarkness(-100), 0f)
+        assertEquals(DayNightLighting.outdoorDarkness(1439), DayNightLighting.outdoorDarkness(9000), 0f)
+    }
 }
