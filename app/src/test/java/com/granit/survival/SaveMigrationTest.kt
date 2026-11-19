@@ -3,7 +3,6 @@ package com.granit.survival
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -32,8 +31,26 @@ class SaveMigrationTest {
         assertEquals(100.0, state.getJSONObject("needs").getDouble("hunger"), 0.001)
         assertEquals(3, state.getJSONObject("clock").getInt("day"))
         assertEquals(420, state.getJSONObject("clock").getInt("minuteOfDay"))
-        assertEquals(1, state.getJSONArray("inventory").length())
+        val migratedInventory = state.getJSONArray("inventory")
+        assertEquals(16, migratedInventory.length())
+        assertEquals(ItemType.WOOD.name, migratedInventory.getJSONObject(0).getString("type"))
+        assertTrue(migratedInventory.isNull(1))
+        assertEquals(24, state.getJSONArray("bunkerStorage").length())
         assertEquals(1, legacy.getInt("saveVersion")) // migration never mutates the source object
+    }
+
+
+    @Test
+    fun clampsPlayerCoordinatesToTheRestoredZoneBounds() {
+        val damaged = JSONObject()
+            .put("saveVersion", 9)
+            .put("state", JSONObject()
+                .put("player", JSONObject().put("x", 999).put("y", -20))
+                .put("clock", JSONObject()))
+        val player = SaveCodec.decode(damaged.toString())
+            .getJSONObject("state").getJSONObject("player")
+        assertEquals(16.35, player.getDouble("x"), 0.001)
+        assertEquals(0.8, player.getDouble("y"), 0.001)
     }
 
     @Test
