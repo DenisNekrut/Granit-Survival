@@ -564,8 +564,7 @@ class MainActivity : Activity() {
         val overlay = FrameLayout(this).apply { isClickable = true; isFocusable = true }
         if (activeGame) {
             // Freeze simulation behind the card, but keep the last world frame visible.
-            gameSurface.pauseEngine()
-            session.audio.stop()
+            // Keep simulation and ambient audio running behind the card: activities consume world time.
             // The interaction card is a compact HUD layer, not a replacement screen.
             overlay.setBackgroundColor(Color.argb(72, 3, 9, 10))
             val cardWidth = minOf(dp(430), (resources.displayMetrics.widthPixels * 0.42f).toInt())
