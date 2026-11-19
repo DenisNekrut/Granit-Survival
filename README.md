@@ -6,7 +6,8 @@
 
 ## Technical direction
 
-- Platform: Android, landscape orientation
+- Platform: Android 8.0+ (API 26), landscape orientation
+- Graphics requirement: OpenGL ES 2.0
 - Language: Kotlin/JVM
 - Rendering: EGL14 + OpenGL ES 2.0
 - Engine: custom implementation; Unity, Godot and MonoGame are not used
