@@ -41,6 +41,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val camera = Camera2D()
     val inventory = Inventory()
     val bunkerStorage = BunkerStorage()
+    private val inventorySystem = InventorySystem(inventory, bunkerStorage)
     val needs = SurvivalNeeds()
     val psychology = PsychologicalState()
     val bookLibrary = BookLibrary()
@@ -51,6 +52,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val weatherMovementMultiplier: Float get() =
         if (zone == WorldZone.BUNKER) 1f else weather.outdoorMovementMultiplier
     val checkpointSystem = CheckpointSystem()
+    private val clockAndNeedsSystem = ClockAndNeedsSystem(
+        worldClock, bunkerPower, statistics, needs, psychology
+    )
 
     private var accumulator = 0f
     private var gameMinuteAccumulator = 0f
@@ -304,41 +308,33 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     }
 
     fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean {
-        if (!canAccessStorage() || amount <= 0 || !bunkerStorage.deposit(inventory, type, amount)) return false
+        if (!canAccessStorage() || !inventorySystem.transferToStorage(type, amount)) return false
         return advanceGameMinutes(1)
     }
 
     fun transferFromStorage(type: ItemType, amount: Int = bunkerStorage.count(type)): Boolean {
-        if (!canAccessStorage() || amount <= 0 || !bunkerStorage.withdraw(inventory, type, amount)) return false
+        if (!canAccessStorage() || !inventorySystem.transferFromStorage(type, amount)) return false
         return advanceGameMinutes(1)
     }
 
     fun consumeFood(): Boolean {
-        if (!inventory.remove(ItemType.CANNED_FOOD, 1)) return false
+        if (!inventorySystem.remove(ItemType.CANNED_FOOD, 1)) return false
         needs.consumeFood()
         return advanceGameMinutes(5)
     }
 
     fun drinkWater(): Boolean {
-        if (!inventory.remove(ItemType.WATER, 1)) return false
+        if (!inventorySystem.remove(ItemType.WATER, 1)) return false
         needs.drinkWater()
         return advanceGameMinutes(5)
     }
 
     /** Apply the cost of a discrete action using the same clock/needs rules as real time. */
     private fun advanceGameMinutes(minutes: Int): Boolean {
-        if (minutes <= 0) return true
-        worldClock.advanceMinutes(minutes)
-        bunkerPower.advanceMinutes(minutes)
-        statistics.recordMinutes(minutes, zone, worldClock.day)
-        needs.advanceAwake(minutes)
-        psychology.advanceAwake(minutes, isMoving, zone)
-        if (needs.health <= 0f) {
+        return clockAndNeedsSystem.advanceActionMinutes(minutes, zone, isMoving) {
             checkpointSystem.restore(this)
             gameMinuteAccumulator = 0f
-            return false
         }
-        return true
     }
 
     private fun arrivalExitFor(from: WorldZone, target: WorldZone): TileType? = when (target) {
@@ -496,13 +492,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         wasInteracting = input.interact
         gameMinuteAccumulator += delta
         while (gameMinuteAccumulator + 0.00001f >= GAME_MINUTE_REAL_SECONDS) {
-            worldClock.advanceMinutes(1)
-            bunkerPower.advanceMinutes(1)
-            statistics.recordMinutes(1, zone, worldClock.day)
-            needs.advanceAwake(1)
-            psychology.advanceAwake(1, isMoving, zone)
+            val survived = clockAndNeedsSystem.advanceRealtimeMinute(zone, isMoving)
             gameMinuteAccumulator -= GAME_MINUTE_REAL_SECONDS
-            if (needs.health <= 0f) {
+            if (!survived) {
                 checkpointSystem.restore(this)
                 gameMinuteAccumulator = 0f
                 break
@@ -516,7 +508,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val resource = tileMap.nearestResource(player.x, player.y, 1.35f)
         if (resource != null) {
             // Remove the world node only after the inventory accepted the item.
-            if (inventory.add(resource.type, 1) == 0 && tileMap.collectResource(resource)) {
+            if (inventorySystem.add(resource.type, 1) == 0 && tileMap.collectResource(resource)) {
                 collectedResourceCount++
                 statistics.recordResourceCollected()
                 lastCollectedItem = resource.type
@@ -528,12 +520,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
         when (tileMap.nearestInteractable(player.x, player.y, 1.35f)) {
             TileType.STORAGE -> {
-                var transferred = false
-                ItemType.values().forEach { type ->
-                    val amount = inventory.count(type)
-                    if (amount > 0 && bunkerStorage.deposit(inventory, type, amount)) transferred = true
-                }
-                if (transferred) advanceGameMinutes(1)
+                if (inventorySystem.depositAll()) advanceGameMinutes(1)
                 interactionCount++
             }
             TileType.EXIT_TO_BUNKER -> { travelToZone(WorldZone.BUNKER); interactionCount++ }
