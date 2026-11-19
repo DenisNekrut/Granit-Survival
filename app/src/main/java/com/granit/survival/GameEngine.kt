@@ -43,6 +43,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val bookLibrary = BookLibrary()
     val radioSystem = BunkerRadioSystem()
     val worldClock = WorldClock()
+    val bunkerPower = BunkerPowerSystem()
     val weather: WeatherType get() = WeatherSystem.forDay(worldClock.day)
     val weatherMovementMultiplier: Float get() =
         if (zone == WorldZone.BUNKER) 1f else weather.outdoorMovementMultiplier
@@ -121,6 +122,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     /** Sleep until 07:00, restore energy, begin the next wake cycle and save a checkpoint. */
     fun sleepUntilMorning(): Int {
         val sleptMinutes = worldClock.sleepUntilMorning()
+        bunkerPower.advanceMinutes(sleptMinutes)
         needs.sleep(sleptMinutes)
         psychology.sleep(sleptMinutes)
         statistics.recordMinutes(sleptMinutes, WorldZone.BUNKER, worldClock.day)
@@ -136,7 +138,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     /** Sleep is only available beside a bed in the bunker. */
     fun canSleep(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.BED, player.x, player.y, 1.5f)
 
-    fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 1.75f)
+    fun canAccessStorage(): Boolean = zone == WorldZone.BUNKER && tileMap.isNearTile(TileType.STORAGE, player.x, player.y, 2.1f)
 
     fun canUseWorkbench(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.WORKBENCH, player.x, player.y, 1.5f)
@@ -149,6 +151,18 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
     fun canAccessGenerator(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.GENERATOR, player.x, player.y, 1.5f)
+
+    fun toggleGenerator(): Boolean = canAccessGenerator() && bunkerPower.toggleGenerator()
+
+    /** One wood unit represents four hours of abstract generator fuel. */
+    fun refuelGenerator(): Boolean {
+        if (!canAccessGenerator() || !inventory.remove(ItemType.WOOD, 1)) return false
+        if (!bunkerPower.addFuel(BunkerPowerSystem.WOOD_FUEL_MINUTES)) {
+            inventory.add(ItemType.WOOD, 1)
+            return false
+        }
+        return advanceGameMinutes(2)
+    }
 
     fun canAccessMedicalStation(): Boolean = zone == WorldZone.BUNKER &&
         tileMap.isNearTile(TileType.MEDICAL_STATION, player.x, player.y, 1.5f)
@@ -285,6 +299,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     private fun advanceGameMinutes(minutes: Int): Boolean {
         if (minutes <= 0) return true
         worldClock.advanceMinutes(minutes)
+        bunkerPower.advanceMinutes(minutes)
         statistics.recordMinutes(minutes, zone, worldClock.day)
         needs.advanceAwake(minutes)
         psychology.advanceAwake(minutes, isMoving, zone)
@@ -333,6 +348,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         discoveredPoiIds = discoveredPoiIds.toSet(),
         equipment = equipment.snapshot(),
         statistics = statistics.snapshot(),
+        bunkerPower = bunkerPower.snapshot(),
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
@@ -341,6 +357,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         changeZone(snapshot.zone, regenerate = false)
         equipment.restore(snapshot.equipment)
         statistics.restore(snapshot.statistics)
+        bunkerPower.restore(snapshot.bunkerPower)
         restoreDiscoveredPointsOfInterest(snapshot.discoveredPoiIds)
         if (snapshot.zoneResources.isEmpty()) tileMap.restoreResources(snapshot.remainingResources)
         player.x = snapshot.player.x
@@ -411,6 +428,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         gameMinuteAccumulator += delta
         while (gameMinuteAccumulator + 0.00001f >= GAME_MINUTE_REAL_SECONDS) {
             worldClock.advanceMinutes(1)
+            bunkerPower.advanceMinutes(1)
             statistics.recordMinutes(1, zone, worldClock.day)
             needs.advanceAwake(1)
             psychology.advanceAwake(1, isMoving, zone)
