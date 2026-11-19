@@ -43,8 +43,8 @@ class BunkerLayoutTest {
         assertEquals(TileType.FLOOR, bunker[8, 5])
         assertEquals(TileType.WALL, bunker[5, 3])
         assertEquals(TileType.WALL, bunker[11, 6])
-        val centers = listOf(1.5f to 1.5f, 9.5f to 2.5f, 12.5f to 1.5f,
-            1.5f to 6.5f, 9.5f to 6.5f, 12.5f to 7.5f)
+        val centers = listOf(1.5f to 1.5f, 8.5f to 2.5f, 13.5f to 1.5f,
+            1.5f to 6.5f, 9.5f to 7.5f, 13.5f to 7.5f)
         centers.forEach { (x, y) -> assertTrue(bunker.isWalkable(x, y)) }
         centers.drop(1).forEach { (x, y) -> assertNotNull(bunker.nextPathStep(1.5f, 1.5f, x, y)) }
     }
