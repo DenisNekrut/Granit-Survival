@@ -31,7 +31,7 @@ object PixelSpriteAtlas {
                     "..SSSSSSSS..", "..SSSSSSSS..", "..CCAAAAAC..", ".PCCCCCCCC..",
                     ".PCCCCCCCC..", ".PCCCCCCCC..", "..CCCCCCCC..", "..BBBBBBBB..",
                     "...BBBB.....", "..BB..BB....", "...DD..DD...", "...DD..DD..."
-                )
+                ),
                 listOf(
                     "....HHHH....",
                     "...HHHHHH...",
@@ -84,7 +84,7 @@ object PixelSpriteAtlas {
                     "..HHHHHHHH..", "..HHHHHHHH..", "..CCCCCCCC..", ".PCCCCCCCC..",
                     ".PCCCCCCCC..", ".PCCCCCCCC..", "..CCCCCCCC..", "..BBBBBBBB..",
                     "...BBBB.....", "..BB..BB....", "...DD..DD...", "...DD..DD..."
-                )
+                ),
                 listOf(
                     "....HHHH....",
                     "...HHHHHH...",
@@ -137,7 +137,7 @@ object PixelSpriteAtlas {
                     "..SSSSSSSS..", "..SSSSSSSS..", "..CCAAAAA...", ".PCCCCCCC...",
                     ".PCCCCCCC...", ".PCCCCCCC...", "..CCCCCCC...", "..BBBBBBB...",
                     "...BBBB.....", "..BB..BB....", "....DD.DD...", "....DD.DD..."
-                )
+                ),
                 listOf(
                     "....HHHH....",
                     "...HHHHHH...",
