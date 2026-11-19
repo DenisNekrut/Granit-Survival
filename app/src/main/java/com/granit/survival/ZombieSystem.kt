@@ -58,6 +58,27 @@ object ZombieSystem {
         }.toMutableList()
     }
 
+    const val AUTO_AIM_RANGE = 7f
+
+    /** Nearest infected actor within the player's visible seven-tile radius. */
+    fun findVisibleTarget(
+        zombies: List<ZombieActor>,
+        player: PlayerState,
+        map: TileMap,
+        maxDistance: Float = AUTO_AIM_RANGE
+    ): ZombieActor? {
+        val limitSquared = maxDistance * maxDistance
+        return zombies.mapNotNull { zombie ->
+            val dx = zombie.x - player.x
+            val dy = zombie.y - player.y
+            val distanceSquared = dx * dx + dy * dy
+            if (distanceSquared <= limitSquared &&
+                map.hasLineOfSight(player.x, player.y, zombie.x, zombie.y)) {
+                zombie to distanceSquared
+            } else null
+        }.minByOrNull { it.second }?.first
+    }
+
     fun update(
         zombies: MutableList<ZombieActor>,
         player: PlayerState,
@@ -107,6 +128,16 @@ object ZombieSystem {
             val side = abs(dx * direction.second - dy * direction.first)
             if (forward in 0f..5f && side <= 0.85f) zombie to distanceSquared else null
         }.minByOrNull { it.second }?.first ?: return null
+        return applyPulseHit(zombies, target)
+    }
+
+    /** Abstract game-only hit for the target currently selected by auto-aim. */
+    fun pulseHitTarget(zombies: MutableList<ZombieActor>, target: ZombieActor?): ZombieActor? {
+        if (target == null || target !in zombies) return null
+        return applyPulseHit(zombies, target)
+    }
+
+    private fun applyPulseHit(zombies: MutableList<ZombieActor>, target: ZombieActor): ZombieActor {
         target.health -= 4f
         target.hitFlash = 0.18f
         if (target.health <= 0f) zombies.remove(target)
