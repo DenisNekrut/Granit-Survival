@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.KeyEvent
@@ -37,6 +38,18 @@ class MainActivity : Activity() {
         session = GameSession(this)
         root = FrameLayout(this)
         gameSurface = GameSurface(this, session)
+        gameSurface.onInteractionProcessed = { handleContextAction() }
+        gameSurface.onRenderFailure = { failure ->
+            if (activeGame && !isFinishing) {
+                activeGame = false
+                AlertDialog.Builder(this)
+                    .setTitle("Не удалось запустить игровой экран")
+                    .setMessage("Рендер остановился: ${failure.javaClass.simpleName}: ${failure.message ?: "без подробностей"}\n\nПодробности доступны в Android Logcat по тегу GranitEngine.")
+                    .setPositiveButton("В ГЛАВНОЕ МЕНЮ") { _, _ -> showMainMenu() }
+                    .setCancelable(false)
+                    .show()
+            }
+        }
         root.addView(gameSurface, FrameLayout.LayoutParams(-1, -1))
         setContentView(root)
         showMainMenu()
@@ -44,16 +57,23 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        if (::gameSurface.isInitialized && activeGame) gameSurface.resumeEngine()
+        if (::gameSurface.isInitialized && activeGame) {
+            gameSurface.resumeEngine()
+            val audioSettings = session.settings.load()
+            session.audio.setVolumes(audioSettings.musicVolume, audioSettings.effectsVolume)
+            session.audio.start()
+        }
     }
 
     override fun onPause() {
         if (::gameSurface.isInitialized) gameSurface.pauseEngine()
+        if (::session.isInitialized) session.audio.stop()
         super.onPause()
     }
 
     override fun onDestroy() {
         if (::gameSurface.isInitialized) gameSurface.releaseEngine()
+        if (::session.isInitialized) session.audio.stop()
         super.onDestroy()
     }
 
@@ -66,10 +86,126 @@ class MainActivity : Activity() {
         }
     }
 
+    /**
+     * Route the on-screen action button to the nearby station's native panel.
+     * World collection and exits are still processed by GameEngine on the render thread.
+     */
+    private fun handleContextAction() {
+        if (!activeGame || isFinishing) return
+        val engine = session.engine
+        // Resource gathering is handled by the simulation first.
+        if (engine.tileMap.nearestResource(engine.player.x, engine.player.y, 1.35f) != null) return
+        when (engine.tileMap.nearestInteractable(engine.player.x, engine.player.y, 1.35f)) {
+            TileType.WORKBENCH -> showCrafting()
+            TileType.STORAGE -> showStorage()
+            TileType.BOOKSHELF -> showBookLibrary()
+            TileType.DINING_TABLE -> showDiningPanel()
+            TileType.MEDICAL_STATION -> showMedicalPanel()
+            TileType.GENERATOR -> showGeneratorPanel()
+            TileType.RADIO -> {
+                if (!engine.bunkerPower.hasPower) showMessageWindow("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
+                else {
+                    val event = engine.listenToRadio()
+                    if (event != null) showMessageWindow(event.title, event.description)
+                    else showMessageWindow("РАДИОПРИЁМНИК", "Сегодня эфир остаётся пустым.")
+                }
+            }
+            TileType.BED -> {
+                if (!engine.canSleep()) showMessageWindow("СПАЛЬНЯ", "Сейчас нельзя лечь спать.")
+                else {
+                    val panel = createPanel("СПАЛЬНЯ", "Можно завершить день и восстановить силы")
+                    panel.addView(label("Сон завершит текущий день. После пробуждения будет создана контрольная точка.", 13f, Color.rgb(206, 215, 202)))
+                    panel.addView(menuButton("СПАТЬ ДО 07:00") {
+                        runCatching { session.sleepAndAutosave() }
+                            .onSuccess { slept -> if (slept) { enterGame(); Toast.makeText(this, "Новый день. Автосохранение создано.", Toast.LENGTH_SHORT).show() } }
+                            .onFailure { error -> Toast.makeText(this, "Не удалось сохранить игру: " + error.message, Toast.LENGTH_LONG).show() }
+                    })
+                    panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
+                    showOverlay(panel)
+                }
+            }
+            TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD, null -> Unit
+            else -> Unit
+        }
+    }
+
+    private fun showGeneratorPanel() {
+        val engine = session.engine
+        val panel = createPanel("ГЕНЕРАТОРНАЯ", "Энергосистема убежища")
+        val powered = engine.bunkerPower.hasPower
+        panel.addView(label(if (powered) "ПИТАНИЕ: ОСНОВНАЯ СЕТЬ" else "ПИТАНИЕ: АВАРИЙНЫЙ РЕЖИМ",
+            15f, if (powered) Color.rgb(164, 210, 170) else Color.rgb(230, 165, 116)))
+        panel.addView(label("Запас топлива: " + engine.bunkerPower.fuelHoursRemaining + " ч", 14f, Color.WHITE))
+        panel.addView(label("Генератор: " + if (engine.bunkerPower.generatorRunning) "работает" else "остановлен",
+            13f, Color.rgb(190, 198, 190)))
+        panel.addView(menuButton(if (engine.bunkerPower.generatorRunning) "ОСТАНОВИТЬ ГЕНЕРАТОР" else "ЗАПУСТИТЬ ГЕНЕРАТОР",
+            enabled = engine.bunkerPower.generatorRunning || engine.bunkerPower.fuelMinutesRemaining > 0) {
+            engine.toggleGenerator()
+            showGeneratorPanel()
+        })
+        panel.addView(menuButton("ЗАГРУЗИТЬ ДРОВА (+4 ЧАСА)", enabled = engine.inventory.count(ItemType.WOOD) > 0 &&
+            engine.bunkerPower.fuelMinutesRemaining < BunkerPowerSystem.MAX_FUEL_MINUTES) {
+            if (engine.refuelGenerator()) showGeneratorPanel()
+        })
+        panel.addView(label("При отключении генератора остаётся слабое аварийное освещение.", 12f,
+            Color.rgb(151, 170, 157)))
+        panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+        showOverlay(panel)
+    }
+    private fun showDiningPanel() {
+        val engine = session.engine
+        val panel = createPanel("СТОЛОВАЯ", "Запасы экспедиции")
+        panel.addView(label("Консервы: ${engine.inventory.count(ItemType.CANNED_FOOD)}", 15f, Color.WHITE))
+        panel.addView(label("Вода: ${engine.inventory.count(ItemType.WATER)}", 15f, Color.WHITE))
+        panel.addView(menuButton("СЪЕСТЬ КОНСЕРВЫ", enabled = engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
+            if (session.consumeFood()) showDiningPanel()
+        })
+        panel.addView(menuButton("ВЫПИТЬ ВОДУ", enabled = engine.inventory.count(ItemType.WATER) > 0) {
+            if (session.drinkWater()) showDiningPanel()
+        })
+        panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+        showOverlay(panel)
+    }
+
+    private fun showMedicalPanel() {
+        val engine = session.engine
+        val panel = createPanel("МЕДЧАСТЬ", "Медицинская станция и расходные материалы")
+        val hurt = engine.needs.health < 100f
+        panel.addView(label("Здоровье: ${engine.needs.health.toInt()}%", 16f, Color.WHITE))
+        panel.addView(label(if (engine.bunkerPower.hasPower) "Станция запитана" else "Нет питания: доступна только ручная помощь",
+            12f, if (engine.bunkerPower.hasPower) Color.rgb(164, 210, 170) else Color.rgb(230, 165, 116)))
+        panel.addView(menuButton("ПРОВЕСТИ ОБРАБОТКУ (+50 ЗДОРОВЬЯ, 12 МИН.)",
+            enabled = engine.canUseMedicalStation() && hurt && engine.inventory.count(ItemType.MEDICAL_KIT) > 0) {
+            if (engine.treatAtMedicalStation()) showMedicalPanel()
+        })
+        panel.addView(menuButton("ИСПОЛЬЗОВАТЬ БИНТ (+15)", enabled = engine.inventory.count(ItemType.BANDAGE) > 0 && hurt) {
+            if (engine.useBandage()) showMedicalPanel()
+        })
+        panel.addView(menuButton("ИСПОЛЬЗОВАТЬ АПТЕЧКУ (+35)", enabled = engine.inventory.count(ItemType.MEDICAL_KIT) > 0 && hurt) {
+            if (engine.useMedicalKit()) showMedicalPanel()
+        })
+        panel.addView(label("Обработка на станции требует генератор и одну аптечку. Ручная помощь работает и без питания.", 11f,
+            Color.rgb(151, 170, 157)))
+        panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+        showOverlay(panel)
+    }
+
+    private fun showMessageWindow(title: String, message: String) {
+        val panel = createPanel(title, "СООБЩЕНИЕ")
+        panel.addView(label(message, 14f, Color.rgb(214, 221, 207)))
+        panel.addView(menuButton("ЗАКРЫТЬ") { enterGame() })
+        showOverlay(panel)
+    }
+
+    private fun closeStationPanel() {
+        if (activeGame) enterGame() else showPauseMenu()
+    }
+
     private fun showMainMenu() {
         activeGame = false
         pausedGame = false
         gameSurface.pauseEngine()
+        session.audio.stop()
         gameSurface.visibility = View.GONE
         val panel = createPanel("GRANIT SURVIVAL", "Тишина — тоже часть выживания")
         panel.addView(menuButton("НОВАЯ ИГРА") {
@@ -102,21 +238,85 @@ class MainActivity : Activity() {
     private fun enterGame() {
         pausedGame = false
         activeGame = true
-        root.removeViewAt(root.childCount - 1)
+        if (root.childCount > 1) root.removeViewAt(root.childCount - 1)
         gameSurface.visibility = View.VISIBLE
+        addBackpackButton()
         gameSurface.resumeEngine()
+        val audioSettings = session.settings.load()
+        session.audio.setVolumes(audioSettings.musicVolume, audioSettings.effectsVolume)
+        session.audio.start()
+    }
+
+    private fun addBackpackButton() {
+        if (root.childCount > 1) root.removeViewAt(1)
+        val button = menuButton("🎒", action = { showBackpack() }).apply {
+            textSize = 23f
+            minWidth = dp(58)
+            minHeight = dp(54)
+            setPadding(dp(8), dp(2), dp(8), dp(2))
+            background = GradientDrawable().apply {
+                setColor(Color.argb(220, 28, 43, 39))
+                cornerRadius = dp(12).toFloat()
+                setStroke(dp(2), Color.rgb(170, 153, 111))
+            }
+        }
+        root.addView(button, FrameLayout.LayoutParams(dp(62), dp(58), Gravity.TOP or Gravity.END).apply {
+            topMargin = dp(14)
+            marginEnd = dp(14)
+        })
+    }
+
+    private fun showBackpack() {
+        val engine = session.engine
+        val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · 4 × 4 ячейки")
+        for (index in 0 until engine.inventory.columns * engine.inventory.rows) {
+            val stack = engine.inventory.slot(index)
+            if (stack == null) {
+                panel.addView(label("Ячейка " + (index + 1) + " · пусто", 12f, Color.rgb(126, 139, 132)))
+                continue
+            }
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(6), dp(3), dp(6), dp(3))
+            }
+            row.addView(label(stack.type.displayName + " × " + stack.quantity, 13f, Color.WHITE).apply {
+                gravity = Gravity.CENTER_VERTICAL
+            }, LinearLayout.LayoutParams(0, -2, 1f))
+            val useAction: (() -> Unit)? = when (stack.type) {
+                ItemType.CANNED_FOOD -> ({ if (session.consumeFood()) showBackpack() })
+                ItemType.WATER -> ({ if (session.drinkWater()) showBackpack() })
+                ItemType.BANDAGE -> ({ if (engine.useBandage()) showBackpack() })
+                ItemType.MEDICAL_KIT -> ({ if (engine.useMedicalKit()) showBackpack() })
+                else -> null
+            }
+            if (useAction != null) {
+                row.addView(menuButton("ИСПОЛЬЗОВАТЬ", enabled = when (stack.type) {
+                    ItemType.BANDAGE, ItemType.MEDICAL_KIT -> engine.needs.health < 100f
+                    else -> true
+                }) { useAction.invoke() }, LinearLayout.LayoutParams(dp(142), -2))
+            } else {
+                row.addView(label("ПАССИВНЫЙ ПРЕДМЕТ", 10f, Color.rgb(145, 160, 149)))
+            }
+            panel.addView(row)
+        }
+        panel.addView(menuButton("ЗАКРЫТЬ РЮКЗАК") { enterGame() })
+        showOverlay(panel)
     }
 
     private fun showPauseMenu() {
         activeGame = false
         pausedGame = true
         gameSurface.pauseEngine()
+        session.audio.stop()
         gameSurface.visibility = View.GONE
         val panel = createPanel("ПАУЗА", "Состояние игры сохранено в памяти")
         panel.addView(label("Психологическое состояние", 16f, Color.WHITE))
         panel.addView(label("Стресс: " + session.engine.psychology.stress.toInt() + "  ·  Одиночество: " + session.engine.psychology.loneliness.toInt(), 13f, Color.LTGRAY))
         panel.addView(label("Усталость: " + session.engine.psychology.fatigue.toInt() + "  ·  Мораль: " + session.engine.psychology.morale.toInt(), 13f, Color.LTGRAY))
         panel.addView(menuButton("ПРОДОЛЖИТЬ") { enterGame() })
+        panel.addView(menuButton("СТАТИСТИКА ПЕРСОНАЖА") { showCharacterStatistics() })
+        panel.addView(menuButton("ГЛАВНОЕ МЕНЮ") { confirmReturnToMainMenu() })
         panel.addView(menuButton("ЖУРНАЛ ЭКСПЕДИЦИЙ") { showJournal() })
         panel.addView(menuButton("ЕСТЬ КОНСЕРВЫ", enabled = session.engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
             if (session.consumeFood()) { Toast.makeText(this, "Консервы использованы", Toast.LENGTH_SHORT).show(); showPauseMenu() }
@@ -159,14 +359,41 @@ class MainActivity : Activity() {
         panel.addView(menuButton("СОХРАНИТЬ ИГРУ") { showSaveSlots(true) })
         panel.addView(menuButton("СОХРАНЕНИЯ") { showSaveSlots(false) })
         panel.addView(menuButton("НАСТРОЙКИ") { showSettings() })
-        panel.addView(menuButton("ГЛАВНОЕ МЕНЮ") {
-            AlertDialog.Builder(this)
-                .setTitle("Вернуться в главное меню?")
-                .setMessage("Несохранённый прогресс текущей вылазки будет потерян.")
-                .setNegativeButton("ОСТАТЬСЯ", null)
-                .setPositiveButton("В МЕНЮ") { _, _ -> showMainMenu() }
-                .show()
-        })
+        showOverlay(panel)
+    }
+
+    private fun confirmReturnToMainMenu() {
+        AlertDialog.Builder(this)
+            .setTitle("Вернуться в главное меню?")
+            .setMessage("Несохранённый прогресс текущей вылазки будет потерян. Сохранённые слоты и контрольная точка останутся без изменений.")
+            .setNegativeButton("ОСТАТЬСЯ", null)
+            .setPositiveButton("В МЕНЮ") { _, _ -> showMainMenu() }
+            .show()
+    }
+
+    private fun showCharacterStatistics() {
+        val stats = session.engine.statistics.snapshot()
+        val expeditionHours = stats.expeditionMinutes / 60L
+        val expeditionMinutes = stats.expeditionMinutes % 60L
+        val panel = createPanel("СТАТИСТИКА ПЕРСОНАЖА", "Показатели текущей временной линии")
+        val engine = session.engine
+        panel.addView(label("ТЕКУЩЕЕ СОСТОЯНИЕ", 15f, Color.rgb(207, 194, 155), true))
+        panel.addView(label("Здоровье: ${engine.needs.health.toInt()}  ·  Голод: ${engine.needs.hunger.toInt()}  ·  Жажда: ${engine.needs.thirst.toInt()}", 13f, Color.LTGRAY))
+        panel.addView(label("Энергия: ${engine.needs.energy.toInt()}  ·  Стресс: ${engine.psychology.stress.toInt()}  ·  Мораль: ${engine.psychology.morale.toInt()}", 13f, Color.LTGRAY))
+        panel.addView(label("Экипировка: " + (if (engine.equipment.weaponDrawn) "сигнальный излучатель в руках" else "убрана"), 13f, Color.LTGRAY))
+        panel.addView(label("ИСТОРИЯ ВЫЖИВАНИЯ", 15f, Color.rgb(207, 194, 155), true))
+        panel.addView(label("Дней выживания: ${stats.daysSurvived}", 15f, Color.WHITE))
+        panel.addView(label("Время в экспедициях: ${expeditionHours} ч ${expeditionMinutes} мин", 14f, Color.LTGRAY))
+        panel.addView(label("Пройдено: ${String.format(java.util.Locale.ROOT, "%.1f", stats.distanceTravelled)} м", 14f, Color.LTGRAY))
+        panel.addView(label("Собрано ресурсов: ${stats.resourcesCollected}", 14f, Color.LTGRAY))
+        panel.addView(label("Создано предметов: ${stats.itemsCrafted}", 14f, Color.LTGRAY))
+        panel.addView(label("Прочитано книг: ${stats.booksRead}", 14f, Color.LTGRAY))
+        panel.addView(label("Посещённые зоны", 15f, Color.WHITE, true))
+        WorldZone.values().filter { it in stats.visitedZones }.forEach { zone ->
+            panel.addView(label("• ${zone.displayName}", 13f, Color.LTGRAY))
+        }
+        panel.addView(label("Статистика откатывается вместе с контрольной точкой при гибели.", 12f, Color.rgb(190, 177, 145)))
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
         showOverlay(panel)
     }
 
@@ -216,24 +443,25 @@ class MainActivity : Activity() {
                 } else Toast.makeText(this, "Не удалось прочитать книгу", Toast.LENGTH_SHORT).show()
             })
         }
-        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
         showOverlay(panel)
     }
 
     private fun showCrafting() {
         val panel = createPanel("МАСТЕРСКАЯ", "Рецепты доступны рядом с верстаком")
+        if (!session.engine.bunkerPower.hasPower) panel.addView(label("Нет питания: генератор необходимо запустить.", 13f, Color.rgb(230, 165, 116)))
         CraftingRecipe.all.forEach { recipe ->
             val costs = recipe.ingredients.entries.joinToString(" · ") { entry -> entry.key.displayName + ": " + entry.value }
             panel.addView(label(recipe.title + " — " + recipe.output.displayName, 16f, Color.WHITE))
             panel.addView(label("Материалы: " + costs + " · Время: " + recipe.craftMinutes + " мин.", 13f, Color.LTGRAY))
-            panel.addView(menuButton("СОЗДАТЬ", enabled = session.engine.canCraft(recipe.id)) {
+            panel.addView(menuButton("СОЗДАТЬ", enabled = session.engine.canUseWorkbench() && session.engine.canCraft(recipe.id)) {
                 if (session.engine.craft(recipe.id)) {
                     Toast.makeText(this, recipe.title + ": готово", Toast.LENGTH_SHORT).show()
                     showCrafting()
-                } else Toast.makeText(this, "Не хватает материалов или места", Toast.LENGTH_SHORT).show()
+                } else Toast.makeText(this, if (!session.engine.bunkerPower.hasPower) "Нет питания: запустите генератор" else "Не хватает материалов или места", Toast.LENGTH_SHORT).show()
             })
         }
-        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
         showOverlay(panel)
     }
 
@@ -254,13 +482,14 @@ class MainActivity : Activity() {
             }, weightedParams())
             panel.addView(row)
         }
-        panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        panel.addView(menuButton("ЗАКРЫТЬ") { closeStationPanel() })
         showOverlay(panel)
     }
 
     private fun showSaveSlots(allowSave: Boolean) {
         activeGame = false
         gameSurface.pauseEngine()
+        session.audio.stop()
         gameSurface.visibility = View.GONE
         canSaveFromSlots = allowSave
         val panel = createPanel("СОХРАНЕНИЯ", "Три независимых слота на устройстве")
@@ -268,7 +497,7 @@ class MainActivity : Activity() {
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(dp(12), dp(8), dp(12), dp(8))
-                setBackgroundColor(Color.rgb(34, 43, 42))
+                background = GradientDrawable().apply { setColor(Color.rgb(34, 47, 43)); cornerRadius = dp(9).toFloat(); setStroke(dp(1), Color.rgb(77, 100, 84)) }
             }
             val info = when {
                 slot.corrupted -> "СЛОТ ${slot.slot}  ·  ФАЙЛ ПОВРЕЖДЁН"
@@ -276,7 +505,7 @@ class MainActivity : Activity() {
                 else -> {
                     val time = "%02d:%02d".format(slot.hour ?: 0, slot.minute ?: 0)
                     val date = slot.savedAtMillis?.let { DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it)) } ?: ""
-                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time\n$date"
+                    "СЛОТ ${slot.slot}  ·  ДЕНЬ ${slot.day ?: 1}, $time\\n$date"
                 }
             }
             row.addView(label(info, 14f, Color.WHITE))
@@ -316,6 +545,7 @@ class MainActivity : Activity() {
     private fun showSettings() {
         activeGame = false
         gameSurface.pauseEngine()
+        session.audio.stop()
         gameSurface.visibility = View.GONE
         val current = session.settings.load()
         val panel = createPanel("НАСТРОЙКИ", "Параметры управления и отображения")
@@ -343,11 +573,13 @@ class MainActivity : Activity() {
         var sensitivity = current.joystickSensitivity
         var scale = current.joystickScale
         var opacity = current.controlsOpacity
+        var displayScale = current.displayScale
         addSetting("ГРОМКОСТЬ МУЗЫКИ", music * 100, 100, { "Уровень: $it%" }) { music = it / 100f }
         addSetting("ГРОМКОСТЬ ЭФФЕКТОВ", effects * 100, 100, { "Уровень: $it%" }) { effects = it / 100f }
         addSetting("ЧУВСТВИТЕЛЬНОСТЬ УПРАВЛЕНИЯ", (sensitivity * 50), 100, { "Множитель: ${(it / 50f).formatOneDecimal()}x" }) { sensitivity = it / 50f }
         addSetting("РАЗМЕР ДЖОЙСТИКА", ((scale - 0.8f) * 166.66f), 100, { "Размер: ${(0.8f + it / 166.66f).formatOneDecimal()}x" }) { scale = 0.8f + it / 166.66f }
         addSetting("ПРОЗРАЧНОСТЬ КНОПОК", ((opacity - 0.35f) / 0.65f * 100), 100, { "Прозрачность: ${(35 + it * 0.65f).toInt()}%" }) { opacity = 0.35f + it / 100f * 0.65f }
+        addSetting("МАСШТАБ ИГРОВОГО ЭКРАНА", ((displayScale - 0.8f) * 250f), 100, { "Масштаб: ${80 + it / 100f * 40f}%" }) { displayScale = 0.8f + it / 250f }
         val quality = Spinner(this).apply {
             adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, GraphicsQuality.values().map { it.name })
             setSelection(GraphicsQuality.values().indexOf(current.graphicsQuality).coerceAtLeast(0))
@@ -362,7 +594,7 @@ class MainActivity : Activity() {
         panel.addView(vibration)
         panel.addView(menuButton("СОХРАНИТЬ НАСТРОЙКИ") {
             session.settings.save(GameSettings(music, effects, sensitivity, scale, opacity,
-                GraphicsQuality.values()[quality.selectedItemPosition], vibration.isChecked))
+                GraphicsQuality.values()[quality.selectedItemPosition], vibration.isChecked, displayScale))
             Toast.makeText(this, "Настройки сохранены", Toast.LENGTH_SHORT).show()
             if (pausedGame) showPauseMenu() else showMainMenu()
         })
@@ -374,13 +606,21 @@ class MainActivity : Activity() {
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(24), dp(24), dp(24), dp(24))
-            setBackgroundColor(Color.rgb(19, 27, 27))
+            setPadding(dp(18), dp(18), dp(18), dp(16))
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(Color.rgb(30, 43, 41), Color.rgb(17, 27, 28))
+            ).apply {
+                cornerRadius = dp(14).toFloat()
+                setStroke(dp(1), Color.rgb(104, 126, 105))
+            }
         }
-        content.addView(label(title, 28f, Color.rgb(207, 194, 155), true))
-        content.addView(label(subtitle, 13f, Color.rgb(142, 155, 147)).apply {
+        content.addView(label(title, 22f, Color.rgb(230, 205, 151), true).apply {
+            letterSpacing = 0.045f
+        })
+        content.addView(label(subtitle, 12f, Color.rgb(165, 184, 169)).apply {
             gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, dp(16))
+            setPadding(dp(4), dp(3), dp(4), dp(12))
         })
         return content
     }
@@ -388,11 +628,27 @@ class MainActivity : Activity() {
     private fun showOverlay(content: LinearLayout) {
         val scroll = ScrollView(this).apply {
             isFillViewport = true
+            clipToPadding = false
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            isClickable = true
+            setOnClickListener { /* Consume taps inside the card; buttons handle their own actions. */ }
             addView(content)
         }
         val overlay = FrameLayout(this).apply {
-            setBackgroundColor(Color.rgb(10, 15, 16))
-            addView(scroll, FrameLayout.LayoutParams(dp(560), -1, Gravity.CENTER))
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { if (activeGame) closeStationPanel() }
+        }
+        if (activeGame) {
+            // The simulation and ambient audio continue while the interaction card is open.
+            // The interaction card is a compact HUD layer, not a replacement screen.
+            overlay.setBackgroundColor(Color.argb(72, 3, 9, 10))
+            val cardWidth = minOf(dp(520), (resources.displayMetrics.widthPixels * 0.58f).toInt())
+            val cardHeight = minOf(dp(680), (resources.displayMetrics.heightPixels * 0.90f).toInt())
+            overlay.addView(scroll, FrameLayout.LayoutParams(cardWidth, cardHeight, Gravity.CENTER))
+        } else {
+            overlay.setBackgroundColor(Color.rgb(8, 14, 15))
+            overlay.addView(scroll, FrameLayout.LayoutParams(dp(560), -1, Gravity.CENTER))
         }
         if (root.childCount > 1) root.removeViewAt(1)
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1))
@@ -415,9 +671,11 @@ class MainActivity : Activity() {
             isEnabled = enabled
             textSize = 14f
             setTextColor(if (enabled) Color.WHITE else Color.GRAY)
-            backgroundTintList = android.content.res.ColorStateList.valueOf(
-                if (enabled) Color.rgb(65, 82, 74) else Color.rgb(42, 49, 47)
-            )
+            background = GradientDrawable().apply {
+                setColor(if (enabled) Color.rgb(57, 82, 68) else Color.rgb(39, 48, 45))
+                cornerRadius = dp(8).toFloat()
+                setStroke(dp(1), if (enabled) Color.rgb(112, 143, 112) else Color.rgb(65, 75, 68))
+            }
             minHeight = dp(48)
             setOnClickListener { action() }
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) }

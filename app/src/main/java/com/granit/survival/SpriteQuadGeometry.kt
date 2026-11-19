@@ -14,7 +14,14 @@ object SpriteQuadGeometry {
         uv: SpriteAtlasUvRect,
         flipX: Boolean = false
     ) {
-        require(right >= left && bottom >= top) { "Sprite quad bounds are inverted" }
+        // X grows left-to-right. NDC Y may descend from the visual top to the bottom.
+        require(
+            left.isFinite() && right.isFinite() &&
+                top.isFinite() && bottom.isFinite() &&
+                right >= left
+        ) {
+            "Sprite quad horizontal bounds are inverted or non-finite"
+        }
         val uLeft = if (flipX) uv.right else uv.left
         val uRight = if (flipX) uv.left else uv.right
         positions.put(left).put(top).put(left).put(bottom).put(right).put(top)

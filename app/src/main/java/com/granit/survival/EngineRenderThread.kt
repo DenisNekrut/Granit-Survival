@@ -18,7 +18,9 @@ class EngineRenderThread(
     initialWidth: Int,
     initialHeight: Int,
     private val session: GameSession,
-    private val appContext: Context
+    private val appContext: Context,
+    private val onInteractionProcessed: () -> Unit = {},
+    private val onRenderFailure: (Throwable) -> Unit = {}
 ) : Thread("Granit-RenderThread") {
     private val running = AtomicBoolean(true)
     @Volatile private var viewportWidth = initialWidth.coerceAtLeast(1)
@@ -27,6 +29,8 @@ class EngineRenderThread(
     @Volatile private var touchY = 0f
     @Volatile private var joystickActive = false
     @Volatile private var interacting = false
+    @Volatile private var firing = false
+    private val pendingInteraction = AtomicBoolean(false)
 
     fun requestStop() {
         running.set(false)
@@ -46,6 +50,15 @@ class EngineRenderThread(
 
     fun setInteracting(active: Boolean) {
         interacting = active
+    }
+
+    fun setFiring(active: Boolean) {
+        firing = active
+    }
+
+    /** Latches a short tap until at least one fixed simulation step consumes it. */
+    fun requestInteraction() {
+        pendingInteraction.set(true)
     }
 
     override fun run() {
@@ -86,11 +99,13 @@ class EngineRenderThread(
             GLES20.glDisable(GLES20.GL_DEPTH_TEST)
             renderer = PixelRenderer()
             renderer.create(appContext.assets)
-            renderer.resize(viewportWidth, viewportHeight)
             val engine = session.engine
             val gameSettings = session.settings.load()
+            session.audio.setVolumes(gameSettings.musicVolume, gameSettings.effectsVolume)
+            renderer.resize(viewportWidth, viewportHeight, gameSettings.displayScale)
             val fixedFrameDelayNanos = 16_000_000L
             var previousFrame = System.nanoTime()
+            var wasInteracting = false
 
             while (running.get() && surfaceHolder.surface.isValid) {
                 val frameStart = System.nanoTime()
@@ -101,12 +116,12 @@ class EngineRenderThread(
                 val width = viewportWidth.coerceAtLeast(1)
                 val height = viewportHeight.coerceAtLeast(1)
                 GLES20.glViewport(0, 0, width, height)
-                renderer.resize(width, height)
+                renderer.resize(width, height, gameSettings.displayScale)
 
                 val active = joystickActive
-                val dx = touchX - width * 0.16f
-                val dy = touchY - height * 0.78f
-                val radius = (height * 0.19f * gameSettings.joystickScale).coerceAtLeast(72f)
+                val dx = touchX - width * 0.145f
+                val dy = touchY - height * 0.80f
+                val radius = (minOf(width, height) * 0.095f * gameSettings.joystickScale).coerceAtLeast(40f)
                 val distance = sqrt(dx * dx + dy * dy)
                 val input = if (active && distance > radius * 0.12f) {
                     val magnitude = ((distance / radius) * gameSettings.joystickSensitivity).coerceAtMost(1f)
@@ -118,9 +133,20 @@ class EngineRenderThread(
                     EngineInput()
                 }
 
-                engine.updateFrame(deltaSeconds, input.copy(interact = interacting))
+                val interactionRequested = pendingInteraction.get()
+                val interactionHeld = interacting
+                val fixedSteps = engine.updateFrame(
+                    deltaSeconds,
+                    input.copy(interact = interactionHeld || interactionRequested, fire = firing)
+                )
+                if (fixedSteps > 0 && interactionRequested && pendingInteraction.compareAndSet(true, false)) {
+                    runCatching { onInteractionProcessed() }
+                }
+                if (interactionHeld && !wasInteracting) session.audio.playAction()
+                wasInteracting = interactionHeld
+                session.audio.setMoving(engine.isMoving)
                 renderer?.render(
-                    engine, touchX, touchY, active, interacting,
+                    engine, touchX, touchY, active, interacting, firing,
                     controlsOpacity = gameSettings.controlsOpacity,
                     joystickScale = gameSettings.joystickScale
                 )
@@ -141,6 +167,7 @@ class EngineRenderThread(
             }
         } catch (failure: Throwable) {
             Log.e("GranitEngine", "Render thread failed", failure)
+            runCatching { onRenderFailure(failure) }
         } finally {
             if (display != EGL14.EGL_NO_DISPLAY) {
                 if (context != EGL14.EGL_NO_CONTEXT && eglSurface != EGL14.EGL_NO_SURFACE &&

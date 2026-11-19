@@ -1,6 +1,7 @@
 package com.granit.survival
 
 import android.content.Context
+import android.graphics.PixelFormat
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -8,12 +9,20 @@ import android.view.SurfaceView
 class GameSurface(context: Context, private val session: GameSession) : SurfaceView(context), SurfaceHolder.Callback {
     @Volatile private var renderThread: EngineRenderThread? = null
     @Volatile private var resumed = false
-    @Volatile private var surfaceWidth = 1
-    @Volatile private var surfaceHeight = 1
+    @Volatile var onRenderFailure: ((Throwable) -> Unit)? = null
+    @Volatile var onInteractionProcessed: (() -> Unit)? = null
+    @Volatile private var surfaceWidth = 0
+    @Volatile private var surfaceHeight = 0
+    @Volatile private var surfaceReady = false
     private var joystickPointerId: Int = MotionEvent.INVALID_POINTER_ID
     private var actionPointerId: Int = MotionEvent.INVALID_POINTER_ID
+    private var firePointerId: Int = MotionEvent.INVALID_POINTER_ID
 
     init {
+        // Match the RGBA_8888 EGL config selected by EngineRenderThread.
+        // Without an explicit native-window format, some Android devices reject or
+        // silently fail to present the GLES surface after entering a new session.
+        holder.setFormat(PixelFormat.RGBA_8888)
         holder.addCallback(this)
         isFocusable = true
         isFocusableInTouchMode = true
@@ -42,10 +51,13 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         surfaceWidth = width.coerceAtLeast(1)
         surfaceHeight = height.coerceAtLeast(1)
+        surfaceReady = true
         renderThread?.setViewport(surfaceWidth, surfaceHeight)
+        startIfReady()
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
+        surfaceReady = false
         stopThread()
     }
 
@@ -55,12 +67,21 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 val index = event.actionIndex
                 val pointerId = event.getPointerId(index)
-                if (event.getX(index) < surfaceWidth * 0.55f && joystickPointerId == MotionEvent.INVALID_POINTER_ID) {
+                val touchX = event.getX(index)
+                val touchY = event.getY(index)
+                val inJoystickArea = touchX < surfaceWidth * 0.38f && touchY > surfaceHeight * 0.62f
+                val inActionArea = touchX > surfaceWidth * 0.68f && touchY > surfaceHeight * 0.72f
+                val inFireArea = touchX > surfaceWidth * 0.68f && touchY in (surfaceHeight * 0.48f)..(surfaceHeight * 0.68f)
+                if (inJoystickArea && joystickPointerId == MotionEvent.INVALID_POINTER_ID) {
                     joystickPointerId = pointerId
-                    thread.setJoystick(event.getX(index), event.getY(index), true)
-                } else if (actionPointerId == MotionEvent.INVALID_POINTER_ID) {
+                    thread.setJoystick(touchX, touchY, true)
+                } else if (inFireArea && firePointerId == MotionEvent.INVALID_POINTER_ID) {
+                    firePointerId = pointerId
+                    thread.setFiring(true)
+                } else if (inActionArea && actionPointerId == MotionEvent.INVALID_POINTER_ID) {
                     actionPointerId = pointerId
                     thread.setInteracting(true)
+                    thread.requestInteraction()
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -73,6 +94,10 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
                     joystickPointerId = MotionEvent.INVALID_POINTER_ID
                     thread.setJoystick(0f, 0f, false)
                 }
+                if (pointerId == firePointerId) {
+                    firePointerId = MotionEvent.INVALID_POINTER_ID
+                    thread.setFiring(false)
+                }
                 if (pointerId == actionPointerId) {
                     actionPointerId = MotionEvent.INVALID_POINTER_ID
                     thread.setInteracting(false)
@@ -81,6 +106,8 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
             MotionEvent.ACTION_CANCEL -> {
                 joystickPointerId = MotionEvent.INVALID_POINTER_ID
                 actionPointerId = MotionEvent.INVALID_POINTER_ID
+                firePointerId = MotionEvent.INVALID_POINTER_ID
+                thread.setFiring(false)
                 thread.setJoystick(0f, 0f, false)
                 thread.setInteracting(false)
             }
@@ -90,8 +117,14 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
 
     @Synchronized
     private fun startIfReady() {
-        if (!resumed || !holder.surface.isValid || renderThread?.isAlive == true) return
-        val thread = EngineRenderThread(holder, surfaceWidth, surfaceHeight, session, context.applicationContext)
+        if (!resumed || !surfaceReady || surfaceWidth <= 1 || surfaceHeight <= 1 ||
+            !holder.surface.isValid || renderThread?.isAlive == true) return
+        val thread = EngineRenderThread(
+            holder, surfaceWidth, surfaceHeight, session, context.applicationContext,
+            onInteractionProcessed = { post { onInteractionProcessed?.invoke() } }
+        ) { failure ->
+            post { onRenderFailure?.invoke(failure) }
+        }
         renderThread = thread
         thread.start()
     }
@@ -106,7 +139,10 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
             Thread.currentThread().interrupt()
         }
         renderThread = null
+        if (!thread.isAlive) session.engine.releaseInputState()
         joystickPointerId = MotionEvent.INVALID_POINTER_ID
         actionPointerId = MotionEvent.INVALID_POINTER_ID
+        firePointerId = MotionEvent.INVALID_POINTER_ID
+        thread.setFiring(false)
     }
 }

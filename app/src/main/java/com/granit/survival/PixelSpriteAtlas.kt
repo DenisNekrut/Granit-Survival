@@ -31,7 +31,43 @@ object PixelSpriteAtlas {
                     "..SSSSSSSS..", "..SSSSSSSS..", "..CCAAAAAC..", ".PCCCCCCCC..",
                     ".PCCCCCCCC..", ".PCCCCCCCC..", "..CCCCCCCC..", "..BBBBBBBB..",
                     "...BBBB.....", "..BB..BB....", "...DD..DD...", "...DD..DD..."
-                )
+                ),
+                listOf(
+                    "....HHHH....",
+                    "...HHHHHH...",
+                    "...SSSSSS...",
+                    "..SSSSSSSS..",
+                    "..SSSSSSSS..",
+                    "..SSSSSSSS..",
+                    "..CCAAAAAC..",
+                    ".PCCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    "..CCCCCCCC..",
+                    "..BBBBBBBB..",
+                    "..BB..BB....",
+                    "...BBBB.....",
+                    "DD....DD....",
+                    "DD....DD...."
+                ),
+                listOf(
+                    "....HHHH....",
+                    "...HHHHHH...",
+                    "...SSSSSS...",
+                    "..SSSSSSSS..",
+                    "..SSSSSSSS..",
+                    "..SSSSSSSS..",
+                    "..CCAAAAAC..",
+                    ".PCCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    "..CCCCCCCC..",
+                    "..BBBBBBBB..",
+                    "...BBBB.....",
+                    "..BB..BB....",
+                    "...DD..DD...",
+                    "...DD..DD..."
+                ),
             ),
             palette = characterPalette
         ),
@@ -48,7 +84,43 @@ object PixelSpriteAtlas {
                     "..HHHHHHHH..", "..HHHHHHHH..", "..CCCCCCCC..", ".PCCCCCCCC..",
                     ".PCCCCCCCC..", ".PCCCCCCCC..", "..CCCCCCCC..", "..BBBBBBBB..",
                     "...BBBB.....", "..BB..BB....", "...DD..DD...", "...DD..DD..."
-                )
+                ),
+                listOf(
+                    "....HHHH....",
+                    "...HHHHHH...",
+                    "...HHHHHH...",
+                    "..HHHHHHHH..",
+                    "..HHHHHHHH..",
+                    "..HHHHHHHH..",
+                    "..CCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    "..CCCCCCCC..",
+                    "..BBBBBBBB..",
+                    "..BB..BB....",
+                    "...BBBB.....",
+                    "DD....DD....",
+                    "DD....DD...."
+                ),
+                listOf(
+                    "....HHHH....",
+                    "...HHHHHH...",
+                    "...HHHHHH...",
+                    "..HHHHHHHH..",
+                    "..HHHHHHHH..",
+                    "..HHHHHHHH..",
+                    "..CCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    ".PCCCCCCCC..",
+                    "..CCCCCCCC..",
+                    "..BBBBBBBB..",
+                    "...BBBB.....",
+                    "..BB..BB....",
+                    "...DD..DD...",
+                    "...DD..DD..."
+                ),
             ),
             palette = characterPalette
         ),
@@ -65,7 +137,43 @@ object PixelSpriteAtlas {
                     "..SSSSSSSS..", "..SSSSSSSS..", "..CCAAAAA...", ".PCCCCCCC...",
                     ".PCCCCCCC...", ".PCCCCCCC...", "..CCCCCCC...", "..BBBBBBB...",
                     "...BBBB.....", "..BB..BB....", "....DD.DD...", "....DD.DD..."
-                )
+                ),
+                listOf(
+                    "....HHHH....",
+                    "...HHHHHH...",
+                    "...HHHHHH...",
+                    "...SSSSSS...",
+                    "..SSSSSSSS..",
+                    "..SSSSSSSS..",
+                    "..CCAAAAA...",
+                    ".PCCCCCCC...",
+                    ".PCCCCCCC...",
+                    ".PCCCCCCC...",
+                    "..CCCCCCC...",
+                    "..BBBBBBB...",
+                    "..BB..BB....",
+                    "...BBBB.....",
+                    "...DD.DD....",
+                    "...DD.DD...."
+                ),
+                listOf(
+                    "....HHHH....",
+                    "...HHHHHH...",
+                    "...HHHHHH...",
+                    "...SSSSSS...",
+                    "..SSSSSSSS..",
+                    "..SSSSSSSS..",
+                    "..CCAAAAA...",
+                    ".PCCCCCCC...",
+                    ".PCCCCCCC...",
+                    ".PCCCCCCC...",
+                    "..CCCCCCC...",
+                    "..BBBBBBB...",
+                    "...BBBB.....",
+                    "..BB..BB....",
+                    "....DD.DD...",
+                    "....DD.DD..."
+                ),
             ),
             palette = characterPalette
         ),
@@ -407,7 +515,7 @@ object PixelSpriteAtlas {
             "........", "...WW...", "..WWWW..", ".WWWWWW.",
             ".WWWWWW.", "..WWWW..", "...WW...", "........"
         )), mapOf('W' to floatArrayOf(0.27f, 0.59f, 0.78f)))
-    )
+    ) + GeneratedPixelSprites.all
 
     fun sprite(id: String): PixelSprite? = sprites[id]
 

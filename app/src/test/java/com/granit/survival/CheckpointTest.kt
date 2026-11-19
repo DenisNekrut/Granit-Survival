@@ -32,7 +32,26 @@ class CheckpointTest {
         assertEquals(1, engine.bunkerStorage.count(ItemType.METAL))
         assertEquals(checkpointNeeds, engine.needs.snapshot())
         assertEquals(checkpointDay, engine.worldClock.day)
-        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 8])
+        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[1, 8])
+    }
+
+    @Test
+    fun deathRollbackRestoresEquipmentAndAllCharacterStatistics() {
+        val engine = GameEngine { 404L }
+        engine.sleepUntilMorning()
+        val checkpointStats = engine.statistics.snapshot()
+        val checkpointEquipment = engine.equipment.snapshot()
+
+        engine.changeZone(WorldZone.RUINS)
+        engine.statistics.recordDistance(120f)
+        engine.statistics.recordResourceCollected(4)
+        engine.statistics.recordCrafted(3)
+        engine.statistics.recordBookRead()
+
+        assertTrue(engine.respawnAtWakeCheckpoint())
+        assertEquals(checkpointStats, engine.statistics.snapshot())
+        assertEquals(checkpointEquipment, engine.equipment.snapshot())
+        assertEquals(WorldZone.BUNKER, engine.zone)
     }
 
     @Test

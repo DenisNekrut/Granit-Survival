@@ -20,6 +20,9 @@ data class EngineSaveSnapshot(
     val zone: WorldZone = WorldZone.BUNKER,
     val zoneResources: List<ZoneResourceSnapshot> = emptyList(),
     val discoveredPoiIds: Set<String> = emptySet(),
+    val equipment: PlayerEquipmentSnapshot = PlayerEquipmentSnapshot(),
+    val statistics: CharacterStatisticsSnapshot = CharacterStatisticsSnapshot(),
+    val bunkerPower: BunkerPowerSnapshot = BunkerPowerSnapshot(),
     val wakeCheckpoint: WakeCheckpoint?
 ) {
     companion object
@@ -126,7 +129,7 @@ class GameSaveRepository(context: Context) {
 
     companion object {
         const val MAX_SLOTS = 3
-        const val SAVE_VERSION = 6
+        const val SAVE_VERSION = 9
     }
 }
 
@@ -143,6 +146,9 @@ private fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("zone", zone.name)
     .put("zoneResources", zoneResources.toZoneResourcesJson())
     .put("discoveredPoiIds", JSONArray(discoveredPoiIds.toList()))
+    .put("equipment", equipment.toJson())
+    .put("statistics", statistics.toJson())
+    .put("bunkerPower", bunkerPower.toJson())
     .put("wakeCheckpoint", wakeCheckpoint?.toJson() ?: JSONObject.NULL)
 
 private fun PlayerSnapshot.toJson() = JSONObject()
@@ -157,6 +163,23 @@ private fun SurvivalNeedsSnapshot.toJson() = JSONObject()
 private fun BookLibrarySnapshot.toJson() = JSONObject().put("readBookIds", JSONArray(readBookIds.toList()))
 
 private fun BunkerRadioSnapshot.toJson() = JSONObject().put("lastListenedDay", lastListenedDay)
+
+private fun PlayerEquipmentSnapshot.toJson() = JSONObject()
+    .put("weapon", weapon?.name ?: JSONObject.NULL)
+    .put("weaponDrawn", weaponDrawn)
+
+private fun BunkerPowerSnapshot.toJson() = JSONObject()
+    .put("generatorRunning", generatorRunning)
+    .put("fuelMinutesRemaining", fuelMinutesRemaining)
+
+private fun CharacterStatisticsSnapshot.toJson() = JSONObject()
+    .put("daysSurvived", daysSurvived)
+    .put("expeditionMinutes", expeditionMinutes)
+    .put("distanceTravelled", distanceTravelled.toDouble())
+    .put("resourcesCollected", resourcesCollected)
+    .put("itemsCrafted", itemsCrafted)
+    .put("booksRead", booksRead)
+    .put("visitedZones", JSONArray(visitedZones.map { it.name }))
 
 private fun PsychologicalStateSnapshot.toJson() = JSONObject()
     .put("stress", stress.toDouble())
@@ -179,6 +202,7 @@ private fun List<ZoneResourceSnapshot>.toZoneResourcesJson(): JSONArray = JSONAr
     forEach { snapshot ->
         array.put(JSONObject()
             .put("zone", snapshot.zone.name)
+            .put("seed", snapshot.seed ?: JSONObject.NULL)
             .put("resources", snapshot.resources.toResourcesJson()))
     }
 }
@@ -205,9 +229,14 @@ private fun WakeCheckpoint.toJson() = JSONObject()
     .put("zone", zone.name)
     .put("zoneResources", zoneResources.toZoneResourcesJson())
     .put("discoveredPoiIds", JSONArray(discoveredPoiIds.toList()))
+    .put("equipment", equipment.toJson())
+    .put("statistics", statistics.toJson())
+    .put("bunkerPower", bunkerPower.toJson())
 
 private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveSnapshot {
     val checkpointJson = json.optJSONObject("wakeCheckpoint")
+    val restoredZone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }
+        .getOrDefault(WorldZone.BUNKER)
     return EngineSaveSnapshot(
         player = json.getJSONObject("player").toPlayerSnapshot(),
         inventory = json.getJSONArray("inventory").toItemStacks(),
@@ -218,9 +247,13 @@ private fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSaveS
         radio = json.optJSONObject("radio")?.toBunkerRadioSnapshot() ?: BunkerRadioSnapshot(),
         clock = json.getJSONObject("clock").toClockSnapshot(),
         remainingResources = json.getJSONArray("remainingResources").toResources(),
-        zone = runCatching { WorldZone.valueOf(json.optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
+        zone = restoredZone,
         zoneResources = json.optJSONArray("zoneResources")?.toZoneResources() ?: emptyList(),
         discoveredPoiIds = json.optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet(),
+        equipment = json.optJSONObject("equipment")?.toEquipmentSnapshot()
+            ?: PlayerEquipmentSnapshot(weaponDrawn = restoredZone != WorldZone.BUNKER),
+        statistics = json.optJSONObject("statistics")?.toStatisticsSnapshot() ?: CharacterStatisticsSnapshot(),
+        bunkerPower = json.optJSONObject("bunkerPower")?.toBunkerPowerSnapshot() ?: BunkerPowerSnapshot(),
         wakeCheckpoint = checkpointJson?.toWakeCheckpoint()
     )
 }
@@ -240,6 +273,30 @@ private fun JSONObject.toNeedsSnapshot() = SurvivalNeedsSnapshot(
 
 private fun JSONObject.toBunkerRadioSnapshot() = BunkerRadioSnapshot(
     lastListenedDay = optInt("lastListenedDay", 0).coerceAtLeast(0)
+)
+
+private fun JSONObject.toEquipmentSnapshot() = PlayerEquipmentSnapshot(
+    weapon = runCatching { optString("weapon").takeIf { it.isNotBlank() && it != "null" }?.let { value -> WeaponType.valueOf(value) } }.getOrNull(),
+    weaponDrawn = optBoolean("weaponDrawn", false)
+)
+
+private fun JSONObject.toBunkerPowerSnapshot() = BunkerPowerSnapshot(
+    generatorRunning = optBoolean("generatorRunning", true),
+    fuelMinutesRemaining = optInt("fuelMinutesRemaining", BunkerPowerSystem.DEFAULT_FUEL_MINUTES)
+)
+
+private fun JSONObject.toStatisticsSnapshot() = CharacterStatisticsSnapshot(
+    daysSurvived = optInt("daysSurvived", 1),
+    expeditionMinutes = optLong("expeditionMinutes", 0L),
+    distanceTravelled = optDouble("distanceTravelled", 0.0).toFloat(),
+    resourcesCollected = optInt("resourcesCollected", 0),
+    itemsCrafted = optInt("itemsCrafted", 0),
+    booksRead = optInt("booksRead", 0),
+    visitedZones = optJSONArray("visitedZones")?.let { array ->
+        (0 until array.length()).mapNotNull { index ->
+            runCatching { WorldZone.valueOf(array.optString(index)) }.getOrNull()
+        }.toSet()
+    } ?: setOf(WorldZone.BUNKER)
 )
 
 private fun JSONObject.toBookLibrarySnapshot() = BookLibrarySnapshot(
@@ -274,7 +331,8 @@ private fun JSONArray.toZoneResources(): List<ZoneResourceSnapshot> = List(lengt
     getJSONObject(index).let { entry ->
         ZoneResourceSnapshot(
             zone = WorldZone.valueOf(entry.getString("zone")),
-            resources = entry.getJSONArray("resources").toResources()
+            resources = entry.getJSONArray("resources").toResources(),
+            seed = if (entry.isNull("seed")) null else entry.optLong("seed")
         )
     }
 }
@@ -289,7 +347,10 @@ private fun JSONArray.toResources(): List<ResourceLocation> = List(length()) { i
     }
 }
 
-private fun JSONObject.toWakeCheckpoint() = WakeCheckpoint(
+private fun JSONObject.toWakeCheckpoint(): WakeCheckpoint {
+    val restoredZone = runCatching { WorldZone.valueOf(optString("zone", WorldZone.BUNKER.name)) }
+        .getOrDefault(WorldZone.BUNKER)
+    return WakeCheckpoint(
     player = getJSONObject("player").toPlayerSnapshot(),
     inventory = getJSONArray("inventory").toItemStacks(),
     bunkerStorage = getJSONArray("bunkerStorage").toItemStacks(),
@@ -299,7 +360,12 @@ private fun JSONObject.toWakeCheckpoint() = WakeCheckpoint(
     radio = optJSONObject("radio")?.toBunkerRadioSnapshot() ?: BunkerRadioSnapshot(),
     clock = getJSONObject("clock").toClockSnapshot(),
     remainingResources = getJSONArray("remainingResources").toResources(),
-    zone = runCatching { WorldZone.valueOf(optString("zone", WorldZone.BUNKER.name)) }.getOrDefault(WorldZone.BUNKER),
+    zone = restoredZone,
     zoneResources = optJSONArray("zoneResources")?.toZoneResources() ?: emptyList(),
-    discoveredPoiIds = optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet()
-)
+    discoveredPoiIds = optJSONArray("discoveredPoiIds")?.toStringSet() ?: emptySet(),
+    equipment = optJSONObject("equipment")?.toEquipmentSnapshot()
+        ?: PlayerEquipmentSnapshot(weaponDrawn = restoredZone != WorldZone.BUNKER),
+    statistics = optJSONObject("statistics")?.toStatisticsSnapshot() ?: CharacterStatisticsSnapshot(),
+        bunkerPower = optJSONObject("bunkerPower")?.toBunkerPowerSnapshot() ?: BunkerPowerSnapshot()
+    )
+}

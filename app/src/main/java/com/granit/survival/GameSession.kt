@@ -9,6 +9,7 @@ import android.content.Context
 class GameSession(context: Context) {
     val saves = GameSaveRepository(context.applicationContext)
     val settings = GameSettingsRepository(context.applicationContext)
+    val audio = GranitAudioEngine()
     var engine: GameEngine = GameEngine()
         private set
 

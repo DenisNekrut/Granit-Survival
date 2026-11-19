@@ -6,6 +6,27 @@ import org.junit.Test
 
 class GameSaveSnapshotTest {
     @Test
+    fun saveSnapshotRestoresEquipmentAndCharacterStatistics() {
+        val original = GameEngine { 808L }
+        original.changeZone(WorldZone.RUINS)
+        original.statistics.recordMinutes(75, WorldZone.RUINS, 2)
+        original.statistics.recordDistance(42.5f)
+        original.statistics.recordResourceCollected(6)
+        original.statistics.recordCrafted(2)
+        original.statistics.recordBookRead()
+        val expectedStatistics = original.statistics.snapshot()
+        val expectedEquipment = original.equipment.snapshot()
+        val snapshot = original.createSaveSnapshot()
+
+        val restored = GameEngine { 909L }
+        restored.restoreSaveSnapshot(snapshot)
+
+        assertEquals(expectedEquipment, restored.equipment.snapshot())
+        assertEquals(expectedStatistics, restored.statistics.snapshot())
+        assertEquals(808L, restored.tileMap.layoutSeed)
+    }
+
+    @Test
     fun restoringSnapshotReturnsCurrentStateAndWakeCheckpoint() {
         val engine = GameEngine()
         engine.inventory.add(ItemType.WOOD, 4)
@@ -30,7 +51,7 @@ class GameSaveSnapshotTest {
         assertEquals(saved.bookLibrary, engine.bookLibrary.snapshot())
         assertEquals(saved.radio, engine.radioSystem.snapshot())
         assertEquals(saved.psychology, engine.psychology.snapshot())
-        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[7, 8])
+        assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[1, 8])
         assertTrue(engine.checkpointSystem.hasCheckpoint())
         assertTrue(engine.respawnAtWakeCheckpoint())
         assertEquals(4, engine.inventory.count(ItemType.WOOD))

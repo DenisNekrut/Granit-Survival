@@ -13,29 +13,31 @@ class CraftingTest {
         engine.inventory.add(ItemType.METAL, 1)
         assertFalse(engine.craft("medical_kit"))
 
-        engine.player.x = 9.5f
-        engine.player.y = 1.5f
+        engine.player.x = 8.5f
+        engine.player.y = 7.5f
         assertTrue(engine.canUseWorkbench())
         assertFalse(engine.craft("medical_kit"))
 
-        engine.player.x = 20.5f
+        engine.player.x = 9.5f
         engine.player.y = 2.5f
         assertTrue(engine.readBook("field_first_aid"))
-        engine.player.x = 9.5f
-        engine.player.y = 1.5f
+        engine.player.x = 8.5f
+        engine.player.y = 7.5f
         val startTime = engine.worldClock.totalMinutes
         assertTrue(engine.craft("medical_kit"))
         assertEquals(0, engine.inventory.count(ItemType.FABRIC))
         assertEquals(0, engine.inventory.count(ItemType.METAL))
         assertEquals(1, engine.inventory.count(ItemType.MEDICAL_KIT))
         assertEquals(startTime + 15, engine.worldClock.totalMinutes)
+        assertEquals(1, engine.statistics.snapshot().booksRead)
+        assertEquals(1, engine.statistics.snapshot().itemsCrafted)
     }
 
     @Test
-    fun craftingFailsWithoutMaterialsOrWhenInventoryCannotFitOutput() {
+    fun craftingFailsWithoutMaterialsButUsesSlotsFreedByIngredients() {
         val engine = GameEngine()
-        engine.player.x = 9.5f
-        engine.player.y = 1.5f
+        engine.player.x = 8.5f
+        engine.player.y = 7.5f
         assertFalse(engine.craft("medical_kit"))
 
         val recipe = CraftingRecipe.byId("medical_kit")!!
@@ -43,7 +45,30 @@ class CraftingTest {
         full.add(ItemType.FABRIC, 2)
         full.add(ItemType.METAL, 1)
         full.add(ItemType.WOOD, 20)
-        assertFalse(recipe.canCraft(full))
+        assertTrue(recipe.canCraft(full))
+    }
+
+    @Test
+    fun craftingCanProduceAnItemFromACompletelyFullBackpack() {
+        val engine = GameEngine()
+        engine.player.x = 8.5f
+        engine.player.y = 7.5f
+        engine.player.x = 9.5f
+        engine.player.y = 2.5f
+        assertTrue(engine.readBook("field_first_aid"))
+        engine.player.x = 8.5f
+        engine.player.y = 7.5f
+
+        // Fourteen full wood stacks plus the two ingredient stacks fill all 16 slots.
+        repeat(14) { assertEquals(0, engine.inventory.add(ItemType.WOOD, 20)) }
+        assertEquals(0, engine.inventory.add(ItemType.FABRIC, 2))
+        assertEquals(0, engine.inventory.add(ItemType.METAL, 1))
+        assertTrue(engine.inventory.slot(15) != null)
+        assertTrue(engine.canCraft("medical_kit"))
+        assertTrue(engine.craft("medical_kit"))
+        assertEquals(1, engine.inventory.count(ItemType.MEDICAL_KIT))
+        assertEquals(0, engine.inventory.count(ItemType.FABRIC))
+        assertEquals(0, engine.inventory.count(ItemType.METAL))
     }
 
     @Test
@@ -60,8 +85,8 @@ class CraftingTest {
     @Test
     fun bandageCanBeCraftedAndUsedForSmallHealing() {
         val engine = GameEngine()
-        engine.player.x = 9.5f
-        engine.player.y = 1.5f
+        engine.player.x = 8.5f
+        engine.player.y = 7.5f
         engine.inventory.add(ItemType.FABRIC, 1)
         val start = engine.worldClock.totalMinutes
 
@@ -91,15 +116,15 @@ class CraftingTest {
     @Test
     fun fatalCraftingCostRollsBackAndReportsFailure() {
         val engine = GameEngine()
-        engine.player.x = 20.5f
+        engine.player.x = 9.5f
         engine.player.y = 2.5f
         engine.inventory.add(ItemType.FABRIC, 2)
         engine.inventory.add(ItemType.METAL, 1)
         assertTrue(engine.readBook("field_first_aid"))
         engine.sleepUntilMorning()
 
-        engine.player.x = 9.5f
-        engine.player.y = 1.5f
+        engine.player.x = 8.5f
+        engine.player.y = 7.5f
         engine.needs.restore(SurvivalNeedsSnapshot(0.1f, 0f, 0f, 80f))
 
         assertFalse(engine.craft("medical_kit"))

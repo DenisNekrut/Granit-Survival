@@ -11,7 +11,8 @@ class GameSettingsTest {
             effectsVolume = -0.2f,
             joystickSensitivity = 3f,
             joystickScale = 0.1f,
-            controlsOpacity = 2f
+            controlsOpacity = 2f,
+            displayScale = 1.8f
         ).normalized()
 
         assertEquals(1f, settings.musicVolume, 0.001f)
@@ -19,6 +20,7 @@ class GameSettingsTest {
         assertEquals(2f, settings.joystickSensitivity, 0.001f)
         assertEquals(0.8f, settings.joystickScale, 0.001f)
         assertEquals(1f, settings.controlsOpacity, 0.001f)
+        assertEquals(1.2f, settings.displayScale, 0.001f)
     }
 
     @Test
@@ -27,5 +29,6 @@ class GameSettingsTest {
         assertEquals(0.7f, settings.musicVolume, 0.001f)
         assertEquals(GraphicsQuality.MEDIUM, settings.graphicsQuality)
         assertEquals(true, settings.vibrationEnabled)
+        assertEquals(1f, settings.displayScale, 0.001f)
     }
 }

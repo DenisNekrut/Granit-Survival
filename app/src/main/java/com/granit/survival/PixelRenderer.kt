@@ -133,12 +133,15 @@ class PixelRenderer {
         textureProgram = 0
     }
 
-    fun resize(width: Int, height: Int) {
+    fun resize(width: Int, height: Int, displayScale: Float = 1f) {
         screenWidth = width.coerceAtLeast(1)
         screenHeight = height.coerceAtLeast(1)
-        worldScale = minOf(screenWidth / 20f, screenHeight / 12f)
-        worldOffsetX = (screenWidth - 20f * worldScale) * 0.5f
-        worldOffsetY = (screenHeight - 12f * worldScale) * 0.5f
+        // Fill the complete landscape display. The camera viewport expands/contracts
+        // with the real aspect ratio instead of stretching the world or adding side bars.
+        worldScale = (screenHeight / 12f) * displayScale.coerceIn(0.8f, 1.2f)
+        worldOffsetX = 0f
+        worldOffsetY = 0f
+        currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
     }
 
@@ -148,16 +151,18 @@ class PixelRenderer {
         joystickY: Float,
         touching: Boolean,
         interacting: Boolean,
+        firing: Boolean = false,
         controlsOpacity: Float = 0.8f,
         joystickScale: Float = 1f
     ) {
-        GLES20.glClearColor(0.035f, 0.047f, 0.055f, 1f)
+        GLES20.glClearColor(0.055f, 0.065f, 0.067f, 1f)
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
         if (program == 0) return
         GLES20.glUseProgram(program)
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         currentCamera = engine.camera
+        currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
         queuedVertexCount = 0
         queuedTextureVertexCount = 0
         textureVertexBuffer.clear()
@@ -167,66 +172,30 @@ class PixelRenderer {
 
         // Each zone has its own floor tone to make transitions immediately readable.
         val floorTone = when (engine.zone) {
-            WorldZone.BUNKER -> floatArrayOf(0.12f, 0.15f, 0.16f)
-            WorldZone.FOREST -> floatArrayOf(0.15f, 0.19f, 0.14f)
-            WorldZone.RUINS -> floatArrayOf(0.17f, 0.16f, 0.15f)
-            WorldZone.ROAD -> floatArrayOf(0.13f, 0.15f, 0.18f)
+            WorldZone.BUNKER -> floatArrayOf(0.19f, 0.21f, 0.20f)
+            WorldZone.FOREST -> floatArrayOf(0.20f, 0.27f, 0.18f)
+            WorldZone.RUINS -> floatArrayOf(0.25f, 0.22f, 0.19f)
+            WorldZone.ROAD -> floatArrayOf(0.20f, 0.23f, 0.26f)
         }
-        rect(0f, 0f, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT,
+        rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
             floorTone[0], floorTone[1], floorTone[2])
-        for (x in 1 until GameEngine.WORLD_WIDTH.toInt()) {
-            rect(x.toFloat(), 0f, 0.025f, GameEngine.WORLD_HEIGHT, 0.16f, 0.18f, 0.17f)
+        for (x in 1 until engine.tileMap.width) {
+            rect(x.toFloat(), 0f, 0.025f, engine.tileMap.height.toFloat(), 0.22f, 0.24f, 0.22f)
         }
-        for (y in 1 until GameEngine.WORLD_HEIGHT.toInt()) {
-            rect(0f, y.toFloat(), GameEngine.WORLD_WIDTH, 0.025f, 0.16f, 0.18f, 0.17f)
+        for (y in 1 until engine.tileMap.height) {
+            rect(0f, y.toFloat(), engine.tileMap.width.toFloat(), 0.025f, 0.22f, 0.24f, 0.22f)
         }
 
         // Draw only non-floor tiles; the tile map is also used by movement collision.
         engine.tileMap.forEachTile { tileX, tileY, type ->
+            if (engine.zone == WorldZone.BUNKER && type != TileType.WALL) drawBunkerFloor(tileX, tileY)
             when (type) {
-                TileType.FLOOR -> drawFloorDetail(tileX, tileY, engine.zone)
+                TileType.FLOOR -> if (engine.zone != WorldZone.BUNKER) drawFloorDetail(tileX, tileY, engine.zone) else Unit
                 TileType.WALL -> Unit
-                TileType.BED -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.31f, 0.25f, 0.18f)
-                    rect(tileX + 0.08f, tileY + 0.12f, 0.84f, 0.18f, 0.43f, 0.35f, 0.23f)
-                    rect(tileX + 0.13f, tileY + 0.35f, 0.28f, 0.20f, 0.62f, 0.58f, 0.45f)
-                    rect(tileX + 0.48f, tileY + 0.34f, 0.38f, 0.07f, 0.20f, 0.17f, 0.14f)
-                }
-                TileType.WORKBENCH -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.20f, 0.35f, 0.26f)
-                    rect(tileX + 0.12f, tileY + 0.18f, 0.76f, 0.18f, 0.48f, 0.35f, 0.20f)
-                    rect(tileX + 0.18f, tileY + 0.38f, 0.10f, 0.48f, 0.28f, 0.23f, 0.16f)
-                    rect(tileX + 0.72f, tileY + 0.38f, 0.10f, 0.48f, 0.28f, 0.23f, 0.16f)
-                    rect(tileX + 0.40f, tileY + 0.08f, 0.20f, 0.06f, 0.66f, 0.60f, 0.42f)
-                }
-                TileType.RADIO -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.18f, 0.22f, 0.20f)
-                    rect(tileX + 0.10f, tileY + 0.24f, 0.80f, 0.52f, 0.28f, 0.31f, 0.27f)
-                    rect(tileX + 0.18f, tileY + 0.32f, 0.34f, 0.18f, 0.13f, 0.20f, 0.19f)
-                    rect(tileX + 0.62f, tileY + 0.32f, 0.08f, 0.08f, 0.72f, 0.56f, 0.30f)
-                    rect(tileX + 0.62f, tileY + 0.48f, 0.08f, 0.08f, 0.72f, 0.56f, 0.30f)
-                    rect(tileX + 0.20f, tileY + 0.58f, 0.60f, 0.06f, 0.10f, 0.13f, 0.12f)
-                }
-                TileType.BOOKSHELF -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.24f, 0.19f, 0.14f)
-                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.39f, 0.28f, 0.18f)
-                    rect(tileX + 0.18f, tileY + 0.34f, 0.64f, 0.07f, 0.15f, 0.14f, 0.12f)
-                    rect(tileX + 0.18f, tileY + 0.62f, 0.64f, 0.07f, 0.15f, 0.14f, 0.12f)
-                    rect(tileX + 0.23f, tileY + 0.16f, 0.10f, 0.17f, 0.58f, 0.36f, 0.23f)
-                    rect(tileX + 0.39f, tileY + 0.16f, 0.12f, 0.17f, 0.30f, 0.45f, 0.39f)
-                    rect(tileX + 0.58f, tileY + 0.16f, 0.13f, 0.17f, 0.58f, 0.51f, 0.36f)
-                    rect(tileX + 0.28f, tileY + 0.43f, 0.12f, 0.17f, 0.31f, 0.40f, 0.52f)
-                    rect(tileX + 0.49f, tileY + 0.43f, 0.16f, 0.17f, 0.63f, 0.55f, 0.34f)
-                }
-                TileType.STORAGE -> {
-                    rect(tileX.toFloat(), tileY.toFloat(), 1f, 1f, 0.34f, 0.27f, 0.17f)
-                    rect(tileX + 0.12f, tileY + 0.12f, 0.76f, 0.76f, 0.18f, 0.20f, 0.19f)
-                    rect(tileX + 0.18f, tileY + 0.20f, 0.64f, 0.08f, 0.43f, 0.35f, 0.22f)
-                    rect(tileX + 0.46f, tileY + 0.32f, 0.08f, 0.46f, 0.40f, 0.34f, 0.22f)
-                    rect(tileX + 0.40f, tileY + 0.46f, 0.20f, 0.10f, 0.58f, 0.50f, 0.30f)
-                }
+                TileType.BED, TileType.WORKBENCH, TileType.RADIO, TileType.BOOKSHELF, TileType.STORAGE,
+                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> Unit
                 TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
-                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY)
+                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY, type)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
                 TileType.RESOURCE_METAL -> drawResource(tileX, tileY, "metal")
                 TileType.RESOURCE_FABRIC -> drawResource(tileX, tileY, "fabric")
@@ -258,6 +227,9 @@ class PixelRenderer {
                 TileType.STORAGE -> "storage"
                 TileType.BOOKSHELF -> "bookshelf"
                 TileType.RADIO -> "radio"
+                TileType.DINING_TABLE -> "dining_table"
+                TileType.GENERATOR -> "generator"
+                TileType.MEDICAL_STATION -> "medical_station"
                 else -> null
             }
             if (furnitureSprite != null) {
@@ -286,14 +258,20 @@ class PixelRenderer {
         val (playerSprite, playerFlipX) = when (engine.player.facing) {
             PlayerFacing.DOWN -> "player" to false
             PlayerFacing.UP -> "player_back" to false
-            PlayerFacing.RIGHT -> "player_side" to false
-            PlayerFacing.LEFT -> "player_side" to true
+            PlayerFacing.RIGHT -> "player_side_right" to false
+            PlayerFacing.LEFT -> "player_side_left" to false
         }
         worldSprites += WorldSpriteCommand(
             sortY = py + 0.48f, sortOrder = 1, spriteId = playerSprite,
-            centerX = px, topY = py - 0.48f, pixelSize = 0.06f,
+            centerX = px, topY = py - 0.48f, pixelSize = 0.04f,
             frame = playerFrame, flipX = playerFlipX
         )
+        // Add fixed ceiling fixtures to the bunker room layout.
+        val bunkerLamps = listOf(
+            3.0f to 2.0f, 8.0f to 2.0f, 14.0f to 2.0f,
+            3.0f to 7.0f, 8.5f to 7.0f, 14.0f to 7.0f
+        )
+        // Fixtures are intentionally hidden: only their reflected light is visible on the floor and objects.
         worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
         worldSprites.forEach { command ->
             if (command.contactShadow) {
@@ -304,6 +282,88 @@ class PixelRenderer {
                 command.spriteId, command.centerX, command.topY, command.pixelSize,
                 command.frame, command.flipX
             )
+        }
+
+        // Stylized infected silhouettes are simple original shapes, sorted near ground level.
+        engine.zombies.forEach { zombie ->
+            val z = zombie.x
+            val y = zombie.y
+            val flash = zombie.hitFlash > 0f
+            val palette = when (zombie.variant) {
+                InfectedVariant.SHAMBLER -> floatArrayOf(0.24f, 0.34f, 0.27f)
+                InfectedVariant.RUNNER -> floatArrayOf(0.36f, 0.39f, 0.25f)
+                InfectedVariant.BRUTE -> floatArrayOf(0.30f, 0.27f, 0.25f)
+            }
+            val bodyR = if (flash) 0.62f else palette[0]
+            val bodyG = if (flash) 0.86f else palette[1]
+            val bodyB = if (flash) 0.78f else palette[2]
+            val width = if (zombie.variant == InfectedVariant.BRUTE) 0.48f else 0.40f
+            val left = z - width * 0.5f
+            rect(z - 0.34f, y + 0.27f, 0.68f, 0.12f, 0.035f, 0.045f, 0.04f, 0.58f)
+            rect(left, y - 0.27f, width, 0.53f, bodyR, bodyG, bodyB)
+            rect(z - 0.17f, y - 0.48f, 0.34f, 0.27f, 0.39f, 0.48f, 0.39f)
+            rect(z - 0.31f, y - 0.13f, 0.13f, 0.43f, bodyR, bodyG, bodyB)
+            rect(z + 0.18f, y - 0.12f, 0.13f, 0.42f, bodyR, bodyG, bodyB)
+            rect(z - 0.17f, y + 0.21f, 0.13f, 0.29f, 0.19f, 0.24f, 0.21f)
+            rect(z + 0.04f, y + 0.21f, 0.13f, 0.29f, 0.19f, 0.24f, 0.21f)
+            rect(z - 0.11f, y - 0.39f, 0.055f, 0.045f, 0.86f, 0.34f, 0.25f)
+            rect(z + 0.055f, y - 0.39f, 0.055f, 0.045f, 0.86f, 0.34f, 0.25f)
+        }
+
+        // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
+        drawWorldLighting(engine, bunkerLamps)
+
+        // The reticle exists only while a living infected is visible within seven tiles.
+        engine.autoAimTarget?.let { target ->
+            val cx = target.x
+            val cy = target.y - 0.08f
+            val colorR = 0.96f
+            val colorG = 0.76f
+            val colorB = 0.30f
+            val arm = 0.22f
+            val gap = 0.13f
+            val thickness = 0.045f
+            // Four open corners make the selected actor readable without obscuring it.
+            rect(cx - gap - arm, cy - 0.40f, arm, thickness, colorR, colorG, colorB, 0.98f)
+            rect(cx - 0.40f, cy - gap - arm, thickness, arm, colorR, colorG, colorB, 0.98f)
+            rect(cx + gap, cy - 0.40f, arm, thickness, colorR, colorG, colorB, 0.98f)
+            rect(cx + 0.355f, cy - gap - arm, thickness, arm, colorR, colorG, colorB, 0.98f)
+            rect(cx - gap - arm, cy + 0.355f, arm, thickness, colorR, colorG, colorB, 0.98f)
+            rect(cx - 0.40f, cy + gap, thickness, arm, colorR, colorG, colorB, 0.98f)
+            rect(cx + gap, cy + 0.355f, arm, thickness, colorR, colorG, colorB, 0.98f)
+            rect(cx + 0.355f, cy + gap, thickness, arm, colorR, colorG, colorB, 0.98f)
+        }
+
+        // Bright cyan pulse trace is a deliberately fictional energy effect.
+        if (firing && engine.equipment.weaponDrawn) {
+            when (engine.player.facing) {
+                PlayerFacing.DOWN -> rect(px - 0.045f, py + 0.28f, 0.09f, 3.6f, 0.16f, 0.78f, 0.88f, 0.52f)
+                PlayerFacing.UP -> rect(px - 0.045f, py - 3.75f, 0.09f, 3.6f, 0.16f, 0.78f, 0.88f, 0.52f)
+                PlayerFacing.RIGHT -> rect(px + 0.28f, py - 0.045f, 3.6f, 0.09f, 0.16f, 0.78f, 0.88f, 0.52f)
+                PlayerFacing.LEFT -> rect(px - 3.88f, py - 0.045f, 3.6f, 0.09f, 0.16f, 0.78f, 0.88f, 0.52f)
+            }
+        }
+
+        // The pulse carbine is shown as a compact cyan device while outside.
+        if (engine.equipment.weaponDrawn) {
+            when (engine.player.facing) {
+                PlayerFacing.DOWN -> {
+                    rect(px + 0.22f, py + 0.10f, 0.09f, 0.25f, 0.24f, 0.34f, 0.34f)
+                    rect(px + 0.22f, py + 0.28f, 0.09f, 0.07f, 0.20f, 0.72f, 0.78f)
+                }
+                PlayerFacing.UP -> {
+                    rect(px - 0.30f, py + 0.10f, 0.09f, 0.25f, 0.24f, 0.34f, 0.34f)
+                    rect(px - 0.30f, py + 0.10f, 0.09f, 0.07f, 0.20f, 0.72f, 0.78f)
+                }
+                PlayerFacing.RIGHT -> {
+                    rect(px + 0.22f, py + 0.10f, 0.25f, 0.09f, 0.24f, 0.34f, 0.34f)
+                    rect(px + 0.40f, py + 0.10f, 0.07f, 0.09f, 0.20f, 0.72f, 0.78f)
+                }
+                PlayerFacing.LEFT -> {
+                    rect(px - 0.47f, py + 0.10f, 0.25f, 0.09f, 0.24f, 0.34f, 0.34f)
+                    rect(px - 0.47f, py + 0.10f, 0.07f, 0.09f, 0.20f, 0.72f, 0.78f)
+                }
+            }
         }
 
         // Screen-space HUD reads the live simulation values.
@@ -319,44 +379,126 @@ class PixelRenderer {
             WorldZone.ROAD -> "ROAD"
         }
         drawText(zoneLabel, 0.68f, 0.80f, 0.055f, 0.57f, 0.68f, 0.60f)
+        if (engine.zombies.isNotEmpty()) {
+            drawText("INFECTED: ${engine.zombies.size}", 2.05f, 1.12f, 0.045f, 0.78f, 0.42f, 0.32f)
+        }
+        if (engine.equipment.weaponDrawn) {
+            drawText("PULSE: READY", 2.05f, 0.80f, 0.045f, 0.35f, 0.75f, 0.76f)
+        }
         drawText("W:" + engine.weather.shortCode, 3.55f, 0.43f, 0.055f, 0.60f, 0.72f, 0.76f)
         drawNeedBar("HP", engine.needs.health, 1.05f, 0.68f, 0.24f, 0.20f)
         drawNeedBar("FO", engine.needs.hunger, 1.52f, 0.64f, 0.43f, 0.22f)
         drawNeedBar("WT", engine.needs.thirst, 1.99f, 0.25f, 0.48f, 0.66f)
         drawNeedBar("EN", engine.needs.energy, 2.46f, 0.34f, 0.55f, 0.38f)
-        drawInventory(engine.inventory)
         engine.lastDiscoveryHudLabel?.let { label ->
             screenRect(5.7f, 0.42f, 8.6f, 0.72f, 0.08f, 0.12f, 0.10f, 0.94f)
             drawText("FOUND: $label", 5.95f, 0.68f, 0.075f, 0.78f, 0.76f, 0.62f)
         }
 
         // Virtual joystick and interaction button.
-        val joystickVisualSize = 2.4f * joystickScale
-        screenRect(3.2f - joystickVisualSize * 0.5f, 9.4f - joystickVisualSize * 0.5f,
-            joystickVisualSize, joystickVisualSize, 0.22f, 0.25f, 0.24f, controlsOpacity)
+        val controlUnit = minOf(screenWidth, screenHeight).toFloat()
+        val joystickDiameter = controlUnit * 0.19f * joystickScale
+        val joystickCenterX = screenWidth * 0.145f
+        val controlCenterY = screenHeight * 0.80f
+        screenRectPx(joystickCenterX - joystickDiameter * 0.5f,
+            controlCenterY - joystickDiameter * 0.5f, joystickDiameter, joystickDiameter,
+            0.22f, 0.25f, 0.24f, controlsOpacity)
         if (touching) {
-            val radiusPx = (screenHeight * 0.19f * joystickScale).coerceAtLeast(72f)
-            val thumbX = (joystickX - worldOffsetX) / worldScale
-            val thumbY = (joystickY - worldOffsetY) / worldScale
-            val thumbSize = (radiusPx * 0.36f) / worldScale
-            screenRect(
-                thumbX - thumbSize * 0.5f,
-                thumbY - thumbSize * 0.5f,
-                thumbSize,
-                thumbSize,
-                0.67f, 0.65f, 0.55f, controlsOpacity
-            )
+            val thumbDiameter = joystickDiameter * 0.34f
+            screenRectPx(joystickX - thumbDiameter * 0.5f, joystickY - thumbDiameter * 0.5f,
+                thumbDiameter, thumbDiameter, 0.67f, 0.65f, 0.55f, controlsOpacity)
         }
-        screenRect(16.8f, 9.2f, 2.2f, 2.2f,
+        val actionDiameter = controlUnit * 0.16f * joystickScale
+        val actionCenterX = screenWidth * 0.855f
+        screenRectPx(actionCenterX - actionDiameter * 0.5f,
+            controlCenterY - actionDiameter * 0.5f, actionDiameter, actionDiameter,
             if (interacting) 0.48f else 0.28f,
             if (interacting) 0.55f else 0.32f,
             if (interacting) 0.42f else 0.30f, controlsOpacity)
 
 
+        if (engine.zone != WorldZone.BUNKER) {
+            val fireDiameter = controlUnit * 0.13f * joystickScale
+            val fireCenterY = screenHeight * 0.59f
+            screenRectPx(actionCenterX - fireDiameter * 0.5f, fireCenterY - fireDiameter * 0.5f,
+                fireDiameter, fireDiameter, if (firing) 0.78f else 0.36f, if (firing) 0.52f else 0.25f, 0.20f, controlsOpacity)
+        }
+
         flushTextureBatch()
         flushBatch()
         GLES20.glDisableVertexAttribArray(positionLocation)
         GLES20.glDisableVertexAttribArray(vertexColorLocation)
+    }
+
+    private fun drawWorldLighting(engine: GameEngine, bunkerLamps: List<Pair<Float, Float>>) {
+        val minute = engine.worldClock.minuteOfDay
+        if (engine.zone != WorldZone.BUNKER) {
+            val darkness = DayNightLighting.outdoorDarkness(minute)
+            if (darkness > 0.001f) {
+                val nightBlue = minute < 360 || minute >= 1200
+                rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
+                    if (nightBlue) 0.035f else 0.12f,
+                    if (nightBlue) 0.055f else 0.075f,
+                    if (nightBlue) 0.12f else 0.055f,
+                    darkness)
+            }
+            val twilight = DayNightLighting.twilightTint(minute)
+            if (twilight > 0.001f) {
+                rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
+                    0.34f, 0.19f, 0.10f, twilight)
+            }
+            return
+        }
+
+        // Powered pools or dim emergency strips; ceiling fixtures remain invisible.
+        rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
+            0.012f, 0.018f, 0.020f, if (engine.bunkerPower.hasPower) 0.48f else 0.72f)
+        if (engine.bunkerPower.hasPower) {
+            bunkerLamps.forEach { (x, y) ->
+                val layers = listOf(
+                    floatArrayOf(6.0f, 3.8f, 0.035f, 0.72f, 0.48f, 0.25f),
+                    floatArrayOf(5.3f, 3.4f, 0.045f, 0.76f, 0.51f, 0.27f),
+                    floatArrayOf(4.7f, 3.0f, 0.055f, 0.80f, 0.55f, 0.29f),
+                    floatArrayOf(4.1f, 2.6f, 0.065f, 0.84f, 0.59f, 0.31f),
+                    floatArrayOf(3.5f, 2.2f, 0.078f, 0.88f, 0.63f, 0.33f),
+                    floatArrayOf(2.9f, 1.8f, 0.090f, 0.92f, 0.67f, 0.35f),
+                    floatArrayOf(2.3f, 1.4f, 0.105f, 0.96f, 0.71f, 0.37f),
+                    floatArrayOf(1.7f, 1.0f, 0.120f, 1.00f, 0.76f, 0.40f)
+                )
+                layers.forEach { layer ->
+                    val width = layer[0]
+                    val height = layer[1]
+                    rect(x - width * 0.5f, y + 0.12f, width, height,
+                        layer[3], layer[4], layer[5], layer[2])
+                }
+                rect(x - 0.62f, y + 0.28f, 1.24f, 0.16f, 1.0f, 0.78f, 0.47f, 0.10f)
+            }
+        } else {
+            // Emergency strips give minimal navigation light without full room illumination.
+            bunkerLamps.forEach { (x, y) ->
+                rect(x - 0.75f, y + 0.10f, 1.5f, 0.55f, 0.58f, 0.20f, 0.10f, 0.075f)
+                rect(x - 0.24f, y + 0.20f, 0.48f, 0.08f, 0.92f, 0.35f, 0.16f, 0.13f)
+            }
+        }
+    }
+
+    private fun drawBunkerFloor(x: Int, y: Int) {
+        // Individual materials for all six rooms; corridors use dark steel.
+        val corridor = (y == 4 && x in setOf(2, 8, 14)) ||
+            (x == 5 && y in setOf(2, 7)) || (x == 11 && y in setOf(2, 7))
+        val (r, g, b) = when {
+            corridor -> Triple(0.12f, 0.15f, 0.15f)
+            y < 4 && x < 5 -> Triple(0.20f, 0.24f, 0.27f)
+            y < 4 && x < 11 -> Triple(0.29f, 0.25f, 0.18f)
+            y < 4 -> Triple(0.22f, 0.25f, 0.19f)
+            x < 5 -> Triple(0.17f, 0.28f, 0.27f)
+            x < 11 -> Triple(0.25f, 0.25f, 0.23f)
+            else -> Triple(0.28f, 0.22f, 0.16f)
+        }
+        rect(x + 0.02f, y + 0.02f, 0.96f, 0.96f, r, g, b)
+        val seam = if (corridor) 0.08f else 0.12f
+        if ((x + y) % 2 == 0) rect(x + 0.12f, y + 0.88f, 0.76f, 0.025f, seam, seam + 0.015f, seam + 0.01f)
+        if ((x * 3 + y * 5) % 11 == 0) rect(x + 0.22f, y + 0.28f, 0.12f, 0.06f, r + 0.045f, g + 0.04f, b + 0.035f)
     }
 
     private fun drawFloorDetail(x: Int, y: Int, zone: WorldZone) {
@@ -388,11 +530,9 @@ class PixelRenderer {
         }
     }
 
-    private fun drawExitTile(x: Int, y: Int) {
-        rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.12f, 0.22f, 0.23f)
-        rect(x + 0.12f, y + 0.08f, 0.76f, 0.84f, 0.28f, 0.43f, 0.42f)
-        rect(x + 0.22f, y + 0.18f, 0.56f, 0.64f, 0.12f, 0.20f, 0.20f)
-        rect(x + 0.34f, y + 0.46f, 0.32f, 0.08f, 0.72f, 0.67f, 0.49f)
+    private fun drawExitTile(x: Int, y: Int, type: TileType) {
+        val sprite = if (type == TileType.EXIT_TO_BUNKER) "ladder_hatch" else "exit_hatch"
+        drawAtlasSprite(sprite, x + 0.5f, y.toFloat(), 0.0625f)
     }
 
     private fun drawAtlasSprite(
@@ -583,11 +723,15 @@ class PixelRenderer {
     }
 
     private fun drawInventory(inventory: Inventory) {
-        val panelX = 15.45f
-        val panelY = 0.45f
+        // HUD and backpack use the current screen-space viewport, not fixed world coordinates.
+        // This keeps the inventory attached to the right display edge on wide and narrow phones.
         val slotSize = 0.72f
         val gap = 0.08f
-        screenRect(panelX - 0.12f, panelY - 0.12f, 3.32f, 3.32f, 0.055f, 0.065f, 0.068f)
+        val panelWidth = inventory.columns * slotSize + (inventory.columns - 1) * gap + 0.24f
+        val viewportWidth = screenWidth / worldScale
+        val panelX = (viewportWidth - panelWidth - 0.42f).coerceAtLeast(0.42f)
+        val panelY = 0.45f
+        screenRect(panelX - 0.12f, panelY - 0.12f, panelWidth, 3.32f, 0.055f, 0.065f, 0.068f)
         for (index in 0 until inventory.columns * inventory.rows) {
             val column = index % inventory.columns
             val row = index / inventory.columns
@@ -623,6 +767,10 @@ class PixelRenderer {
         val right = worldOffsetX + (viewX + width) * worldScale
         val bottom = worldOffsetY + (viewY + height) * worldScale
         appendQuad(left, top, right, bottom, r, g, b, alpha.coerceIn(0f, 1f))
+    }
+
+    private fun screenRectPx(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float, alpha: Float = 1f) {
+        appendQuad(x, y, x + width, y + height, r, g, b, alpha.coerceIn(0f, 1f))
     }
 
     private fun screenRect(x: Float, y: Float, width: Float, height: Float, r: Float, g: Float, b: Float, alpha: Float = 1f) {

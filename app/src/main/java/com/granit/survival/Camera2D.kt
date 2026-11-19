@@ -2,9 +2,19 @@ package com.granit.survival
 
 /** Camera with a fixed virtual viewport and smooth follow target. */
 class Camera2D(
-    val viewportWidth: Float = 20f,
-    val viewportHeight: Float = 12f
+    viewportWidth: Float = 20f,
+    viewportHeight: Float = 12f
 ) {
+    var viewportWidth: Float = viewportWidth
+        private set
+    var viewportHeight: Float = viewportHeight
+        private set
+
+    fun setViewport(width: Float, height: Float) {
+        viewportWidth = width.coerceAtLeast(1f)
+        viewportHeight = height.coerceAtLeast(1f)
+    }
+
     var x: Float = viewportWidth * 0.5f
         private set
     var y: Float = viewportHeight * 0.5f

@@ -93,6 +93,11 @@ class SurvivalNeeds {
         }
     }
 
+    fun applyDamage(amount: Float) {
+        require(amount >= 0f)
+        health = (health - amount).coerceAtLeast(0f)
+    }
+
     fun restoreHealth(amount: Float) {
         require(amount >= 0f)
         health = (health + amount).coerceAtMost(100f)
@@ -136,5 +141,83 @@ class SurvivalNeeds {
         const val HEALTH_LOSS_PER_MINUTE = 0.04f
         const val FOOD_HUNGER_RESTORE = 42f
         const val WATER_THIRST_RESTORE = 48f
+    }
+}
+
+
+/** Reversible character statistics. The wake checkpoint restores these counters on death. */
+data class CharacterStatisticsSnapshot(
+    val daysSurvived: Int = 1,
+    val expeditionMinutes: Long = 0L,
+    val distanceTravelled: Float = 0f,
+    val resourcesCollected: Int = 0,
+    val itemsCrafted: Int = 0,
+    val booksRead: Int = 0,
+    val visitedZones: Set<WorldZone> = setOf(WorldZone.BUNKER)
+)
+
+class CharacterStatistics {
+    var daysSurvived: Int = 1
+        private set
+    var expeditionMinutes: Long = 0L
+        private set
+    var distanceTravelled: Float = 0f
+        private set
+    var resourcesCollected: Int = 0
+        private set
+    var itemsCrafted: Int = 0
+        private set
+    var booksRead: Int = 0
+        private set
+    private val visited = linkedSetOf(WorldZone.BUNKER)
+
+    val visitedZones: Set<WorldZone> get() = visited.toSet()
+
+    fun visitZone(zone: WorldZone) {
+        visited += zone
+    }
+
+    fun recordMinutes(minutes: Int, zone: WorldZone, currentDay: Int) {
+        if (minutes <= 0) return
+        daysSurvived = maxOf(daysSurvived, currentDay)
+        if (zone != WorldZone.BUNKER) expeditionMinutes += minutes.toLong()
+    }
+
+    fun recordDistance(distance: Float) {
+        if (distance.isFinite() && distance > 0f) distanceTravelled += distance
+    }
+
+    fun recordResourceCollected(amount: Int = 1) {
+        resourcesCollected += amount.coerceAtLeast(0)
+    }
+
+    fun recordCrafted(amount: Int = 1) {
+        itemsCrafted += amount.coerceAtLeast(0)
+    }
+
+    fun recordBookRead() {
+        booksRead++
+    }
+
+    fun snapshot() = CharacterStatisticsSnapshot(
+        daysSurvived = daysSurvived,
+        expeditionMinutes = expeditionMinutes,
+        distanceTravelled = distanceTravelled,
+        resourcesCollected = resourcesCollected,
+        itemsCrafted = itemsCrafted,
+        booksRead = booksRead,
+        visitedZones = visited.toSet()
+    )
+
+    fun restore(snapshot: CharacterStatisticsSnapshot) {
+        daysSurvived = snapshot.daysSurvived.coerceAtLeast(1)
+        expeditionMinutes = snapshot.expeditionMinutes.coerceAtLeast(0L)
+        distanceTravelled = snapshot.distanceTravelled.takeIf { it.isFinite() }?.coerceAtLeast(0f) ?: 0f
+        resourcesCollected = snapshot.resourcesCollected.coerceAtLeast(0)
+        itemsCrafted = snapshot.itemsCrafted.coerceAtLeast(0)
+        booksRead = snapshot.booksRead.coerceAtLeast(0)
+        visited.clear()
+        visited.addAll(snapshot.visitedZones)
+        visited += WorldZone.BUNKER
     }
 }

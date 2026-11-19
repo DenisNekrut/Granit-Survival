@@ -2,6 +2,36 @@ package com.granit.survival
 
 data class PlayerSnapshot(val x: Float, val y: Float, val speed: Float)
 
+/** Fictional pulse carbine; SIGNAL_EMITTER remains readable for older saves. */
+enum class WeaponType { PULSE_CARBINE, SIGNAL_EMITTER }
+
+data class PlayerEquipmentSnapshot(
+    val weapon: WeaponType? = WeaponType.PULSE_CARBINE,
+    val weaponDrawn: Boolean = false
+)
+
+class PlayerEquipment {
+    var weapon: WeaponType? = WeaponType.PULSE_CARBINE
+        private set
+    var weaponDrawn: Boolean = false
+        private set
+
+    fun onZoneChanged(from: WorldZone, to: WorldZone) {
+        weaponDrawn = when {
+            to == WorldZone.BUNKER -> false
+            from == WorldZone.BUNKER && weapon != null -> true
+            else -> weaponDrawn
+        }
+    }
+
+    fun snapshot() = PlayerEquipmentSnapshot(weapon, weaponDrawn)
+
+    fun restore(snapshot: PlayerEquipmentSnapshot) {
+        weapon = snapshot.weapon
+        weaponDrawn = snapshot.weaponDrawn && weapon != null
+    }
+}
+
 data class WakeCheckpoint(
     val player: PlayerSnapshot,
     val inventory: List<ItemStack?>,
@@ -14,7 +44,10 @@ data class WakeCheckpoint(
     val remainingResources: List<ResourceLocation>,
     val zone: WorldZone,
     val zoneResources: List<ZoneResourceSnapshot> = emptyList(),
-    val discoveredPoiIds: Set<String> = emptySet()
+    val discoveredPoiIds: Set<String> = emptySet(),
+    val equipment: PlayerEquipmentSnapshot = PlayerEquipmentSnapshot(),
+    val statistics: CharacterStatisticsSnapshot = CharacterStatisticsSnapshot(),
+    val bunkerPower: BunkerPowerSnapshot = BunkerPowerSnapshot()
 )
 
 /** Captures the complete reversible run state at wake-up. */
@@ -34,7 +67,10 @@ class CheckpointSystem {
             remainingResources = engine.tileMap.resourceSnapshot(),
             zone = engine.zone,
             zoneResources = engine.zoneResourceSnapshot(),
-            discoveredPoiIds = engine.discoveredPointsOfInterest()
+            discoveredPoiIds = engine.discoveredPointsOfInterest(),
+            equipment = engine.equipment.snapshot(),
+            statistics = engine.statistics.snapshot(),
+            bunkerPower = engine.bunkerPower.snapshot()
         )
     }
 
@@ -49,7 +85,10 @@ class CheckpointSystem {
     fun restore(engine: GameEngine): Boolean {
         val saved = checkpoint?.deepCopy() ?: return false
         engine.restoreZoneResources(saved.zoneResources)
-        engine.changeZone(saved.zone)
+        engine.changeZone(saved.zone, regenerate = false)
+        engine.equipment.restore(saved.equipment)
+        engine.statistics.restore(saved.statistics)
+        engine.bunkerPower.restore(saved.bunkerPower)
         if (saved.zoneResources.isEmpty()) engine.tileMap.restoreResources(saved.remainingResources)
         engine.player.x = saved.player.x
         engine.player.y = saved.player.y
@@ -63,7 +102,7 @@ class CheckpointSystem {
         engine.restoreDiscoveredPointsOfInterest(saved.discoveredPoiIds)
         engine.worldClock.restore(saved.clock)
         engine.tileMap.restoreResources(saved.remainingResources)
-        engine.camera.follow(engine.player.x, engine.player.y, GameEngine.WORLD_WIDTH, GameEngine.WORLD_HEIGHT)
+        engine.camera.follow(engine.player.x, engine.player.y, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat())
         return true
     }
 
