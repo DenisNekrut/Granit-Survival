@@ -30,6 +30,7 @@ class TileMap(
             WorldZone.RUINS -> buildRuins()
             WorldZone.ROAD -> buildRoad()
         }
+        if (zone != WorldZone.BUNKER) buildRoomPartitions()
         if (seed != null && zone.isProcedurallyGenerated) buildProceduralLayout(seed)
     }
 
@@ -45,26 +46,16 @@ class TileMap(
             if (x != 2 && x != 8 && x != 14) set(x, 4, TileType.WALL)
         }
 
-        // Bedroom — upper left.
-        set(3, 2, TileType.BED)
-        set(4, 2, TileType.STORAGE)
-
-        // Dining room and library — upper middle.
-        set(7, 2, TileType.DINING_TABLE)
-        set(9, 2, TileType.BOOKSHELF)
-
-        // Generator and radio room — upper right.
-        set(13, 2, TileType.GENERATOR)
-        set(14, 2, TileType.RADIO)
-
-        // Medical room — lower left.
-        set(2, 6, TileType.MEDICAL_STATION)
-
-        // Workshop — lower middle.
-        set(8, 6, TileType.WORKBENCH)
-
-        // Storage room — lower right.
-        set(13, 6, TileType.STORAGE)
+        // Furniture is anchored along room perimeter walls; the bedroom doorway remains clear.
+        set(2, 1, TileType.BED)
+        set(4, 1, TileType.STORAGE)
+        set(7, 1, TileType.DINING_TABLE)
+        set(10, 1, TileType.BOOKSHELF)
+        set(13, 1, TileType.GENERATOR)
+        set(15, 1, TileType.RADIO)
+        set(2, 8, TileType.MEDICAL_STATION)
+        set(8, 8, TileType.WORKBENCH)
+        set(14, 8, TileType.STORAGE)
 
         // Bunker hatch; the arrival tile just inside is kept clear.
         set(width / 2, 1, TileType.EXIT_TO_FOREST)
@@ -110,12 +101,27 @@ class TileMap(
         set(34, 11, TileType.RESOURCE_WATER); set(15, 4, TileType.RESOURCE_WOOD)
     }
 
+    /** Add room partitions and door gaps around the permanent central expedition corridor. */
+    private fun buildRoomPartitions() {
+        listOf(13, 26).forEach { x ->
+            for (y in 1 until height - 1) {
+                if (y !in setOf(4, height / 2, height - 5) && get(x, y) == TileType.FLOOR) set(x, y, TileType.WALL)
+            }
+        }
+        listOf(7, 16).forEach { y ->
+            for (x in 1 until width - 1) {
+                if (x !in setOf(6, 13, 20, 26, 33) && get(x, y) == TileType.FLOOR) set(x, y, TileType.WALL)
+            }
+        }
+    }
+
     /**
      * Builds a deterministic expedition layout from a seed. A clear central corridor
      * always connects the spawn to the exit; obstacles and resources vary around it.
      */
     private fun buildProceduralLayout(seed: Long) {
         for (y in 1 until height - 1) for (x in 1 until width - 1) set(x, y, TileType.FLOOR)
+        buildRoomPartitions()
 
         val exitX = if (zone == WorldZone.RUINS) width - 2 else 1
         set(exitX, height / 2, TileType.EXIT_TO_FOREST)
@@ -231,7 +237,11 @@ class TileMap(
             val twiceError = error * 2
             if (twiceError > -dy) { error -= dy; x += stepX }
             if (twiceError < dx) { error += dx; y += stepY }
-            if ((x != endX || y != endY) && get(x, y) == TileType.WALL) return false
+            if ((x != endX || y != endY) && get(x, y) in setOf(
+                    TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE,
+                    TileType.BOOKSHELF, TileType.RADIO, TileType.DINING_TABLE,
+                    TileType.GENERATOR, TileType.MEDICAL_STATION
+                )) return false
         }
         return true
     }
