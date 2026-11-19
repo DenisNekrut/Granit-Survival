@@ -340,7 +340,7 @@ class PixelRenderer {
         }
         drawText(zoneLabel, 0.68f, 0.80f, 0.055f, 0.57f, 0.68f, 0.60f)
         if (engine.equipment.weaponDrawn) {
-            drawText("SIGNAL: READY", 2.05f, 0.80f, 0.045f, 0.35f, 0.75f, 0.76f)
+            drawText("PULSE: READY", 2.05f, 0.80f, 0.045f, 0.35f, 0.75f, 0.76f)
         }
         drawText("W:" + engine.weather.shortCode, 3.55f, 0.43f, 0.055f, 0.60f, 0.72f, 0.76f)
         drawNeedBar("HP", engine.needs.health, 1.05f, 0.68f, 0.24f, 0.20f)
