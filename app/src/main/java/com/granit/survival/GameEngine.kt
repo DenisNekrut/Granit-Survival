@@ -401,6 +401,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED)
     }
 
+    /** The service entrance can be inspected only after it has been discovered. */
+    fun inspectRuinsServiceAccess(): Boolean {
+        if (!isPoiDiscovered("ruins_service_access")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)
+    }
+
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
     fun inspectForestWatchPostSignal(): Boolean {
         if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
