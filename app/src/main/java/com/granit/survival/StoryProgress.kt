@@ -6,12 +6,22 @@ object StoryEventIds {
     const val STORAGE_OPENED = "chapter_01.storage_opened"
     const val RADIO_PANEL_OPENED = "chapter_01.radio_panel_opened"
     const val FIRST_BUNKER_EXIT = "chapter_01.first_bunker_exit"
+    const val DINING_INSPECTED = "chapter_01.dining_inspected"
+    const val MEDICAL_INSPECTED = "chapter_01.medical_inspected"
+    const val BED_INSPECTED = "chapter_01.bed_inspected"
+    const val LIBRARY_INSPECTED = "chapter_01.library_inspected"
+    const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
         GENERATOR_PANEL_OPENED,
         STORAGE_OPENED,
         RADIO_PANEL_OPENED,
-        FIRST_BUNKER_EXIT
+        FIRST_BUNKER_EXIT,
+        DINING_INSPECTED,
+        MEDICAL_INSPECTED,
+        BED_INSPECTED,
+        LIBRARY_INSPECTED,
+        WORKSHOP_INSPECTED
     )
 }
 
@@ -21,6 +31,8 @@ data class StoryObjective(
     val description: String,
     val eventId: String
 )
+
+data class StoryObservation(val eventId: String, val title: String, val note: String)
 
 data class StoryProgressSnapshot(
     val chapterId: String = StoryProgressSystem.CHAPTER_ONE_ID,
@@ -88,6 +100,21 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
     }
 
     fun hasEvent(eventId: String): Boolean = eventId in completedEvents
+
+
+    fun observations(): List<StoryObservation> {
+        val notes = listOf(
+            StoryObservation(StoryEventIds.GENERATOR_PANEL_OPENED, "Генераторная", "На панели видны следы недавней проверки. Кто-то обслуживал оборудование совсем недавно."),
+            StoryObservation(StoryEventIds.STORAGE_OPENED, "Хранилище", "Запасы разложены по категориям, на контейнерах есть свежие отметки учёта."),
+            StoryObservation(StoryEventIds.RADIO_PANEL_OPENED, "Радиостанция", "Корпус радиостанции тёплый, а на шкале частот заметна полоска помех."),
+            StoryObservation(StoryEventIds.DINING_INSPECTED, "Столовая", "На столе закреплён листок с нормами выдачи воды и продуктов. Последняя запись сделана не так давно."),
+            StoryObservation(StoryEventIds.MEDICAL_INSPECTED, "Медчасть", "Инструменты разложены по местам. На шкафу висит карточка проверки запасов, но имя ответственного стёрлось."),
+            StoryObservation(StoryEventIds.BED_INSPECTED, "Спальня", "На тумбе лежит блокнот с короткой пометкой: «Не забыть проверить связь»."),
+            StoryObservation(StoryEventIds.LIBRARY_INSPECTED, "Библиотека", "На полях нескольких справочников есть карандашные пометки."),
+            StoryObservation(StoryEventIds.WORKSHOP_INSPECTED, "Мастерская", "На верстаке оставлены измерительный инструмент и список мелких ремонтных работ.")
+        )
+        return notes.filter { hasEvent(it.eventId) }
+    }
 
     fun snapshot(): StoryProgressSnapshot = StoryProgressSnapshot(
         chapterId = CHAPTER_ONE_ID,
