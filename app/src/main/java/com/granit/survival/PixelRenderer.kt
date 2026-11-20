@@ -142,7 +142,6 @@ class PixelRenderer {
         worldScale = (screenHeight / 12f) * this.displayScale
         worldOffsetX = 0f
         worldOffsetY = 0f
-        currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
     }
 
@@ -169,7 +168,7 @@ class PixelRenderer {
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         currentCamera = engine.camera
-        currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
+        engine.setCameraViewport(screenWidth / worldScale, screenHeight / worldScale)
         queuedVertexCount = 0
         queuedTextureVertexCount = 0
         frameDrawCalls = 0
@@ -180,10 +179,10 @@ class PixelRenderer {
 
         // Each zone has its own floor tone to make transitions immediately readable.
         val floorTone = when (engine.zone) {
-            WorldZone.BUNKER -> floatArrayOf(0.19f, 0.21f, 0.20f)
-            WorldZone.FOREST -> floatArrayOf(0.20f, 0.27f, 0.18f)
-            WorldZone.RUINS -> floatArrayOf(0.25f, 0.22f, 0.19f)
-            WorldZone.ROAD -> floatArrayOf(0.20f, 0.23f, 0.26f)
+            WorldZone.BUNKER -> floatArrayOf(0.17f, 0.23f, 0.23f)
+            WorldZone.FOREST -> floatArrayOf(0.18f, 0.29f, 0.17f)
+            WorldZone.RUINS -> floatArrayOf(0.31f, 0.20f, 0.16f)
+            WorldZone.ROAD -> floatArrayOf(0.17f, 0.23f, 0.31f)
         }
         // Extend the ground beyond the solid map perimeter. The camera can reveal this
         // neutral margin near map edges instead of cutting the location flush against the screen.
@@ -195,7 +194,7 @@ class PixelRenderer {
         rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
             floorTone[0], floorTone[1], floorTone[2])
         for (x in 1 until engine.tileMap.width) {
-            rect(x.toFloat(), 0f, 0.025f, engine.tileMap.height.toFloat(), 0.22f, 0.24f, 0.22f)
+            rect(x.toFloat(), 0f, 0.025f, engine.tileMap.height.toFloat(), 0.25f, 0.28f, 0.25f)
         }
         for (y in 1 until engine.tileMap.height) {
             rect(0f, y.toFloat(), engine.tileMap.width.toFloat(), 0.025f, 0.22f, 0.24f, 0.22f)
@@ -509,13 +508,13 @@ class PixelRenderer {
         val corridor = (y == 4 && x in setOf(2, 8, 14)) ||
             (x == 5 && y in setOf(2, 7)) || (x == 11 && y in setOf(2, 7))
         val (r, g, b) = when {
-            corridor -> Triple(0.12f, 0.15f, 0.15f)
-            y < 4 && x < 5 -> Triple(0.20f, 0.24f, 0.27f)
-            y < 4 && x < 11 -> Triple(0.29f, 0.25f, 0.18f)
-            y < 4 -> Triple(0.22f, 0.25f, 0.19f)
-            x < 5 -> Triple(0.17f, 0.28f, 0.27f)
-            x < 11 -> Triple(0.25f, 0.25f, 0.23f)
-            else -> Triple(0.28f, 0.22f, 0.16f)
+            corridor -> Triple(0.10f, 0.16f, 0.19f)
+            y < 4 && x < 5 -> Triple(0.16f, 0.29f, 0.34f)
+            y < 4 && x < 11 -> Triple(0.34f, 0.27f, 0.17f)
+            y < 4 -> Triple(0.25f, 0.31f, 0.19f)
+            x < 5 -> Triple(0.13f, 0.31f, 0.29f)
+            x < 11 -> Triple(0.30f, 0.28f, 0.24f)
+            else -> Triple(0.36f, 0.20f, 0.13f)
         }
         rect(x + 0.02f, y + 0.02f, 0.96f, 0.96f, r, g, b)
         val seam = if (corridor) 0.08f else 0.12f
