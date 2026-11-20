@@ -2,8 +2,8 @@ package com.granit.survival
 
 /** Separate bunker container. It uses the same stack rules as the field inventory. */
 class BunkerStorage(
-    columns: Int = 6,
-    rows: Int = 4,
+    val columns: Int = 6,
+    val rows: Int = 4,
     stackLimit: Int = 20
 ) {
     private val contents = Inventory(columns, rows, stackLimit)
