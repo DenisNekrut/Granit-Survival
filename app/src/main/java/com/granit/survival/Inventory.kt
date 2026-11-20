@@ -22,7 +22,7 @@ data class ItemStack(
 interface ItemContainer {
     val columns: Int
     val rows: Int
-    override fun slot(index: Int): ItemStack?
+    fun slot(index: Int): ItemStack?
     fun count(type: ItemType): Int
     fun snapshot(): List<ItemStack?>
     fun restore(snapshot: List<ItemStack?>)
@@ -44,7 +44,7 @@ class Inventory(
         require(columns > 0 && rows > 0 && stackLimit > 0)
     }
 
-    fun slot(index: Int): ItemStack? = slots.getOrNull(index)?.copy()
+    override fun slot(index: Int): ItemStack? = slots.getOrNull(index)?.copy()
 
     override fun count(type: ItemType): Int = slots.filterNotNull()
         .filter { it.type == type }
