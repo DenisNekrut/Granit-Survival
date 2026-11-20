@@ -101,9 +101,22 @@ class WorldZoneTest {
         val (x, y, sprite) = requireNotNull(selected) { "Expected a tall blocking forest prop" }
         val height = SpriteWorldMetrics.footprint(sprite).height
         assertTrue("Player can pass behind the upper part of $sprite",
-            map.isWalkable(x + 0.5f, y + height * 0.35f))
+            map.isWalkable(x + 0.5f, y + height * 0.15f))
         assertTrue("Player is still blocked by the base of $sprite",
             !map.isWalkable(x + 0.5f, y + height - 0.05f))
+    }
+
+    @Test
+    fun bunkerFurnitureCollisionMatchesVisibleBaseInsteadOfWholeTile() {
+        val map = TileMap(zone = WorldZone.BUNKER)
+        val sprite = "workbench"
+        val footprint = SpriteWorldMetrics.footprint(sprite)
+        val tileX = 8
+        val tileY = 8
+        assertTrue("Player can pass behind the upper part of the workbench",
+            map.isWalkable(tileX + 0.5f, tileY + footprint.height * 0.15f))
+        assertTrue("The workbench base still blocks the player",
+            !map.isWalkable(tileX + 0.5f, tileY + footprint.height - 0.05f))
     }
 
     @Test
