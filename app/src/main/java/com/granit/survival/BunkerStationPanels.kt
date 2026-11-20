@@ -47,11 +47,14 @@ internal class BunkerStationPanels(
     }
 
     fun showBed() {
-        if (!session.engine.canSleep()) {
+        val engine = session.engine
+        if (!engine.canSleep()) {
             showMessage("СПАЛЬНЯ", "Сейчас нельзя лечь спать.")
             return
         }
-        val panel = createPanel("СПАЛЬНЯ", "Можно завершить день и восстановить силы")
+        val firstInspection = !engine.storyProgress.hasEvent(StoryEventIds.BED_INSPECTED)
+        engine.storyProgress.recordEvent(StoryEventIds.BED_INSPECTED)
+        val panel = createPanel("СПАЛЬНЯ", (if (firstInspection) "Андрей замечает на тумбе блокнот. Между бытовыми записями выведено: «Не забыть проверить связь». Почерк кажется торопливым.\n\n" else "") + "Можно завершить день и восстановить силы")
         panel.addView(label("Сон завершит текущий день. После пробуждения будет создана контрольная точка.", 13f, Color.rgb(206, 215, 202), false))
         panel.addView(menuButton("СПАТЬ ДО 07:00", true) {
             runCatching { session.sleepAndAutosave() }
@@ -110,7 +113,10 @@ internal class BunkerStationPanels(
 
     fun showDining() {
         val engine = session.engine
-        val panel = createPanel("СТОЛОВАЯ", "Запасы экспедиции")
+        val canInspect = engine.canAccessDiningTable()
+        val firstInspection = canInspect && !engine.storyProgress.hasEvent(StoryEventIds.DINING_INSPECTED)
+        if (canInspect) engine.storyProgress.recordEvent(StoryEventIds.DINING_INSPECTED)
+        val panel = createPanel("СТОЛОВАЯ", (if (firstInspection) "На столе закреплён листок с нормами выдачи воды и продуктов. Последняя запись сделана не так давно.\n\n" else "") + "Запасы экспедиции")
         panel.addView(label("Консервы: ${engine.inventory.count(ItemType.CANNED_FOOD)}", 15f, Color.WHITE, false))
         panel.addView(label("Вода: ${engine.inventory.count(ItemType.WATER)}", 15f, Color.WHITE, false))
         panel.addView(menuButton("СЪЕСТЬ КОНСЕРВЫ", engine.inventory.count(ItemType.CANNED_FOOD) > 0) {
@@ -125,9 +131,14 @@ internal class BunkerStationPanels(
 
 
     fun showLibrary() {
+        val engine = session.engine
+        val canInspect = engine.canAccessBookshelf()
+        val firstInspection = canInspect && !engine.storyProgress.hasEvent(StoryEventIds.LIBRARY_INSPECTED)
+        if (canInspect) engine.storyProgress.recordEvent(StoryEventIds.LIBRARY_INSPECTED)
         val panel = createPanel(
             "БИБЛИОТЕКА УБЕЖИЩА",
-            "Чтение занимает игровое время. Новые знания закрепляются при следующем пробуждении."
+            (if (firstInspection) "Книги расставлены по темам. На полях нескольких справочников есть карандашные пометки — кто-то пользовался ими как рабочими инструкциями.\n\n" else "") +
+                "Чтение занимает игровое время. Новые знания закрепляются при следующем пробуждении."
         )
         BookCatalog.all.forEach { book ->
             val read = session.engine.bookLibrary.hasRead(book.id)
@@ -148,7 +159,14 @@ internal class BunkerStationPanels(
 
     fun showWorkshop() {
         val engine = session.engine
-        val panel = createPanel("МАСТЕРСКАЯ", "Рецепты доступны рядом с верстаком")
+        val canInspect = engine.canAccessWorkbench()
+        val firstInspection = canInspect && !engine.storyProgress.hasEvent(StoryEventIds.WORKSHOP_INSPECTED)
+        if (canInspect) engine.storyProgress.recordEvent(StoryEventIds.WORKSHOP_INSPECTED)
+        val panel = createPanel(
+            "МАСТЕРСКАЯ",
+            (if (firstInspection) "На верстаке оставлены измерительный инструмент и список мелких ремонтных работ. Несколько пунктов отмечены, остальные не завершены.\n\n" else "") +
+                "Рецепты доступны рядом с верстаком"
+        )
         if (!engine.bunkerPower.hasPower) {
             panel.addView(label("Нет питания: генератор необходимо запустить.", 13f, Color.rgb(230, 165, 116), false))
         }
@@ -288,7 +306,14 @@ internal class BunkerStationPanels(
 
     fun showMedical() {
         val engine = session.engine
-        val panel = createPanel("МЕДЧАСТЬ", "Медицинская станция и расходные материалы")
+        val canInspect = engine.canAccessMedicalStation()
+        val firstInspection = canInspect && !engine.storyProgress.hasEvent(StoryEventIds.MEDICAL_INSPECTED)
+        if (canInspect) engine.storyProgress.recordEvent(StoryEventIds.MEDICAL_INSPECTED)
+        val panel = createPanel(
+            "МЕДЧАСТЬ",
+            (if (firstInspection) "Инструменты разложены по местам. На шкафу висит карточка проверки запасов, но имя ответственного стёрлось. Андрей задерживает взгляд на пустой строке подписи.\n\n" else "") +
+                "Медицинская станция и расходные материалы"
+        )
         val hurt = engine.needs.health < 100f
         panel.addView(label("Здоровье: ${engine.needs.health.toInt()}%", 16f, Color.WHITE, false))
         panel.addView(label(
