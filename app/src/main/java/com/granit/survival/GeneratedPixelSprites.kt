@@ -239,8 +239,6 @@ internal object GeneratedPixelSprites {
 
     val all: Map<String, PixelSprite> = base + detailedPlayerSprites + detailedBunkerProps + mapOf(
         "player_side" to base.getValue("player_side_right"),
-        "storage" to base.getValue("locker"),
-        "radio" to base.getValue("control_console"),
         "bunker_panel" to base.getValue("vault_door")
     )
 }
