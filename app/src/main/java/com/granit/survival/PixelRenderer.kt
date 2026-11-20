@@ -296,9 +296,11 @@ class PixelRenderer {
             PlayerFacing.RIGHT -> "player_side_right" to false
             PlayerFacing.LEFT -> "player_side_left" to false
         }
+        val playerTileExtent = 0.82f
+        val playerHeight = SpriteWorldMetrics.footprint(playerSprite, playerTileExtent).height
         worldSprites += WorldSpriteCommand(
-            sortY = py + 0.48f, sortOrder = 1, spriteId = playerSprite,
-            centerX = px, topY = py - 0.48f, tileExtent = 0.82f,
+            sortY = py + 0.01f, sortOrder = 1, spriteId = playerSprite,
+            centerX = px, topY = py - playerHeight, tileExtent = playerTileExtent,
             frame = playerFrame, flipX = playerFlipX
         )
         // Add fixed ceiling fixtures to the bunker room layout.
@@ -327,7 +329,7 @@ class PixelRenderer {
                 InfectedVariant.BRUTE -> "infected_brute"
             }
             val walkFrame = if ((zombie.attackCooldown * 8f).toInt() and 1 == 0) 0 else 1
-            drawAtlasSprite(spriteId, zombie.x, zombie.y - 0.48f, 0.72f, walkFrame)
+            drawAtlasSprite(spriteId, zombie.x, zombie.y - SpriteWorldMetrics.footprint(spriteId, 0.72f).height, 0.72f, walkFrame)
             if (zombie.hitFlash > 0f) {
                 rect(zombie.x - 0.11f, zombie.y - 0.40f, 0.22f, 0.08f, 0.62f, 0.86f, 0.78f, 0.38f)
             }
