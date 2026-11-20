@@ -178,12 +178,7 @@ class PixelRenderer {
         GLES20.glEnableVertexAttribArray(vertexColorLocation)
 
         // Each zone has its own floor tone to make transitions immediately readable.
-        val floorTone = when (engine.zone) {
-            WorldZone.BUNKER -> floatArrayOf(0.17f, 0.23f, 0.23f)
-            WorldZone.FOREST -> floatArrayOf(0.18f, 0.29f, 0.17f)
-            WorldZone.RUINS -> floatArrayOf(0.31f, 0.20f, 0.16f)
-            WorldZone.ROAD -> floatArrayOf(0.17f, 0.23f, 0.31f)
-        }
+        val floorTone = GranitWorldPalette.zoneFloor(engine.zone)
         // Extend the ground beyond the solid map perimeter. The camera can reveal this
         // neutral margin near map edges instead of cutting the location flush against the screen.
         val edgePadding = Camera2D.WORLD_EDGE_PADDING
@@ -470,6 +465,11 @@ class PixelRenderer {
             if (twilight > 0.001f) {
                 rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
                     0.34f, 0.19f, 0.10f, twilight)
+            }
+            val weather = GranitWorldPalette.weatherOverlay(engine.weather)
+            if (weather[3] > 0f) {
+                rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
+                    weather[0], weather[1], weather[2], weather[3])
             }
             return
         }
