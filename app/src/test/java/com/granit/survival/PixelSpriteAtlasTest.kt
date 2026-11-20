@@ -29,6 +29,19 @@ class PixelSpriteAtlasTest {
     }
 
     @Test
+    fun zoneAndWeatherGradesAreDistinctAndBounded() {
+        val zones = WorldZone.values().map { GranitWorldPalette.zoneFloor(it).toList() }
+        assertTrue("Each zone needs a distinct floor identity", zones.distinct().size == WorldZone.values().size)
+        WeatherType.values().forEach { weather ->
+            val overlay = GranitWorldPalette.weatherOverlay(weather)
+            assertTrue("$weather overlay must have RGBA channels", overlay.size == 4)
+            assertTrue("$weather overlay alpha must stay restrained", overlay[3] in 0f..0.20f)
+            assertTrue("$weather overlay channels must be normalized", overlay.take(3).all { it in 0f..1f })
+        }
+        assertTrue("Clear weather must not tint the scene", GranitWorldPalette.weatherOverlay(WeatherType.CLEAR)[3] == 0f)
+    }
+
+    @Test
     fun everySpriteUsesTheReplacementColdSurvivalPalette() {
         PixelSpriteAtlas.allIds().forEach { id ->
             val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
