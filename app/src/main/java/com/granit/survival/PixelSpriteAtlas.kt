@@ -170,6 +170,22 @@ object PixelSpriteAtlas {
         ),
             "................","......BBBB......","....BBWWWWBB....","...BWWWWWWWWB...","..BWWWWWWWWWWB..",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",
             "..BWWWWWWWWWWB..","...BWWWWWWWWB...","....BBWWWWBB....","......BBBB......","................","................","................","................"
+        ),
+        "item_electronics" to inventoryIcon(mapOf(
+            'D' to floatArrayOf(0.10f, 0.18f, 0.18f),
+            'C' to floatArrayOf(0.20f, 0.65f, 0.59f),
+            'G' to floatArrayOf(0.75f, 0.78f, 0.63f)
+        ),
+            "................","..DDDDDDDDDDDD..","..DCCCCCCCCCCD..","..DCGGCCGGCCCD..","..DCCCCCCCCCCD..","..DCCCDDDCCCCD..","..DCCCDDDCCCCD..","..DCCCCCCCCCCD..",
+            "..DCGGCCGGCCCD..","..DCCCCCCCCCCD..","..DDDDDDDDDDDD..","....DD....DD....","....DD....DD....","................","................","................"
+        ),
+        "item_battery" to inventoryIcon(mapOf(
+            'D' to floatArrayOf(0.20f, 0.20f, 0.14f),
+            'Y' to floatArrayOf(0.72f, 0.61f, 0.25f),
+            'L' to floatArrayOf(0.88f, 0.81f, 0.49f)
+        ),
+            "................","......DDDD......",".....DYYYYD.....","....DYYYYYYD....","....DYLLYYD....","....DYYYYYYD....","....DYYYYYYD....","....DYYYYYYD....",
+            "....DYYYYYYD....","....DYYYYYYD....","....DYYYYYYD....",".....DYYYYD.....","......DDDD......",".......DD.......","................","................"
         )
     )
 
