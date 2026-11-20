@@ -92,6 +92,49 @@ class BunkerPowerSystemTest {
     }
 
     @Test
+    fun radioUsesOneBatteryWhenGeneratorPowerIsUnavailable() {
+        val engine = GameEngine()
+        engine.player.x = 14.5f
+        engine.player.y = 3.5f
+        engine.bunkerPower.advanceMinutes(BunkerPowerSystem.DEFAULT_FUEL_MINUTES)
+        engine.inventory.add(ItemType.BATTERY, 2)
+        val startTime = engine.worldClock.totalMinutes
+
+        assertTrue(engine.canUseRadio())
+        val event = engine.listenToRadio()
+
+        assertTrue(event != null)
+        assertEquals(1, engine.inventory.count(ItemType.BATTERY))
+        assertEquals(startTime + event!!.broadcastMinutes, engine.worldClock.totalMinutes)
+        assertTrue(event.description.contains("аварийного питания"))
+    }
+
+    @Test
+    fun radioDoesNotConsumeBatteryWhileMainPowerIsAvailable() {
+        val engine = GameEngine()
+        engine.player.x = 14.5f
+        engine.player.y = 3.5f
+        engine.inventory.add(ItemType.BATTERY, 1)
+
+        assertTrue(engine.canUseRadio())
+        assertTrue(engine.listenToRadio() != null)
+        assertEquals(1, engine.inventory.count(ItemType.BATTERY))
+    }
+
+    @Test
+    fun radioCannotRunWithoutGeneratorPowerOrBattery() {
+        val engine = GameEngine()
+        engine.player.x = 14.5f
+        engine.player.y = 3.5f
+        engine.bunkerPower.advanceMinutes(BunkerPowerSystem.DEFAULT_FUEL_MINUTES)
+        val startTime = engine.worldClock.totalMinutes
+
+        assertFalse(engine.canUseRadio())
+        assertEquals(null, engine.listenToRadio())
+        assertEquals(startTime, engine.worldClock.totalMinutes)
+    }
+
+    @Test
     fun saveSnapshotRestoresGeneratorState() {
         val original = GameEngine()
         original.bunkerPower.toggleGenerator()
