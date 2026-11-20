@@ -2,7 +2,7 @@ package com.granit.survival
 
 /**
  * Original Granit Survival pixel art, generated specifically for this project.
- * Player frames are 16x24; environment objects are 16x16.
+ * Player frames are authored at 32x48; environment objects remain 16x16.
  * Slash-separated rows keep the atlas compact and easy to validate.
  */
 internal object GeneratedPixelSprites {
@@ -25,7 +25,12 @@ internal object GeneratedPixelSprites {
         'P' to floatArrayOf(0.45f, 0.37f, 0.27f),
         'Q' to floatArrayOf(0.78f, 0.48f, 0.19f),
         'R' to floatArrayOf(0.61f, 0.63f, 0.52f),
-        'S' to floatArrayOf(0.10f, 0.13f, 0.12f)
+        'S' to floatArrayOf(0.10f, 0.13f, 0.12f),
+        'T' to floatArrayOf(0.82f, 0.72f, 0.53f), // cloth edge highlight
+        'U' to floatArrayOf(0.18f, 0.27f, 0.23f), // webbing and straps
+        'V' to floatArrayOf(0.77f, 0.39f, 0.19f), // signal orange detail
+        'W' to floatArrayOf(0.43f, 0.57f, 0.53f), // steel hardware
+        'X' to floatArrayOf(0.08f, 0.12f, 0.12f)  // deep seam
     )
 
     private fun sprite(vararg frames: String) = PixelSprite(
@@ -89,7 +94,76 @@ internal object GeneratedPixelSprites {
         )
     )
 
-    val all: Map<String, PixelSprite> = base + mapOf(
+    /**
+     * Redraw pass for the four player directions. The 16x24 blockout is expanded
+     * to a 32x48 authored canvas, then individual texels are painted as seams,
+     * webbing, pocket edges and small equipment highlights. Runtime atlas still
+     * applies its separate 2x nearest-neighbour density pass.
+     */
+    private fun detailedPlayer(source: PixelSprite, direction: String): PixelSprite {
+        val detailedFrames = source.frames.mapIndexed { frameIndex, frame ->
+            val rows = buildList {
+                frame.forEach { row ->
+                    val doubled = buildString(row.length * 2) {
+                        row.forEach { pixel -> append(pixel).append(pixel) }
+                    }
+                    add(doubled.toCharArray())
+                    add(doubled.toCharArray())
+                }
+            }.toMutableList()
+
+            fun paint(x: Int, y: Int, color: Char) {
+                if (y in rows.indices && x in rows[y].indices && rows[y][x] != '.') {
+                    rows[y][x] = color
+                }
+            }
+
+            // Fine cloth seams and edge highlights, only on existing opaque pixels.
+            for (y in 25..35) {
+                paint(if (direction == "left") 11 else 20, y, 'X')
+                if (y % 3 == 0) paint(if (direction == "left") 12 else 21, y, 'T')
+            }
+            when (direction) {
+                "front" -> {
+                    for (x in 21..25) paint(x, 28, 'T')
+                    for (y in 28..31) paint(24, y, 'X')
+                    paint(20, 30, 'V')
+                }
+                "back" -> {
+                    for (y in 20..33) {
+                        paint(12, y, 'U')
+                        paint(13, y, 'T')
+                        paint(24, y, 'U')
+                    }
+                    for (x in 13..22) paint(x, 31, 'X')
+                    paint(22, 29, 'V')
+                }
+                "left", "right" -> {
+                    val equipmentX = if (direction == "left") 7 else 24
+                    for (y in 24..31) {
+                        paint(equipmentX, y, 'U')
+                        paint(equipmentX + 1, y, 'W')
+                    }
+                    paint(equipmentX, 25 + (frameIndex % 2), 'V')
+                }
+            }
+            // Distinct boot/sole highlights make the walk cycle read at phone scale.
+            for (x in 9..22) {
+                if ((x + frameIndex) % 4 == 0) paint(x, 44, 'W')
+            }
+            rows.map { String(it) }
+        }
+        return PixelSprite(detailedFrames, palette)
+    }
+
+    private val detailedPlayerSprites = mapOf(
+        "player" to detailedPlayer(base.getValue("player"), "front"),
+        "player_back" to detailedPlayer(base.getValue("player_back"), "back"),
+        "player_side_left" to detailedPlayer(base.getValue("player_side_left"), "left"),
+        "player_side_right" to detailedPlayer(base.getValue("player_side_right"), "right")
+    )
+
+    val all: Map<String, PixelSprite> = base + detailedPlayerSprites + mapOf(
         "player_side" to base.getValue("player_side_right"),
         "storage" to base.getValue("locker"),
         "radio" to base.getValue("control_console"),
