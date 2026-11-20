@@ -227,6 +227,30 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun ruinsSignalMarkerIsHiddenUntilMapClueAndThenPersists() {
+        val engine = GameEngine()
+        val marker = PointOfInterestCatalog.byId("ruins_checkpoint")!!
+        engine.changeZone(WorldZone.RUINS)
+        engine.player.x = marker.x
+        engine.player.y = marker.y
+
+        assertFalse(engine.scanNearbyPointsOfInterest().contains(marker))
+        assertFalse(engine.isPoiDiscovered(marker.id))
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED))
+
+        engine.storyProgress.recordEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)
+        assertTrue(engine.scanNearbyPointsOfInterest().contains(marker))
+        assertTrue(engine.isPoiDiscovered(marker.id))
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED))
+        assertTrue(engine.scanNearbyPointsOfInterest().isEmpty())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.isPoiDiscovered(marker.id))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED))
+    }
+
+    @Test
     fun discoveriesSurviveSaveSnapshotRestore() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first()
