@@ -148,6 +148,18 @@ internal class BunkerStationPanels(
             (if (firstInspection) "Книги расставлены по темам. На полях нескольких справочников есть карандашные пометки — кто-то пользовался ими как рабочими инструкциями.\n\n" else "") +
                 "Чтение занимает игровое время. Новые знания закрепляются при следующем пробуждении."
         )
+        if (canInspect) {
+            val notesRead = engine.storyProgress.hasEvent(StoryEventIds.LIBRARY_NOTES_READ)
+            panel.addView(menuButton(
+                if (notesRead) "ПОМЕТКИ ИЗУЧЕНЫ" else "РАССМОТРЕТЬ ПОМЕТКИ НА ПОЛЯХ",
+                !notesRead
+            ) {
+                if (engine.storyProgress.recordEvent(StoryEventIds.LIBRARY_NOTES_READ)) {
+                    Toast.makeText(activity, "Андрей добавил наблюдение в журнал", Toast.LENGTH_SHORT).show()
+                }
+                showLibrary()
+            })
+        }
         BookCatalog.all.forEach { book ->
             val read = session.engine.bookLibrary.hasRead(book.id)
             panel.addView(label(book.title + " · " + book.category.displayName, 15f, Color.WHITE, false))
