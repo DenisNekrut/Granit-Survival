@@ -132,7 +132,7 @@ class TileMap(
         val random = Random(seed)
         val spawnX = zone.spawnX.toInt()
         val spawnY = zone.spawnY.toInt()
-        val reserved = (height / 2 - 1)..(height / 2 + 1)
+        val reserved = (height / 2 - 2)..(height / 2 + 2)
 
         val reservedLandmarks = PointOfInterestCatalog.inZone(zone)
             .map { kotlin.math.floor(it.x).toInt() to kotlin.math.floor(it.y).toInt() }
@@ -140,16 +140,21 @@ class TileMap(
 
         fun validPlacement(x: Int, y: Int): Boolean {
             if (x <= 1 || x >= width - 2 || y <= 1 || y >= height - 2) return false
-            // Keep authored points of interest reachable on every procedural map seed.
-            if ((x to y) in reservedLandmarks) return false
+            if (reservedLandmarks.any { (lx, ly) -> abs(x - lx) <= 2 && abs(y - ly) <= 2 }) return false
             if (y in reserved) return false
             if (abs(x - spawnX) <= 3 && abs(y - spawnY) <= 3) return false
             if (x == exitX && abs(y - height / 2) <= 2) return false
-            return get(x, y) == TileType.FLOOR
+            if (get(x, y) != TileType.FLOOR) return false
+            // A sprite is wider than one logical cell; leave a complete empty cell around it.
+            for (dy in -1..1) for (dx in -1..1) {
+                if (dx == 0 && dy == 0) continue
+                if (get(x + dx, y + dy) != TileType.FLOOR) return false
+            }
+            return true
         }
 
-        // Scattered cover and debris, deliberately kept away from the guaranteed route.
-        repeat(18) {
+        // Fewer, separated cover pieces replace the old tightly packed scatter.
+        repeat(12) {
             val x = random.nextInt(2, width - 2)
             val y = random.nextInt(2, height - 2)
             if (validPlacement(x, y)) set(x, y, TileType.WALL)
@@ -164,7 +169,7 @@ class TileMap(
         )
         var placed = 0
         var attempts = 0
-        while (placed < 18 && attempts < 240) {
+        while (placed < 14 && attempts < 360) {
             attempts++
             val x = random.nextInt(2, width - 2)
             val y = random.nextInt(2, height - 2)
@@ -178,15 +183,68 @@ class TileMap(
     operator fun get(x: Int, y: Int): TileType =
         if (x !in 0 until width || y !in 0 until height) TileType.WALL else tiles[y][x]
 
-    fun isWalkable(worldX: Float, worldY: Float, radius: Float = 0.22f): Boolean {
-        val points = arrayOf(worldX - radius to worldY - radius, worldX + radius to worldY - radius,
-            worldX - radius to worldY + radius, worldX + radius to worldY + radius)
-        return points.all { (x, y) ->
-            when (get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())) {
-                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF,
-                TileType.RADIO, TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> false
-                else -> true
+    /**
+     * Resolve the visible environment prop from the map itself. Rendering and collision
+     * use this same placement result, so a large sprite cannot be drawn over a walkway.
+     */
+    fun environmentPropAt(x: Int, y: Int): String? {
+        if (get(x, y) != TileType.FLOOR) return null
+        if (x <= 1 || x >= width - 2 || y <= 1 || y >= height - 2) return null
+        for (offsetY in -1..1) for (offsetX in -1..1) {
+            if (offsetX == 0 && offsetY == 0) continue
+            if (get(x + offsetX, y + offsetY) == TileType.WALL) return null
+        }
+        if (zone != WorldZone.BUNKER) {
+            if (kotlin.math.abs(y - height / 2) <= 2) return null
+            if (kotlin.math.abs(x + 0.5f - zone.spawnX) < 2.0f &&
+                kotlin.math.abs(y + 0.5f - zone.spawnY) < 2.0f) return null
+            val nearExit = (0 until height).any { exitY ->
+                listOf(1, width - 2).any { exitX ->
+                    val type = get(exitX, exitY)
+                    type in setOf(TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD, TileType.EXIT_TO_BUNKER) &&
+                        kotlin.math.abs(x - exitX) < 2 && kotlin.math.abs(y - exitY) < 2
+                }
             }
+            if (nearExit) return null
+            if (PointOfInterestCatalog.inZone(zone).any { poi ->
+                val dx = x + 0.5f - poi.x
+                val dy = y + 0.5f - poi.y
+                dx * dx + dy * dy < 2.25f * 2.25f
+            }) return null
+        }
+        return ZonePropSelector.spriteFor(zone, x, y)
+    }
+
+    private fun isInsideBlockingProp(worldX: Float, worldY: Float): Boolean {
+        val cellX = kotlin.math.floor(worldX).toInt()
+        val cellY = kotlin.math.floor(worldY).toInt()
+        for (propY in cellY - 1..cellY + 1) for (propX in cellX - 1..cellX + 1) {
+            val spriteId = environmentPropAt(propX, propY) ?: continue
+            if (!ZonePropSelector.blocksMovement(spriteId)) continue
+            val footprint = SpriteWorldMetrics.footprint(spriteId, 0.0625f)
+            val left = propX + 0.5f - footprint.width * 0.5f
+            val top = propY.toFloat()
+            if (worldX >= left && worldX <= left + footprint.width &&
+                worldY >= top && worldY <= top + footprint.height) return true
+        }
+        return false
+    }
+
+    fun isWalkable(worldX: Float, worldY: Float, radius: Float = 0.22f): Boolean {
+        val points = listOf(
+            worldX - radius to worldY - radius,
+            worldX + radius to worldY - radius,
+            worldX - radius to worldY + radius,
+            worldX + radius to worldY + radius,
+            worldX to worldY
+        )
+        return points.all { (x, y) ->
+            val type = get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())
+            val tileBlocked = type in setOf(
+                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF,
+                TileType.RADIO, TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION
+            )
+            !tileBlocked && !isInsideBlockingProp(x, y)
         }
     }
 
