@@ -80,7 +80,11 @@ class WorldZoneTest {
             }
         }
         val (x, y) = requireNotNull(blockingCell) { "Expected at least one blocking forest prop" }
-        assertTrue("Player must not walk through a large prop", !map.isWalkable(x + 0.5f, y + 0.5f))
+        val sprite = requireNotNull(map.environmentPropAt(x, y))
+        val footprint = SpriteWorldMetrics.footprint(sprite, 1f)
+        val baseY = y + footprint.height - 0.14f
+        assertTrue("Player must be blocked at the visible base of a large prop",
+            !map.isWalkable(x + 0.5f, baseY))
         assertTrue("Player must be able to pass around a large prop",
             map.isWalkable(x + 1.5f, y + 0.5f) || map.isWalkable(x - 1.5f, y + 0.5f))
     }
