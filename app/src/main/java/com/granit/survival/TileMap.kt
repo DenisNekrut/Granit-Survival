@@ -231,7 +231,7 @@ class TileMap(
         for (propY in cellY - 1..cellY + 1) for (propX in cellX - 1..cellX + 1) {
             val spriteId = environmentPropAt(propX, propY) ?: continue
             if (!ZonePropSelector.blocksMovement(spriteId)) continue
-            val footprint = SpriteWorldMetrics.footprint(spriteId, 0.0625f)
+            val footprint = SpriteWorldMetrics.footprint(spriteId, 1f)
             val propLeft = propX + 0.5f - footprint.width * 0.5f
             val propRight = propLeft + footprint.width
             val propTop = propY.toFloat()
