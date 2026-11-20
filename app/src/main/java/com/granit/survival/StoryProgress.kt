@@ -41,6 +41,8 @@ object StoryEventIds {
     const val ROAD_LINE_08_MARKER_INSPECTED = "chapter_01.road_line_08_marker_inspected"
     const val ROAD_LINE_08_BRANCH_FOUND = "chapter_01.road_line_08_branch_found"
     const val ROAD_LINE_08_BRANCH_INSPECTED = "chapter_01.road_line_08_branch_inspected"
+    const val ROAD_LINE_08_CHECKPOINT_FOUND = "chapter_01.road_line_08_checkpoint_found"
+    const val ROAD_LINE_08_CHECKPOINT_INSPECTED = "chapter_01.road_line_08_checkpoint_inspected"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -83,6 +85,8 @@ object StoryEventIds {
         ROAD_LINE_08_MARKER_INSPECTED,
         ROAD_LINE_08_BRANCH_FOUND,
         ROAD_LINE_08_BRANCH_INSPECTED,
+        ROAD_LINE_08_CHECKPOINT_FOUND,
+        ROAD_LINE_08_CHECKPOINT_INSPECTED,
         WORKSHOP_INSPECTED
     )
 }
@@ -205,6 +209,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED, "Осмотр метки линии 08", "Под слоем грязи Андрей обнаруживает вторую, более старую отметку и условный знак ответвления. Он переносит его в карту и отмечает направление к следующему участку. До проверки на месте нельзя сказать, сохранился ли сам проезд."),
             StoryObservation(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND, "Ответвление резервной трассы", "За дорожной опорой Андрей находит старую отметку на бетонном основании. Она совпадает со знаком на карте и указывает на узкий просёлочный проезд между зарослями. Само ответвление частично скрыто, поэтому маршрут ещё предстоит проверить."),
             StoryObservation(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED, "Осмотр ответвления линии 08", "Под слоем земли проступает фрагмент дорожной таблички: «контрольный пункт Б». Ниже сохранилась часть стрелки и номер линии. Андрей отмечает ориентир на карте; точное положение узла Б пока неизвестно."),
+            StoryObservation(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND, "Съезд к контрольному пункту Б", "В конце просёлочного ответвления Андрей находит старый дорожный пост. На боковой стойке сохранилась табличка с обозначением «Б». Проезд перекрыт, но рядом видна отдельная служебная полоса вдоль ограждения."),
+            StoryObservation(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED, "Осмотр дорожного поста Б", "На обороте таблички сохранилась схема подъезда: основной проезд закрыт, служебная полоса ведёт вдоль ограждения к внешнему периметру. Андрей переносит схему в карту. Добраться до самого узла отсюда пока нельзя."),
         )
         return notes.filter { hasEvent(it.eventId) }
     }
