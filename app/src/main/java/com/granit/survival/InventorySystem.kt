@@ -14,4 +14,10 @@ internal class InventorySystem(
     fun transferFromStorage(type: ItemType, amount: Int): Boolean =
         amount > 0 && bunkerStorage.withdraw(backpack, type, amount)
 
+    fun transferToStorageAt(slotIndex: Int, amount: Int): Boolean =
+        amount > 0 && bunkerStorage.depositAt(backpack, slotIndex, amount)
+
+    fun transferFromStorageAt(slotIndex: Int, amount: Int): Boolean =
+        amount > 0 && bunkerStorage.withdrawAt(backpack, slotIndex, amount)
+
 }
