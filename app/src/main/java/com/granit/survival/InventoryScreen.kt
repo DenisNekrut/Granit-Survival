@@ -84,12 +84,10 @@ internal class InventoryScreen(
         val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · ${engine.inventory.columns} × ${engine.inventory.rows}")
         panel.addView(InventoryGridView(
             context = activity,
-            columns = engine.inventory.columns,
-            rows = engine.inventory.rows,
+            container = engine.inventory,
             cellHeightDp = 104,
             iconSizeDp = 42,
-            dp = dp,
-            slotAt = engine.inventory::slot
+            dp = dp
         ) { _, stack ->
             val useAction: (() -> Unit)? = when (stack.type) {
                 ItemType.CANNED_FOOD -> ({
