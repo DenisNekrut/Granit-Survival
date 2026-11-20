@@ -130,6 +130,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (found.any { it.id == "road_line_08_marker" }) {
             storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND)
         }
+        if (found.any { it.id == "road_line_08_branch" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND)
+        }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
                 storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) ->
@@ -497,6 +500,14 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (!isPoiDiscovered("road_line_08_marker")) return false
         if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND)) return false
         return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED)
+    }
+
+    /** Inspects the reserve-line branch only after its landmark has been discovered. */
+    fun inspectRoadLine08Branch(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_line_08_branch")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED)
     }
 
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
