@@ -24,16 +24,26 @@ internal class BunkerStationPanels(
 ) {
     fun showRadio() {
         val engine = session.engine
-        if (engine.zone == WorldZone.BUNKER && engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f)) {
-            engine.storyProgress.recordEvent(StoryEventIds.RADIO_PANEL_OPENED)
-        }
+        val canInspect = engine.zone == WorldZone.BUNKER &&
+            engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f)
+        val firstInspection = canInspect && !engine.storyProgress.hasEvent(StoryEventIds.RADIO_PANEL_OPENED)
+        if (canInspect) engine.storyProgress.recordEvent(StoryEventIds.RADIO_PANEL_OPENED)
+        val reaction = if (firstInspection) {
+            "Андрей задерживает руку над регулятором. Корпус радиостанции тёплый, хотя вокруг прохладно. На шкале частот дрожит тонкая полоска помех. Кто-то обслуживал аппарат — но когда?"
+        } else ""
         if (!engine.bunkerPower.hasPower) {
-            showMessage("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
+            val detail = if (reaction.isNotEmpty()) "$reaction\n\n" else ""
+            showMessage("РАДИОПРИЁМНИК", detail + "Нет питания. Для работы радиостанции запустите генератор.")
             return
         }
         val event = engine.listenToRadio()
-        if (event != null) showMessage(event.title, event.description)
-        else showMessage("РАДИОПРИЁМНИК", "Сегодня эфир остаётся пустым.")
+        if (event != null) {
+            val detail = if (reaction.isNotEmpty()) "$reaction\n\n" else ""
+            showMessage(event.title, detail + event.description)
+        } else {
+            val detail = if (reaction.isNotEmpty()) "$reaction\n\n" else ""
+            showMessage("РАДИОПРИЁМНИК", detail + "Сегодня эфир остаётся пустым.")
+        }
     }
 
     fun showBed() {
@@ -61,8 +71,14 @@ internal class BunkerStationPanels(
 
     fun showGenerator() {
         val engine = session.engine
-        if (engine.canAccessGenerator()) engine.storyProgress.recordEvent(StoryEventIds.GENERATOR_PANEL_OPENED)
-        val panel = createPanel("ГЕНЕРАТОРНАЯ", "Энергосистема убежища")
+        val canInspect = engine.canAccessGenerator()
+        val firstInspection = canInspect && !engine.storyProgress.hasEvent(StoryEventIds.GENERATOR_PANEL_OPENED)
+        if (canInspect) engine.storyProgress.recordEvent(StoryEventIds.GENERATOR_PANEL_OPENED)
+        val panel = createPanel(
+            "ГЕНЕРАТОРНАЯ",
+            if (firstInspection) "Андрей прислушивается к ровной вибрации корпуса. На металлической табличке видны следы недавней проверки, а возле панели аккуратно убраны инструменты. Здесь следили за оборудованием — совсем недавно."
+            else "Энергосистема убежища"
+        )
         val powered = engine.bunkerPower.hasPower
         panel.addView(label(
             if (powered) "ПИТАНИЕ: ОСНОВНАЯ СЕТЬ" else "ПИТАНИЕ: АВАРИЙНЫЙ РЕЖИМ",
@@ -182,11 +198,14 @@ internal class BunkerStationPanels(
 
     fun showStorage() {
         val engine = session.engine
-        if (engine.canAccessStorage()) engine.storyProgress.recordEvent(StoryEventIds.STORAGE_OPENED)
+        val canInspect = engine.canAccessStorage()
+        val firstInspection = canInspect && !engine.storyProgress.hasEvent(StoryEventIds.STORAGE_OPENED)
+        if (canInspect) engine.storyProgress.recordEvent(StoryEventIds.STORAGE_OPENED)
         fun dp(value: Int): Int = (value * activity.resources.displayMetrics.density).toInt()
         val panel = createPanel(
             "ХРАНИЛИЩЕ УБЕЖИЩА",
-            "Выбирай отдельную ячейку. Само открытие контейнера ничего не перемещает."
+            (if (firstInspection) "Андрей открывает несколько ячеек. Запасы разложены по категориям, на части контейнеров стоят свежие отметки учёта. Кто-то рассчитывал, что убежище продолжит работать.\n\n" else "") +
+                "Выбирай отдельную ячейку. Само открытие контейнера ничего не перемещает."
         )
 
         fun addGrid(
