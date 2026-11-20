@@ -55,7 +55,7 @@ val generateLauncherIcons = tasks.register("generateLauncherIcons") {
     inputs.file(launcherIconSource)
     outputs.dir(generatedLauncherResources)
     doLast {
-        val lines = launcherIconSource.asFile.readLines().filter { it.isNotBlank() && !it.startsWith("#") }
+        val lines = launcherIconSource.asFile.readLines().filter { it.isNotBlank() && !it.startsWith("# ") }
         require(lines.size == 2) { "launcher-icon.txt must contain a palette line and a pixel-data line" }
         val palette = lines[0].split(",").map { it.trim() }
         val pixels = lines[1].trim()
