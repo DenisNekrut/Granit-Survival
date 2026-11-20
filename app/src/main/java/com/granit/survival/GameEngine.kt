@@ -369,6 +369,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.FOREST_RELAY_INSPECTED)
     }
 
+    /** The watch-post check is available only after the repaired relay and landmark are both known. */
+    fun inspectForestWatchPostSignal(): Boolean {
+        if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
+        if (!isPoiDiscovered("forest_watch_post")) return false
+        return storyProgress.recordEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)
+    }
+
     fun canRepairDiscoveredForestRelay(): Boolean =
         isPoiDiscovered("forest_radio_cache") &&
             storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED) &&
