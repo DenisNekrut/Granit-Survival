@@ -463,6 +463,18 @@ class MainActivity : Activity() {
         if (story.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) {
             panel.addView(label("РЕТРАНСЛЯТОР РАБОТАЕТ", 14f, Color.rgb(151, 190, 151), true))
             panel.addView(label("Питание восстановлено. Устройство передало короткий сигнал, но устойчивой связи пока нет.", 13f, Color.LTGRAY))
+            if (session.engine.isPoiDiscovered("forest_watch_post")) {
+                if (story.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)) {
+                    panel.addView(label("Показания на лесной вышке уже сверены. Запись добавлена в журнал.", 12f, Color.rgb(151, 190, 151)))
+                } else {
+                    panel.addView(menuButton("СВЕРИТЬ СИГНАЛ НА ЛЕСНОЙ ВЫШКЕ") {
+                        session.engine.inspectForestWatchPostSignal()
+                        showForestRelayInspection()
+                    })
+                }
+            } else {
+                panel.addView(label("Для следующей проверки найдите старую лесную вышку.", 12f, Color.LTGRAY))
+            }
         } else if (story.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED)) {
             panel.addView(label("Результат осмотра уже записан в журнал.", 13f, Color.rgb(151, 190, 151)))
             panel.addView(label("Для ремонта нужны: металл ×2, ткань ×1. Работа займёт 20 игровых минут.", 13f, Color.LTGRAY))
