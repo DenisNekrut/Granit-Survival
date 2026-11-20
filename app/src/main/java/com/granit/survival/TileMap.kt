@@ -5,7 +5,7 @@ import kotlin.random.Random
 
 enum class TileType {
     FLOOR, WALL, BED, WORKBENCH, STORAGE, BOOKSHELF, RADIO, EXIT,
-    EXIT_TO_BUNKER, EXIT_TO_FOREST, EXIT_TO_RUINS, EXIT_TO_ROAD,
+    EXIT_TO_BUNKER, EXIT_TO_FOREST, EXIT_TO_RUINS, EXIT_TO_ROAD, EXIT_TO_COMMUNICATION_NODE,
     DINING_TABLE, GENERATOR, MEDICAL_STATION, LOOT_CACHE,
     RESOURCE_WOOD, RESOURCE_METAL, RESOURCE_FABRIC, RESOURCE_FOOD, RESOURCE_WATER
 }
@@ -26,6 +26,7 @@ class TileMap(
         WorldZone.FOREST -> listOf(width / 2 to height - 2, 1 to height / 2, width - 2 to height / 2)
         WorldZone.RUINS -> listOf(width - 2 to height / 2)
         WorldZone.ROAD -> listOf(1 to height / 2)
+        WorldZone.COMMUNICATION_NODE -> listOf(width / 2 to height - 2)
     }
 
     init {
@@ -36,8 +37,9 @@ class TileMap(
             WorldZone.FOREST -> buildForest()
             WorldZone.RUINS -> buildRuins()
             WorldZone.ROAD -> buildRoad()
+            WorldZone.COMMUNICATION_NODE -> buildCommunicationNode()
         }
-        if (zone != WorldZone.BUNKER) buildRoomPartitions()
+        if (zone != WorldZone.BUNKER && zone != WorldZone.COMMUNICATION_NODE) buildRoomPartitions()
         if (seed != null && zone.isProcedurallyGenerated) buildProceduralLayout(seed)
     }
 
@@ -101,6 +103,18 @@ class TileMap(
         set(25, 13, TileType.RESOURCE_METAL); set(33, 17, TileType.RESOURCE_FABRIC)
         set(20, 4, TileType.RESOURCE_FOOD); set(5, 19, TileType.RESOURCE_WATER)
         set(31, 11, TileType.RESOURCE_WOOD)
+        set(19, 21, TileType.EXIT_TO_COMMUNICATION_NODE)
+    }
+
+    private fun buildCommunicationNode() {
+        // A compact, fixed interior map: quiet corridors and preserved control equipment.
+        set(width / 2, height - 2, TileType.EXIT_TO_RUINS)
+        for (x in 3..13) if (x != 8) set(x, 4, TileType.WALL)
+        set(8, 4, TileType.FLOOR)
+        set(3, 2, TileType.BOOKSHELF)
+        set(8, 2, TileType.RADIO)
+        set(13, 2, TileType.GENERATOR)
+        set(4, 7, TileType.STORAGE)
     }
 
     private fun buildRoad() {
@@ -210,7 +224,7 @@ class TileMap(
             if (offsetX == 0 && offsetY == 0) continue
             if (get(x + offsetX, y + offsetY) != TileType.FLOOR) return null
         }
-        if (zone == WorldZone.BUNKER) {
+        if (zone == WorldZone.BUNKER || zone == WorldZone.COMMUNICATION_NODE) {
             // Keep the upper service corridor and the bunker hatch approach clear.
             if (y <= 2) return null
         } else {
@@ -443,7 +457,7 @@ class TileMap(
             val valid = when (type) {
                 TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF, TileType.RADIO,
                 TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.LOOT_CACHE, TileType.EXIT,
-                TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS,
+                TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_COMMUNICATION_NODE,
                 TileType.EXIT_TO_ROAD -> true
                 else -> false
             }
