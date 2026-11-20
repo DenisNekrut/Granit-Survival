@@ -580,19 +580,20 @@ class PixelRenderer {
         frame: Int = 0,
         flipX: Boolean = false
     ) {
+        val scaledPixelSize = pixelSize * GranitArtPalette.WORLD_SPRITE_SCALE
         val manifest = spriteManifest
         val texture = spriteTexture
         val entry = manifest?.sprites?.firstOrNull { it.id == id }
         if (manifest != null && texture != null && entry != null) {
             val frameRect = entry.frames[Math.floorMod(frame, entry.frames.size)]
             drawTexturedSprite(manifest, texture, frameRect, centerX, topY,
-                entry.frameWidth * pixelSize, entry.frameHeight * pixelSize, flipX)
+                entry.frameWidth * scaledPixelSize, entry.frameHeight * scaledPixelSize, flipX)
             return
         }
         val sprite = PixelSpriteAtlas.sprite(id) ?: return
         val sourceRows = sprite.frames[Math.floorMod(frame, sprite.frames.size)]
         val rows = if (flipX) sourceRows.map { it.reversed() } else sourceRows
-        drawPixelSprite(rows, centerX, topY, pixelSize, sprite.palette)
+        drawPixelSprite(rows, centerX, topY, scaledPixelSize, sprite.palette)
     }
 
     private fun drawTexturedSprite(
@@ -669,12 +670,13 @@ class PixelRenderer {
                 var runEnd = column + 1
                 while (runEnd < row.length && row[runEnd] == symbol) runEnd++
                 val color = palette[symbol] ?: floatArrayOf(0.4f, 0.4f, 0.4f)
+                val graded = GranitArtPalette.grade(color[0], color[1], color[2])
                 rect(
                     left + column * pixelSize,
                     topY + rowIndex * pixelSize,
                     (runEnd - column) * pixelSize,
                     pixelSize,
-                    color[0], color[1], color[2]
+                    graded[0], graded[1], graded[2]
                 )
                 column = runEnd
             }
