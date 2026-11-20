@@ -43,6 +43,8 @@ object StoryEventIds {
     const val ROAD_LINE_08_BRANCH_INSPECTED = "chapter_01.road_line_08_branch_inspected"
     const val ROAD_LINE_08_CHECKPOINT_FOUND = "chapter_01.road_line_08_checkpoint_found"
     const val ROAD_LINE_08_CHECKPOINT_INSPECTED = "chapter_01.road_line_08_checkpoint_inspected"
+    const val ROAD_LINE_08_SERVICE_LANE_FOUND = "chapter_01.road_line_08_service_lane_found"
+    const val ROAD_LINE_08_SERVICE_LANE_INSPECTED = "chapter_01.road_line_08_service_lane_inspected"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -87,6 +89,8 @@ object StoryEventIds {
         ROAD_LINE_08_BRANCH_INSPECTED,
         ROAD_LINE_08_CHECKPOINT_FOUND,
         ROAD_LINE_08_CHECKPOINT_INSPECTED,
+        ROAD_LINE_08_SERVICE_LANE_FOUND,
+        ROAD_LINE_08_SERVICE_LANE_INSPECTED,
         WORKSHOP_INSPECTED
     )
 }
@@ -211,6 +215,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED, "Осмотр ответвления линии 08", "Под слоем земли проступает фрагмент дорожной таблички: «контрольный пункт Б». Ниже сохранилась часть стрелки и номер линии. Андрей отмечает ориентир на карте; точное положение узла Б пока неизвестно."),
             StoryObservation(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND, "Съезд к контрольному пункту Б", "В конце просёлочного ответвления Андрей находит старый дорожный пост. На боковой стойке сохранилась табличка с обозначением «Б». Проезд перекрыт, но рядом видна отдельная служебная полоса вдоль ограждения."),
             StoryObservation(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED, "Осмотр дорожного поста Б", "На обороте таблички сохранилась схема подъезда: основной проезд закрыт, служебная полоса ведёт вдоль ограждения к внешнему периметру. Андрей переносит схему в карту. Добраться до самого узла отсюда пока нельзя."),
+            StoryObservation(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND, "Служебная полоса вдоль ограждения", "За дорожным постом обнаруживается узкая полоса между ограждением и насыпью. Она не обозначена на общей схеме, но совпадает с направлением на табличке поста Б. Дальше путь закрывает старая сетчатая секция."),
+            StoryObservation(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED, "Осмотр служебной полосы", "У сетчатой секции Андрей находит выцветший номерной знак и кабельный маркер линии 08-Б. За ограждением виден продолженный технический коридор, однако проход перекрыт. Андрей отмечает точку на карте: потребуется найти другой доступ к коридору."),
         )
         return notes.filter { hasEvent(it.eventId) }
     }
