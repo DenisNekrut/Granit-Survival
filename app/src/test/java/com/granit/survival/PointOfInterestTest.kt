@@ -271,6 +271,32 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun outerRouteUnlocksOnlyAfterMarkerInspectionAndPersistsOnDiscovery() {
+        val engine = GameEngine()
+        val marker = PointOfInterestCatalog.byId("ruins_checkpoint")!!
+        val outerRoute = PointOfInterestCatalog.byId("ruins_outer_route")!!
+        engine.storyProgress.recordEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)
+        engine.changeZone(WorldZone.RUINS)
+        engine.player.x = marker.x
+        engine.player.y = marker.y
+
+        assertFalse(engine.scanNearbyPointsOfInterest().contains(outerRoute))
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
+
+        assertTrue(engine.scanNearbyPointsOfInterest().contains(marker))
+        assertTrue(engine.inspectRuinsSignalMarker())
+        engine.player.x = outerRoute.x
+        engine.player.y = outerRoute.y
+        assertTrue(engine.scanNearbyPointsOfInterest().contains(outerRoute))
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.isPoiDiscovered(outerRoute.id))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
+    }
+
+    @Test
     fun discoveriesSurviveSaveSnapshotRestore() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first { it.requiredStoryEventId == null }
