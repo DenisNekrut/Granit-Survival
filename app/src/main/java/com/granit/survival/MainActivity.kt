@@ -430,6 +430,22 @@ class MainActivity : Activity() {
                 showForestRelayInspection()
             })
         }
+        if (story.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)) {
+            panel.addView(label("НОВОЕ НАПРАВЛЕНИЕ · СТАРАЯ ДОРОГА", 14f, Color.rgb(207, 194, 155), true))
+            panel.addView(label("На вышке направление сигнала указывало за пределы леса. Проверь брошенный автомобиль на старой дороге: в нём может сохраниться карта с отметками.", 13f, Color.LTGRAY))
+            if (session.engine.isPoiDiscovered("road_vehicle")) {
+                if (story.hasEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)) {
+                    panel.addView(label("Карта изучена. Новая точка для экспедиции отмечена в журнале.", 12f, Color.rgb(151, 190, 151)))
+                } else {
+                    panel.addView(menuButton("ИЗУЧИТЬ КАРТУ В БРОШЕННОМ АВТОМОБИЛЕ") {
+                        session.engine.inspectRoadSignalMap()
+                        showJournal()
+                    })
+                }
+            } else {
+                panel.addView(label("Цель: добраться до зоны «Дорога» и обнаружить брошенный автомобиль.", 12f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
