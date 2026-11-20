@@ -319,30 +319,18 @@ class PixelRenderer {
             )
         }
 
-        // Stylized infected silhouettes are simple original shapes, sorted near ground level.
+        // Distinct original pixel silhouettes for each infected archetype.
         engine.zombies.forEach { zombie ->
-            val z = zombie.x
-            val y = zombie.y
-            val flash = zombie.hitFlash > 0f
-            val palette = when (zombie.variant) {
-                InfectedVariant.SHAMBLER -> floatArrayOf(0.24f, 0.34f, 0.27f)
-                InfectedVariant.RUNNER -> floatArrayOf(0.36f, 0.39f, 0.25f)
-                InfectedVariant.BRUTE -> floatArrayOf(0.30f, 0.27f, 0.25f)
+            val spriteId = when (zombie.variant) {
+                InfectedVariant.SHAMBLER -> "infected_shambler"
+                InfectedVariant.RUNNER -> "infected_runner"
+                InfectedVariant.BRUTE -> "infected_brute"
             }
-            val bodyR = if (flash) 0.62f else palette[0]
-            val bodyG = if (flash) 0.86f else palette[1]
-            val bodyB = if (flash) 0.78f else palette[2]
-            val width = if (zombie.variant == InfectedVariant.BRUTE) 0.48f else 0.40f
-            val left = z - width * 0.5f
-            rect(z - 0.34f, y + 0.27f, 0.68f, 0.12f, 0.035f, 0.045f, 0.04f, 0.58f)
-            rect(left, y - 0.27f, width, 0.53f, bodyR, bodyG, bodyB)
-            rect(z - 0.17f, y - 0.48f, 0.34f, 0.27f, 0.39f, 0.48f, 0.39f)
-            rect(z - 0.31f, y - 0.13f, 0.13f, 0.43f, bodyR, bodyG, bodyB)
-            rect(z + 0.18f, y - 0.12f, 0.13f, 0.42f, bodyR, bodyG, bodyB)
-            rect(z - 0.17f, y + 0.21f, 0.13f, 0.29f, 0.19f, 0.24f, 0.21f)
-            rect(z + 0.04f, y + 0.21f, 0.13f, 0.29f, 0.19f, 0.24f, 0.21f)
-            rect(z - 0.11f, y - 0.39f, 0.055f, 0.045f, 0.86f, 0.34f, 0.25f)
-            rect(z + 0.055f, y - 0.39f, 0.055f, 0.045f, 0.86f, 0.34f, 0.25f)
+            val walkFrame = if ((zombie.attackCooldown * 8f).toInt() and 1 == 0) 0 else 1
+            drawAtlasSprite(spriteId, zombie.x, zombie.y - 0.48f, 0.034f, walkFrame)
+            if (zombie.hitFlash > 0f) {
+                rect(zombie.x - 0.11f, zombie.y - 0.40f, 0.22f, 0.08f, 0.62f, 0.86f, 0.78f, 0.38f)
+            }
         }
 
         // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
