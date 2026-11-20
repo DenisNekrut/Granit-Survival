@@ -86,6 +86,57 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun chosenRadioTheoryProducesDistinctRelayObservationAndPersists() {
+        val engine = GameEngine()
+        engine.storyProgress.recordEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED)
+        assertTrue(engine.storyProgress.chooseFirstTheory(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE))
+        engine.changeZone(WorldZone.FOREST)
+        val relay = PointOfInterestCatalog.byId("forest_radio_cache")!!
+        engine.player.x = relay.x
+        engine.player.y = relay.y
+
+        assertTrue(engine.scanNearbyPointsOfInterest().contains(relay))
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND))
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.EQUIPMENT_FIRST_RELAY_INSPECTED))
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND))
+    }
+
+    @Test
+    fun chosenEquipmentTheoryProducesDistinctRelayObservationAndPersists() {
+        val engine = GameEngine()
+        engine.storyProgress.recordEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED)
+        assertTrue(engine.storyProgress.chooseFirstTheory(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST))
+        engine.changeZone(WorldZone.FOREST)
+        val relay = PointOfInterestCatalog.byId("forest_radio_cache")!!
+        engine.player.x = relay.x
+        engine.player.y = relay.y
+
+        assertTrue(engine.scanNearbyPointsOfInterest().contains(relay))
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.EQUIPMENT_FIRST_RELAY_INSPECTED))
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND))
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.EQUIPMENT_FIRST_RELAY_INSPECTED))
+    }
+
+    @Test
+    fun relayDiscoveryDoesNotCreateBranchObservationWithoutChosenTheory() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.FOREST)
+        val relay = PointOfInterestCatalog.byId("forest_radio_cache")!!
+        engine.player.x = relay.x
+        engine.player.y = relay.y
+
+        engine.scanNearbyPointsOfInterest()
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND))
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.EQUIPMENT_FIRST_RELAY_INSPECTED))
+    }
+
+    @Test
     fun discoveriesSurviveSaveSnapshotRestore() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first()
