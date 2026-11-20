@@ -36,7 +36,8 @@ object PointOfInterestCatalog {
         PointOfInterest("road_checkpoint", WorldZone.ROAD, 34.5f, 14.5f, "Съезд к контрольному пункту Б", "Старый дорожный пост перекрывает съезд к служебному маршруту.", "ROAD POST B", spriteId = "road_barrier", requiredStoryEventId = StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED),
         PointOfInterest("road_line_08_marker", WorldZone.ROAD, 29.5f, 9.5f, "Метка резервной линии 08", "На дорожной опоре сохранилась маркировка, совпадающая с архивным маршрутным листом.", "LINE 08 MARKER", spriteId = "road_sign", requiredStoryEventId = StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND),
         PointOfInterest("road_line_08_branch", WorldZone.ROAD, 31.5f, 10.5f, "Ответвление линии 08", "У основания опоры видна старая дорожная отметка, ведущая к скрытому просёлочному проезду.", "LINE 08 BRANCH", spriteId = "road_sign_faded", requiredStoryEventId = StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED),
-        PointOfInterest("road_service_lane", WorldZone.ROAD, 37.5f, 14.5f, "Служебная полоса у ограждения", "Узкая полоса вдоль внешнего ограждения заканчивается старой сетчатой секцией.", "SERVICE LANE", spriteId = "road_barrier", requiredStoryEventId = StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED)
+        PointOfInterest("road_service_lane", WorldZone.ROAD, 37.5f, 14.5f, "Служебная полоса у ограждения", "Узкая полоса вдоль внешнего ограждения заканчивается старой сетчатой секцией.", "SERVICE LANE", spriteId = "road_barrier", requiredStoryEventId = StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED),
+        PointOfInterest("road_drain_hatch", WorldZone.ROAD, 36.5f, 20.5f, "Дренажный люк у насыпи", "У основания насыпи виден старый металлический люк с маркировкой линии 08-Б.", "DRAIN ACCESS", spriteId = "road_sign_faded", requiredStoryEventId = StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED)
     )
 
     fun all(): List<PointOfInterest> = entries
