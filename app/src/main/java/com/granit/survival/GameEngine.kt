@@ -381,6 +381,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)
     }
 
+    /** The ruins marker can be studied only after its landmark has been discovered. */
+    fun inspectRuinsSignalMarker(): Boolean {
+        if (!isPoiDiscovered("ruins_checkpoint")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)
+    }
+
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
     fun inspectForestWatchPostSignal(): Boolean {
         if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
