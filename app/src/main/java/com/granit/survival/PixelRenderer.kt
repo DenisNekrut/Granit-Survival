@@ -246,10 +246,7 @@ class PixelRenderer {
             if (furnitureSprite != null) {
                 // Snap the sprite's visible edge to the nearest adjacent wall, not just its tile center.
                 val furniturePixelSize = 0.052f
-                val furnitureDensity = PixelSpriteAtlas.worldDensityScale(furnitureSprite)
-                val furnitureFrame = requireNotNull(PixelSpriteAtlas.sprite(furnitureSprite)).frames.first()
-                val furnitureSourceWidth = furnitureFrame.maxOfOrNull { it.length }?.toFloat() ?: 16f
-                val furnitureExtent = furnitureSourceWidth * furniturePixelSize * furnitureDensity
+                val furnitureExtent = SpriteWorldMetrics.footprint(furnitureSprite, furniturePixelSize).width
                 val anchoredX = when {
                     engine.tileMap[tileX - 1, tileY] == TileType.WALL -> tileX + furnitureExtent * 0.5f
                     engine.tileMap[tileX + 1, tileY] == TileType.WALL -> tileX + 1f - furnitureExtent * 0.5f
@@ -268,7 +265,7 @@ class PixelRenderer {
             }
 
             if (type == TileType.FLOOR) {
-                val propSprite = ZonePropSelector.spriteFor(engine.zone, tileX, tileY)
+                val propSprite = engine.tileMap.environmentPropAt(tileX, tileY)
                 if (propSprite != null) {
                     worldSprites += WorldSpriteCommand(
                         sortY = tileY + 0.96f, sortOrder = 0, spriteId = propSprite,
@@ -658,13 +655,12 @@ class PixelRenderer {
                 var runEnd = column + 1
                 while (runEnd < row.length && row[runEnd] == symbol) runEnd++
                 val color = palette[symbol] ?: floatArrayOf(0.4f, 0.4f, 0.4f)
-                val graded = GranitArtPalette.grade(color[0], color[1], color[2])
                 rect(
                     left + column * pixelSize,
                     topY + rowIndex * pixelSize,
                     (runEnd - column) * pixelSize,
                     pixelSize,
-                    graded[0], graded[1], graded[2]
+                    color[0], color[1], color[2]
                 )
                 column = runEnd
             }
@@ -819,9 +815,8 @@ class PixelRenderer {
                 var runEnd = column + 1
                 while (runEnd < row.length && row[runEnd] == symbol) runEnd++
                 val color = palette[symbol] ?: floatArrayOf(0.4f,0.4f,0.4f)
-                val graded = GranitArtPalette.grade(color[0],color[1],color[2])
                 screenRect(left + column * pixelSize, topY + rowIndex * pixelSize,
-                    (runEnd - column) * pixelSize, pixelSize, graded[0],graded[1],graded[2])
+                    (runEnd - column) * pixelSize, pixelSize, color[0],color[1],color[2])
                 column = runEnd
             }
         }
