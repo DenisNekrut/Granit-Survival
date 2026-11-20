@@ -36,3 +36,8 @@ The external atlas is currently an optional override. If absent, the game genera
 - The 48x48 authored pixel master is stored as compact indexed-color data in `app/src/main/assets/launcher-icon.txt`.
 - The Android Gradle build generates density-specific PNG resources (mdpi through xxxhdpi) using nearest-neighbour scaling, plus adaptive and round launcher resource definitions.
 - The icon is registered through `android:icon` and `android:roundIcon` in the application manifest. No external image/vector runtime dependency is required.
+
+## Infected character sprites
+- Three distinct 12x24 pixel-art silhouettes are authored for the shambler, runner and brute archetypes.
+- Each archetype has two frames; the renderer selects its matching sprite and alternates frames during movement/attack cooldown updates.
+- The infected remain non-graphic, stylized game characters and share the atlas palette/nearest-neighbour pipeline.
