@@ -44,15 +44,13 @@ class BunkerStorage(
     }
 
     private fun transfer(from: Inventory, to: Inventory, type: ItemType, amount: Int): Boolean {
-        if (amount <= 0 || from.count(type) < amount) return false
+        if (amount <= 0 || from.count(type) < amount || !to.canAdd(type, amount)) return false
         if (!from.remove(type, amount)) return false
 
-        val unaccepted = to.add(type, amount)
-        if (unaccepted == 0) return true
-
-        // Roll back both sides if the destination cannot accept the whole transfer.
-        to.remove(type, amount - unaccepted)
-        from.add(type, amount)
-        return false
+        // Capacity is preflighted, so this add must be complete and cannot reorder items on rollback.
+        check(to.add(type, amount) == 0) {
+            "Destination capacity changed during an inventory transfer"
+        }
+        return true
     }
 }
