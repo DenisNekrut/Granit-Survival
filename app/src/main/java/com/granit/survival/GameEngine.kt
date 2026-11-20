@@ -49,6 +49,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val radioSystem = BunkerRadioSystem()
     val worldClock = WorldClock()
     val bunkerPower = BunkerPowerSystem()
+    val storyProgress = StoryProgressSystem()
     val weather: WeatherType get() = WeatherSystem.forDay(worldClock.day)
     val weatherMovementMultiplier: Float get() =
         if (zone == WorldZone.BUNKER) 1f else weather.outdoorMovementMultiplier
@@ -414,6 +415,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     private fun travelToZone(target: WorldZone) {
         if (target == zone) return
         val source = zone
+        if (source == WorldZone.BUNKER && target == WorldZone.FOREST) {
+            storyProgress.recordEvent(StoryEventIds.FIRST_BUNKER_EXIT)
+        }
         changeZone(target, entryFrom = source)
         advanceGameMinutes(ZONE_TRAVEL_MINUTES)
     }
@@ -437,6 +441,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         equipment = equipment,
         statistics = statistics,
         bunkerPower = bunkerPower,
+        storyProgress = storyProgress,
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
@@ -446,6 +451,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         equipment.restore(snapshot.equipment)
         statistics.restore(snapshot.statistics)
         bunkerPower.restore(snapshot.bunkerPower)
+        storyProgress.restore(snapshot.storyProgress)
         restoreDiscoveredPointsOfInterest(snapshot.discoveredPoiIds)
         if (snapshot.zoneResources.isEmpty()) tileMap.restoreResources(snapshot.remainingResources)
         player.x = snapshot.player.x
