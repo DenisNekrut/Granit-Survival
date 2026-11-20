@@ -753,6 +753,18 @@ object PixelSpriteAtlas {
         )
     }
 
+    /**
+     * High-resolution source frames are authored at 2x logical density.
+     * Keep their world footprint identical to the former 16px/24px source art.
+     * This affects world rendering only; HUD icons use their own screen-space sizing.
+     */
+    fun worldDensityScale(id: String): Float {
+        val frame = sprite(id)?.frames?.firstOrNull() ?: return 1f
+        val width = frame.maxOfOrNull { it.length } ?: 0
+        val height = frame.size
+        return if (width >= 32 || height >= 48) 0.5f else 1f
+    }
+
     fun sprite(id: String): PixelSprite? = sprites[id] ?: variants[id]
 
     fun allIds(): Set<String> = sprites.keys + variants.keys
