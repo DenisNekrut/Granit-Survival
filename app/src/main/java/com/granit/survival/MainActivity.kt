@@ -460,8 +460,20 @@ class MainActivity : Activity() {
                 panel.addView(label("Андрей пока не выбрал, с какой версии начинать. Он отмечает только то, что устройство давно не обслуживали.", 13f, Color.LTGRAY))
             }
         }
-        if (story.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED)) {
+        if (story.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) {
+            panel.addView(label("РЕТРАНСЛЯТОР РАБОТАЕТ", 14f, Color.rgb(151, 190, 151), true))
+            panel.addView(label("Питание восстановлено. Устройство передало короткий сигнал, но устойчивой связи пока нет.", 13f, Color.LTGRAY))
+        } else if (story.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED)) {
             panel.addView(label("Результат осмотра уже записан в журнал.", 13f, Color.rgb(151, 190, 151)))
+            panel.addView(label("Для ремонта нужны: металл ×2, ткань ×1. Работа займёт 20 игровых минут.", 13f, Color.LTGRAY))
+            if (session.engine.canRepairDiscoveredForestRelay()) {
+                panel.addView(menuButton("ВОССТАНОВИТЬ РЕТРАНСЛЯТОР · 20 МИН.") {
+                    session.engine.repairDiscoveredForestRelay()
+                    showForestRelayInspection()
+                })
+            } else {
+                panel.addView(label("Пока недостаточно материалов для ремонта.", 12f, Color.rgb(207, 170, 130)))
+            }
         } else {
             panel.addView(menuButton("ЗАПИСАТЬ РЕЗУЛЬТАТ ОСМОТРА") {
                 session.engine.inspectDiscoveredForestRelay()
