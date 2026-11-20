@@ -446,6 +446,14 @@ class MainActivity : Activity() {
                 panel.addView(label("Цель: добраться до зоны «Дорога» и обнаружить брошенный автомобиль.", 12f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)) {
+            panel.addView(label("СЛЕДУЮЩАЯ ЦЕЛЬ · РАЗБИТЫЙ ПОСТ В РУИНАХ", 14f, Color.rgb(207, 194, 155), true))
+            if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED)) {
+                panel.addView(label("Отметка на посту найдена. Андрей подтвердил вторую точку маршрута.", 12f, Color.rgb(151, 190, 151)))
+            } else {
+                panel.addView(label("Отправляйся в зону «Руины» и найди разбитый пост. Его отметка совпадает с условным знаком на карте.", 13f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
