@@ -25,6 +25,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         const val MEDICAL_STATION_HEALING = 50f
         const val MEDICAL_STATION_TREATMENT_MINUTES = 12
         const val RESOURCE_GATHER_MINUTES = 2
+        const val FOREST_RELAY_REPAIR_MINUTES = 20
+        const val FOREST_RELAY_REPAIR_METAL = 2
+        const val FOREST_RELAY_REPAIR_FABRIC = 1
         const val ZONE_TRAVEL_MINUTES = 8
         private const val FIXED_STEP_SECONDS = 1f / 60f
         private const val MAX_FRAME_SECONDS = 0.25f
@@ -364,6 +367,26 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     fun inspectDiscoveredForestRelay(): Boolean {
         if (!isPoiDiscovered("forest_radio_cache")) return false
         return storyProgress.recordEvent(StoryEventIds.FOREST_RELAY_INSPECTED)
+    }
+
+    fun canRepairDiscoveredForestRelay(): Boolean =
+        isPoiDiscovered("forest_radio_cache") &&
+            storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED) &&
+            !storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED) &&
+            inventory.count(ItemType.METAL) >= FOREST_RELAY_REPAIR_METAL &&
+            inventory.count(ItemType.FABRIC) >= FOREST_RELAY_REPAIR_FABRIC
+
+    /** Repairs the discovered relay once; its story state persists beyond expedition rollback. */
+    fun repairDiscoveredForestRelay(): Boolean {
+        if (!canRepairDiscoveredForestRelay()) return false
+        // Advance first so a survival checkpoint rollback cannot consume repair materials.
+        if (!advanceGameMinutes(FOREST_RELAY_REPAIR_MINUTES)) return false
+        if (!inventory.remove(ItemType.METAL, FOREST_RELAY_REPAIR_METAL)) return false
+        if (!inventory.remove(ItemType.FABRIC, FOREST_RELAY_REPAIR_FABRIC)) {
+            inventory.add(ItemType.METAL, FOREST_RELAY_REPAIR_METAL)
+            return false
+        }
+        return storyProgress.recordEvent(StoryEventIds.FOREST_RELAY_REPAIRED)
     }
 
     fun nearestWorldContainer(maxDistance: Float = 1.35f): WorldContainer? {
