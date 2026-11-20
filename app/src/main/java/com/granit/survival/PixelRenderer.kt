@@ -431,6 +431,7 @@ class PixelRenderer {
             WorldZone.FOREST -> "FOREST"
             WorldZone.RUINS -> "RUINS"
             WorldZone.ROAD -> "ROAD"
+            WorldZone.COMMUNICATION_NODE -> "NODE"
         }
         drawText(zoneLabel, hudWidth - 5.0f, 1.04f, 0.052f, 0.57f, 0.68f, 0.60f)
         drawText("W:" + engine.weather.shortCode, hudWidth - 2.6f, 1.04f, 0.052f, 0.60f, 0.72f, 0.76f)
@@ -646,6 +647,10 @@ class PixelRenderer {
                 if (pattern == 0) {
                     rect(x + 0.40f, y + 0.22f, 0.06f, 0.06f, 0.27f, 0.29f, 0.30f)
                 }
+            }
+            WorldZone.COMMUNICATION_NODE -> {
+                if (x % 4 == 0) rect(x + 0.12f, y + 0.16f, 0.76f, 0.035f, 0.15f, 0.22f, 0.23f)
+                if (pattern == 0) drawAtlasSprite("floor_grate_rust", x + 0.5f, y + 0.12f, 0.38f)
             }
         }
         // Sparse zone-coloured flecks make the floor identity readable without
