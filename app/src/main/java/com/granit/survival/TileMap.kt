@@ -520,5 +520,5 @@ class TileMap(
 
 /** Creates the correctly sized map for each zone. The bunker footprint is intentionally compact. */
 internal fun createZoneMap(zone: WorldZone, seed: Long? = null): TileMap =
-    if (zone == WorldZone.BUNKER) TileMap(width = 17, height = 10, zone = zone, seed = seed)
+    if (zone == WorldZone.BUNKER || zone == WorldZone.COMMUNICATION_NODE) TileMap(width = 17, height = 10, zone = zone, seed = seed)
     else TileMap(zone = zone, seed = seed)
