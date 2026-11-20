@@ -481,12 +481,21 @@ class MainActivity : Activity() {
         if (story.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED)) {
             panel.addView(label("СЛЕДУЮЩАЯ ЦЕЛЬ · СЛУЖЕБНЫЙ ВХОД", 14f, Color.rgb(207, 194, 155), true))
             if (story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)) {
-                if (story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)) {
-                    panel.addView(label("Дверь изучена. Электромеханический замок обесточен; расположение распределительной коробки отмечено на карте.", 12f, Color.rgb(151, 190, 151)))
-                } else {
-                    panel.addView(label("Служебный вход найден. Дверь закрыта, рядом виден сервисный отсек.", 12f, Color.LTGRAY))
-                    panel.addView(menuButton("ОСМОТРЕТЬ СЛУЖЕБНЫЙ ВХОД") { showRuinsServiceAccessInspection() })
+                when {
+                    story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED) ->
+                        panel.addView(label("Служебный вход разблокирован. Доступ внутрь коммуникационного узла открыт.", 12f, Color.rgb(151, 190, 151)))
+                    story.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED) ->
+                        panel.addView(label("Питание восстановлено. Осталось разблокировать электромеханический замок.", 12f, Color.LTGRAY))
+                    story.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED) ->
+                        panel.addView(label("Распределительная коробка изучена. Для восстановления линии нужны 1 металл и 1 ткань.", 12f, Color.LTGRAY))
+                    story.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND) ->
+                        panel.addView(label("Распределительная коробка найдена. Её нужно осмотреть.", 12f, Color.LTGRAY))
+                    story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED) ->
+                        panel.addView(label("Расположение распределительной коробки отмечено. Найди её у дальней стены.", 12f, Color.LTGRAY))
+                    else ->
+                        panel.addView(label("Служебный вход найден. Дверь закрыта, рядом виден сервисный отсек.", 12f, Color.LTGRAY))
                 }
+                panel.addView(menuButton("ПРОДОЛЖИТЬ РАБОТУ СО СЛУЖЕБНЫМ ВХОДОМ") { showRuinsServiceAccessInspection() })
             } else {
                 panel.addView(label("Следуй по техническому проезду к дальней окраине руин и найди служебный вход старого коммуникационного узла.", 13f, Color.LTGRAY))
             }
@@ -522,19 +531,67 @@ class MainActivity : Activity() {
     }
 
     private fun showRuinsServiceAccessInspection() {
-        val story = session.engine.storyProgress
+        val engine = session.engine
+        val story = engine.storyProgress
         val panel = createPanel("СЛУЖЕБНЫЙ ВХОД", "Руины · коммуникационный узел")
         panel.addView(label("Андрей подходит к двери. Маркировка на металле совпадает со схемой, найденной на указателе.", 14f, Color.WHITE))
-        panel.addView(label("Электромеханический замок не реагирует. В сервисном отсеке нет питания, а кабель уходит под бетон к распределительной коробке. Похоже, сначала придётся разобраться с подачей электричества.", 13f, Color.LTGRAY))
-        if (story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)) {
-            panel.addView(label("РАСПОЛОЖЕНИЕ КОРОБКИ ОТМЕЧЕНО НА КАРТЕ", 13f, Color.rgb(151, 190, 151), true))
-        } else {
-            panel.addView(menuButton("ЗАПИСАТЬ РЕЗУЛЬТАТ ОСМОТРА") {
-                session.engine.inspectRuinsServiceAccess()
-                showRuinsServiceAccessInspection()
-            })
+        when {
+            story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED) -> {
+                panel.addView(label("Замок разблокирован. Дверь поддалась, за ней виден тёмный коридор коммуникационного узла. Вход открыт.", 13f, Color.LTGRAY))
+                panel.addView(label("ДОСТУП В КОММУНИКАЦИОННЫЙ УЗЕЛ ОТКРЫТ", 13f, Color.rgb(151, 190, 151), true))
+            }
+            !story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED) -> {
+                panel.addView(label("Электромеханический замок не реагирует. В сервисном отсеке нет питания, кабель уходит под бетон к распределительной коробке.", 13f, Color.LTGRAY))
+                panel.addView(menuButton("ЗАПИСАТЬ РЕЗУЛЬТАТ ОСМОТРА") {
+                    engine.inspectRuinsServiceAccess()
+                    showRuinsServiceAccessInspection()
+                })
+            }
+            !story.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND) -> {
+                panel.addView(label("По схеме кабель ведёт к распределительной коробке у дальней стены. Найди её в этой части руин.", 13f, Color.LTGRAY))
+                panel.addView(label("ЦЕЛЬ: НАЙТИ РАСПРЕДЕЛИТЕЛЬНУЮ КОРОБКУ", 13f, Color.rgb(207, 194, 155), true))
+            }
+            !story.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED) -> {
+                panel.addView(label("Коробка найдена. Осмотри её, чтобы понять состояние линии питания.", 13f, Color.LTGRAY))
+                panel.addView(menuButton("ОСМОТРЕТЬ РАСПРЕДЕЛИТЕЛЬНУЮ КОРОБКУ") { showRuinsPowerJunctionInspection() })
+            }
+            !story.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED) -> {
+                panel.addView(label("Линия питания отключена. Для ремонта потребуется 1 металл и 1 ткань. Работа займёт 15 игровых минут.", 13f, Color.LTGRAY))
+                panel.addView(menuButton("ВОССТАНОВИТЬ ПИТАНИЕ · 15 МИН.", enabled = engine.canRestoreRuinsServicePower()) {
+                    engine.restoreRuinsServicePower()
+                    showRuinsServiceAccessInspection()
+                })
+                if (!engine.canRestoreRuinsServicePower()) {
+                    panel.addView(label("Не хватает материалов: металл ×1, ткань ×1.", 12f, Color.rgb(196, 164, 125)))
+                }
+            }
+            else -> {
+                panel.addView(label("Питание восстановлено. На панели замка загорелся индикатор готовности.", 13f, Color.LTGRAY))
+                panel.addView(menuButton("РАЗБЛОКИРОВАТЬ ДВЕРЬ") {
+                    engine.openRuinsServiceAccess()
+                    showRuinsServiceAccessInspection()
+                })
+            }
         }
         panel.addView(menuButton("НАЗАД К ЖУРНАЛУ") { showJournal() })
+        showOverlay(panel)
+    }
+
+    private fun showRuinsPowerJunctionInspection() {
+        val engine = session.engine
+        val story = engine.storyProgress
+        val panel = createPanel("РАСПРЕДЕЛИТЕЛЬНАЯ КОРОБКА", "Руины · линия питания")
+        panel.addView(label("Коробка соединена с кабелем, который Андрей проследил от служебного входа. На крышке сохранилась маркировка линии.", 14f, Color.WHITE))
+        panel.addView(label("Внутри обнаружен отключённый участок и повреждённый контакт. По обозначениям ясно, что питание замка можно восстановить после замены повреждённого соединения.", 13f, Color.LTGRAY))
+        if (story.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED)) {
+            panel.addView(label("СОСТОЯНИЕ ЛИНИИ ЗАПИСАНО В ЖУРНАЛ", 13f, Color.rgb(151, 190, 151), true))
+        } else {
+            panel.addView(menuButton("ЗАПИСАТЬ РЕЗУЛЬТАТ ОСМОТРА") {
+                engine.inspectRuinsPowerJunction()
+                showRuinsPowerJunctionInspection()
+            })
+        }
+        panel.addView(menuButton("К СЛУЖЕБНОМУ ВХОДУ") { showRuinsServiceAccessInspection() })
         showOverlay(panel)
     }
 
