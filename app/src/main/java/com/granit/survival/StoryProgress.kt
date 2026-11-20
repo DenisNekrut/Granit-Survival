@@ -14,6 +14,8 @@ object StoryEventIds {
     const val RADIO_NOTES_CROSS_CHECKED = "chapter_01.radio_notes_cross_checked"
     const val THEORY_CHECK_RADIO_ELSEWHERE = "chapter_01.theory_check_radio_elsewhere"
     const val THEORY_CHECK_EQUIPMENT_FIRST = "chapter_01.theory_check_equipment_first"
+    const val RADIO_ELSEWHERE_RELAY_FOUND = "chapter_01.radio_elsewhere_relay_found"
+    const val EQUIPMENT_FIRST_RELAY_INSPECTED = "chapter_01.equipment_first_relay_inspected"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -29,6 +31,8 @@ object StoryEventIds {
         RADIO_NOTES_CROSS_CHECKED,
         THEORY_CHECK_RADIO_ELSEWHERE,
         THEORY_CHECK_EQUIPMENT_FIRST,
+        RADIO_ELSEWHERE_RELAY_FOUND,
+        EQUIPMENT_FIRST_RELAY_INSPECTED,
         WORKSHOP_INSPECTED
     )
 }
@@ -123,7 +127,9 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.WORKSHOP_INSPECTED, "Мастерская", "На верстаке оставлены измерительный инструмент и список мелких ремонтных работ."),
             StoryObservation(StoryEventIds.RADIO_NOTES_CROSS_CHECKED, "Сверка записей и эфира", "Андрей сопоставляет пометки с поведением радиостанции. Записи не объясняют помехи, но дают понять: перед выходом нельзя полагаться только на радиосвязь."),
             StoryObservation(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE, "Гипотеза: проверить связь в другом месте", "Андрей решает, что помехи могут быть связаны с местом, где находится убежище. Это лишь рабочая версия — её ещё предстоит проверить."),
-            StoryObservation(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST, "Гипотеза: проверить оборудование", "Андрей решает сначала проверить само оборудование и питание радиостанции. Пока нельзя исключить ни неисправность, ни внешнюю причину помех.")
+            StoryObservation(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST, "Гипотеза: проверить оборудование", "Андрей решает сначала проверить само оборудование и питание радиостанции. Пока нельзя исключить ни неисправность, ни внешнюю причину помех."),
+            StoryObservation(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND, "Сигнал за пределами убежища", "У старого ретранслятора Андрей замечает, что характер помех отличается от того, что он слышал в убежище. Это поддерживает мысль проверить связь в других местах, но пока ничего не доказывает."),
+            StoryObservation(StoryEventIds.EQUIPMENT_FIRST_RELAY_INSPECTED, "Проверка старого ретранслятора", "Андрей осматривает корпус ретранслятора и замечает следы прежнего ремонта. Само устройство давно не обслуживали; по одному внешнему осмотру нельзя понять, связано ли это с помехами.")
         )
         return notes.filter { hasEvent(it.eventId) }
     }
