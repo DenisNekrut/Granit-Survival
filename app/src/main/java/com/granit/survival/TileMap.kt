@@ -20,6 +20,13 @@ class TileMap(
 ) {
     val layoutSeed: Long? = if (zone.isProcedurallyGenerated) seed else null
     private val tiles = Array(height) { Array(width) { TileType.FLOOR } }
+    private val zoneLandmarks = PointOfInterestCatalog.inZone(zone)
+    private val protectedExitCoordinates: List<Pair<Int, Int>> = when (zone) {
+        WorldZone.BUNKER -> listOf(width / 2 to 1)
+        WorldZone.FOREST -> listOf(width / 2 to height - 2, 1 to height / 2, width - 2 to height / 2)
+        WorldZone.RUINS -> listOf(width - 2 to height / 2)
+        WorldZone.ROAD -> listOf(1 to height / 2)
+    }
 
     init {
         for (x in 0 until width) { set(x, 0, TileType.WALL); set(x, height - 1, TileType.WALL) }
@@ -202,16 +209,10 @@ class TileMap(
             if (zone == WorldZone.FOREST && kotlin.math.abs(x - width / 2) <= 2) return null
             if (kotlin.math.abs(x + 0.5f - zone.spawnX) < 2.0f &&
                 kotlin.math.abs(y + 0.5f - zone.spawnY) < 2.0f) return null
-            val exitPositions = when (zone) {
-                WorldZone.FOREST -> listOf(width / 2 to height - 2, 1 to height / 2, width - 2 to height / 2)
-                WorldZone.RUINS -> listOf(width - 2 to height / 2)
-                WorldZone.ROAD -> listOf(1 to height / 2)
-                WorldZone.BUNKER -> emptyList()
-            }
-            if (exitPositions.any { (exitX, exitY) ->
+            if (protectedExitCoordinates.any { (exitX, exitY) ->
                 kotlin.math.abs(x - exitX) < 2 && kotlin.math.abs(y - exitY) < 2
             }) return null
-            if (PointOfInterestCatalog.inZone(zone).any { poi ->
+            if (zoneLandmarks.any { poi ->
                 val dx = x + 0.5f - poi.x
                 val dy = y + 0.5f - poi.y
                 dx * dx + dy * dy < 2.25f * 2.25f
