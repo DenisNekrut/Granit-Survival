@@ -229,14 +229,45 @@ class TileMap(
         val cellX = kotlin.math.floor(worldX).toInt()
         val cellY = kotlin.math.floor(worldY).toInt()
         for (propY in cellY - 1..cellY + 1) for (propX in cellX - 1..cellX + 1) {
+            val type = get(propX, propY)
+            val furnitureSprite = when (type) {
+                TileType.BED -> "bed"
+                TileType.WORKBENCH -> "workbench"
+                TileType.STORAGE -> "storage"
+                TileType.BOOKSHELF -> "bookshelf"
+                TileType.RADIO -> "radio"
+                TileType.DINING_TABLE -> "dining_table"
+                TileType.GENERATOR -> "generator"
+                TileType.MEDICAL_STATION -> "medical_station"
+                else -> null
+            }
+            if (furnitureSprite != null) {
+                val footprint = SpriteWorldMetrics.footprint(furnitureSprite, 1f)
+                val anchoredX = when {
+                    get(propX - 1, propY) == TileType.WALL -> propX + footprint.width * 0.5f
+                    get(propX + 1, propY) == TileType.WALL -> propX + 1f - footprint.width * 0.5f
+                    else -> propX + 0.5f
+                }
+                val anchoredTopY = when {
+                    get(propX, propY - 1) == TileType.WALL -> propY.toFloat()
+                    get(propX, propY + 1) == TileType.WALL -> propY + 1f - footprint.width
+                    else -> propY + (1f - footprint.width) * 0.5f
+                }
+                val bottom = anchoredTopY + footprint.height
+                val top = bottom - minOf(footprint.height, 0.28f)
+                val left = anchoredX - footprint.width * 0.5f
+                if (playerLeft < left + footprint.width && playerRight > left &&
+                    playerTop < bottom && playerBottom > top) return true
+                continue
+            }
+
             val spriteId = environmentPropAt(propX, propY) ?: continue
             if (!ZonePropSelector.blocksMovement(spriteId)) continue
             val footprint = SpriteWorldMetrics.footprint(spriteId, 1f)
             val propLeft = propX + 0.5f - footprint.width * 0.5f
             val propRight = propLeft + footprint.width
             // Tall props are depth-sorted by their ground contact point. Only the
-            // lower base strip blocks movement; the upper canopy/body remains passable
-            // so the player can walk behind it instead of hitting an invisible wall.
+            // lower base strip blocks movement; the upper canopy/body remains passable.
             val collisionDepth = minOf(footprint.height, 0.28f)
             val propBottom = propY.toFloat() + footprint.height
             val propTop = propBottom - collisionDepth
@@ -256,10 +287,7 @@ class TileMap(
         )
         val tilesClear = points.all { (x, y) ->
             val type = get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())
-            type !in setOf(
-                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF,
-                TileType.RADIO, TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION
-            )
+            type != TileType.WALL
         }
         return tilesClear && !overlapsBlockingProp(worldX, worldY, radius)
     }
