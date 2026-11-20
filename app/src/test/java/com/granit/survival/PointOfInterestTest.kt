@@ -507,4 +507,32 @@ class PointOfInterestTest {
         })
     }
 
+    @Test
+    fun line08ServiceLaneRequiresCheckpointInspectionAndPersistsOnce() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.ROAD, regenerate = false)
+        val lane = PointOfInterestCatalog.byId("road_service_lane")!!
+        engine.player.x = lane.x
+        engine.player.y = lane.y
+
+        engine.storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+        assertTrue(engine.scanNearbyPointsOfInterest().none { it.id == lane.id })
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND))
+        assertFalse(engine.inspectRoadLine08ServiceLane())
+
+        engine.storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED)
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == lane.id })
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND))
+        assertTrue(engine.inspectRoadLine08ServiceLane())
+        assertFalse(engine.inspectRoadLine08ServiceLane())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED
+        })
+    }
+
 }
