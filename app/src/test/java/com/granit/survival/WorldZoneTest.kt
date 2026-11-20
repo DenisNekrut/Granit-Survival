@@ -53,7 +53,7 @@ class WorldZoneTest {
                 for (dy in -1..1) for (dx in -1..1) {
                     if (dx == 0 && dy == 0) continue
                     assertTrue("$zone prop $prop at ($x,$y) must not touch a wall",
-                        map[x + dx, y + dy] != TileType.WALL)
+                        map[x + dx, y + dy] == TileType.FLOOR)
                 }
                 if (zone != WorldZone.BUNKER) {
                     assertTrue("$zone prop must stay clear of the central route",
