@@ -41,6 +41,8 @@ class TileMap(
         }
         if (zone != WorldZone.BUNKER && zone != WorldZone.COMMUNICATION_NODE) buildRoomPartitions()
         if (seed != null && zone.isProcedurallyGenerated) buildProceduralLayout(seed)
+        // The sealed service entrance is a fixed landmark even on regenerated ruins maps.
+        if (zone == WorldZone.RUINS) set(19, 21, TileType.EXIT_TO_COMMUNICATION_NODE)
     }
 
     private fun buildBunker() {
