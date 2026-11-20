@@ -500,6 +500,23 @@ class MainActivity : Activity() {
                 panel.addView(label("Следуй по техническому проезду к дальней окраине руин и найди служебный вход старого коммуникационного узла.", 13f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED)) {
+            panel.addView(label("КОММУНИКАЦИОННЫЙ УЗЕЛ", 15f, Color.rgb(207, 194, 155), true))
+            when {
+                !session.engine.isPoiDiscovered("communication_node_console") ->
+                    panel.addView(label("Внутри узла обнаружен пульт с индикатором линии. Найди его в помещении.", 13f, Color.LTGRAY))
+                !story.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED) -> {
+                    panel.addView(label("Пульт найден. Осмотри экран и состояние линии связи.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ОСМОТРЕТЬ ПУЛЬТ СВЯЗИ") { showCommunicationNodeConsoleInspection() })
+                }
+                !story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ) -> {
+                    panel.addView(label("Пульт осмотрен. Рядом сохранился журнал дежурной смены.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ПРОЧИТАТЬ ЖУРНАЛ ДЕЖУРНОЙ СМЕНЫ") { showCommunicationNodeShiftLog() })
+                }
+                else ->
+                    panel.addView(label("Пульт и журнал дежурной смены изучены. Отметки о линии GRANIT сохранены.", 12f, Color.rgb(151, 190, 151)))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
@@ -510,6 +527,46 @@ class MainActivity : Activity() {
             }
         }
         panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        showOverlay(panel)
+    }
+
+    private fun showCommunicationNodeConsoleInspection() {
+        val engine = session.engine
+        val story = engine.storyProgress
+        val panel = createPanel("ПУЛЬТ ЛИНИИ СВЯЗИ", "Коммуникационный узел · сектор 08")
+        panel.addView(label("Пульт закреплён на металлической стойке. Индикатор линии горит ровно, хотя вокруг не слышно ни вентиляции, ни работы генератора.", 14f, Color.WHITE))
+        panel.addView(label("На экране отображается служебный статус «GRANIT / ЛИНИЯ 08». Запрос внешнего подтверждения не получает ответа. Андрей не может определить, откуда оборудование продолжает получать питание.", 13f, Color.LTGRAY))
+        if (story.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED)) {
+            panel.addView(label("СОСТОЯНИЕ ПУЛЬТА ЗАПИСАНО В ЖУРНАЛ", 13f, Color.rgb(151, 190, 151), true))
+            if (!story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ)) {
+                panel.addView(menuButton("ПРОЧИТАТЬ ЖУРНАЛ ДЕЖУРНОЙ СМЕНЫ") { showCommunicationNodeShiftLog() })
+            }
+        } else {
+            panel.addView(menuButton("ЗАПИСАТЬ РЕЗУЛЬТАТ ОСМОТРА") {
+                engine.inspectCommunicationNodeConsole()
+                showCommunicationNodeConsoleInspection()
+            })
+        }
+        panel.addView(menuButton("НАЗАД К ЖУРНАЛУ") { showJournal() })
+        showOverlay(panel)
+    }
+
+    private fun showCommunicationNodeShiftLog() {
+        val engine = session.engine
+        val story = engine.storyProgress
+        val panel = createPanel("ЖУРНАЛ ДЕЖУРНОЙ СМЕНЫ", "Коммуникационный узел · линия GRANIT")
+        panel.addView(label("Бумажный журнал лежит рядом с пультом. Несколько страниц склеились от сырости, но последняя запись читается частично.", 14f, Color.WHITE))
+        panel.addView(label("21:40 — линия GRANIT отвечает в штатном режиме.\n21:47 — контрольный сигнал принят повторно.\n21:52 — время на панели не совпадает с часами поста.", 13f, Color.LTGRAY))
+        panel.addView(label("Дальше строка обрывается. Подписи дежурного нет. Андрей отмечает расхождение времени, но пока не делает выводов о его причине.", 13f, Color.LTGRAY))
+        if (story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ)) {
+            panel.addView(label("ЗАПИСИ ЖУРНАЛА СОХРАНЕНЫ", 13f, Color.rgb(151, 190, 151), true))
+        } else {
+            panel.addView(menuButton("СОХРАНИТЬ ЗАПИСЬ В ЖУРНАЛЕ АНДРЕЯ") {
+                engine.readCommunicationNodeShiftLog()
+                showCommunicationNodeShiftLog()
+            })
+        }
+        panel.addView(menuButton("К ПУЛЬТУ СВЯЗИ") { showCommunicationNodeConsoleInspection() })
         showOverlay(panel)
     }
 
