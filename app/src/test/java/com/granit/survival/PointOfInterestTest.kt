@@ -286,11 +286,11 @@ class PointOfInterestTest {
         assertFalse(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
 
         assertTrue(engine.inspectRuinsSignalMarker())
+        assertFalse(engine.inspectRuinsOuterRoute())
         engine.player.x = outerRoute.x
         engine.player.y = outerRoute.y
         assertTrue(engine.scanNearbyPointsOfInterest().contains(outerRoute))
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
-        assertFalse(engine.inspectRuinsOuterRoute())
         assertTrue(engine.inspectRuinsOuterRoute())
         assertFalse(engine.inspectRuinsOuterRoute())
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED))
