@@ -246,7 +246,10 @@ class PixelRenderer {
             if (furnitureSprite != null) {
                 // Snap the sprite's visible edge to the nearest adjacent wall, not just its tile center.
                 val furniturePixelSize = 0.052f
-                val furnitureExtent = 16f * furniturePixelSize
+                val furnitureDensity = PixelSpriteAtlas.worldDensityScale(furnitureSprite)
+                val furnitureFrame = requireNotNull(PixelSpriteAtlas.sprite(furnitureSprite)).frames.first()
+                val furnitureSourceWidth = furnitureFrame.maxOfOrNull { it.length }?.toFloat() ?: 16f
+                val furnitureExtent = furnitureSourceWidth * furniturePixelSize * furnitureDensity
                 val anchoredX = when {
                     engine.tileMap[tileX - 1, tileY] == TileType.WALL -> tileX + furnitureExtent * 0.5f
                     engine.tileMap[tileX + 1, tileY] == TileType.WALL -> tileX + 1f - furnitureExtent * 0.5f
@@ -564,7 +567,8 @@ class PixelRenderer {
         frame: Int = 0,
         flipX: Boolean = false
     ) {
-        val scaledPixelSize = pixelSize * GranitArtPalette.WORLD_SPRITE_SCALE
+        // Texture resolution must never change the object's footprint on the tile map.
+        val scaledPixelSize = pixelSize * PixelSpriteAtlas.worldDensityScale(id) * GranitArtPalette.WORLD_SPRITE_SCALE
         val manifest = spriteManifest
         val texture = spriteTexture
         val entry = manifest?.sprites?.firstOrNull { it.id == id }
