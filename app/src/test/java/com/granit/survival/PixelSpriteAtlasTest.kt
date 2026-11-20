@@ -55,6 +55,28 @@ class PixelSpriteAtlasTest {
 
 
     @Test
+    fun doubledWorldSpriteResolutionDoesNotDoubleItsLogicalFootprint() {
+        val highResolutionIds = listOf(
+            "player", "player_back", "player_side_left", "player_side_right",
+            "tree", "bush", "rubble", "streetlamp", "road_sign", "wreck",
+            "crate", "barrel", "road_barrier",
+            "bed", "generator", "medical_station", "workbench", "storage", "bookshelf", "radio"
+        )
+        highResolutionIds.forEach { id ->
+            assertTrue("$id must compensate for 2x source density",
+                PixelSpriteAtlas.worldDensityScale(id) == 0.5f)
+        }
+        listOf("exit_hatch", "ladder_hatch", "floor_grate", "infected_shambler").forEach { id ->
+            assertTrue("$id keeps its original world pixel scale",
+                PixelSpriteAtlas.worldDensityScale(id) == 1f)
+        }
+        val formerFootprint = 16f * 0.0625f
+        val detailedFootprint = 32f * 0.0625f * PixelSpriteAtlas.worldDensityScale("tree")
+        assertTrue("Higher resolution must preserve the original tile footprint",
+            kotlin.math.abs(formerFootprint - detailedFootprint) < 0.0001f)
+    }
+
+    @Test
     fun inventoryIconsHaveUniquePixelArtFrames() {
         val ids = listOf("item_wood", "item_metal", "item_fabric", "item_food", "item_water", "item_medical_kit", "item_bandage")
         ids.forEach { id ->
