@@ -99,7 +99,10 @@ object PixelSpriteTextureAtlas {
 
     fun build(): BuiltPixelSpriteAtlas {
         val plan = plan()
-        val bitmap = Bitmap.createBitmap(plan.textureWidth, plan.textureHeight, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(plan.textureWidth, plan.textureHeight, Bitmap.Config.ARGB_8888).apply {
+            // Empty atlas padding and '.' sprite pixels must remain fully transparent.
+            eraseColor(Color.TRANSPARENT)
+        }
         val entries = plan.entries.map { packed ->
             val sprite = requireNotNull(PixelSpriteAtlas.sprite(packed.id))
             packed.frames.forEachIndexed { frameIndex, frame ->
