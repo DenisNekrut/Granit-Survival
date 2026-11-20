@@ -360,6 +360,12 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         }
     }
 
+    /** The relay can only be inspected after the landmark has been discovered. */
+    fun inspectDiscoveredForestRelay(): Boolean {
+        if (!isPoiDiscovered("forest_radio_cache")) return false
+        return storyProgress.recordEvent(StoryEventIds.FOREST_RELAY_INSPECTED)
+    }
+
     fun nearestWorldContainer(maxDistance: Float = 1.35f): WorldContainer? {
         val limit = maxDistance * maxDistance
         return zoneContainers[zone].orEmpty().values.minByOrNull { c ->
