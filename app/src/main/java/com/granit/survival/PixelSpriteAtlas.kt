@@ -631,7 +631,8 @@ object PixelSpriteAtlas {
     /** Returns atlas integrity errors; an empty list means every frame is renderable. */
     fun validate(): List<String> {
         val errors = mutableListOf<String>()
-        allIds().forEach { id ->\n            val sprite = requireNotNull(sprite(id))
+        allIds().forEach { id ->
+            val sprite = requireNotNull(sprite(id))
             val expectedHeight = sprite.frames.firstOrNull()?.size ?: 0
             val expectedWidth = sprite.frames.firstOrNull()?.firstOrNull()?.length ?: 0
             if (expectedHeight == 0 || expectedWidth == 0) errors += "$id has an empty frame"
