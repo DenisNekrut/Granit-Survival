@@ -82,63 +82,38 @@ internal class InventoryScreen(
 
     fun show(engine: GameEngine) {
         val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · ${engine.inventory.columns} × ${engine.inventory.rows}")
-        for (rowIndex in 0 until engine.inventory.rows) {
-            val row = LinearLayout(activity).apply {
-                orientation = LinearLayout.HORIZONTAL
+        panel.addView(InventoryGridView(
+            context = activity,
+            columns = engine.inventory.columns,
+            rows = engine.inventory.rows,
+            cellHeightDp = 104,
+            iconSizeDp = 42,
+            dp = dp,
+            slotAt = engine.inventory::slot
+        ) { _, stack ->
+            val useAction: (() -> Unit)? = when (stack.type) {
+                ItemType.CANNED_FOOD -> ({
+                    if (consumeFood()) refresh() else showCannotUseMessage()
+                })
+                ItemType.WATER -> ({
+                    if (drinkWater()) refresh() else showCannotUseMessage()
+                })
+                ItemType.BANDAGE -> ({
+                    if (useBandage()) refresh() else showCannotUseMessage()
+                })
+                ItemType.MEDICAL_KIT -> ({
+                    if (useMedicalKit()) refresh() else showCannotUseMessage()
+                })
+                else -> null
             }
-            for (column in 0 until engine.inventory.columns) {
-                val index = rowIndex * engine.inventory.columns + column
-                val stack = engine.inventory.slot(index)
-                val cell = LinearLayout(activity).apply {
-                    orientation = LinearLayout.VERTICAL
-                    gravity = Gravity.CENTER
-                    setPadding(dp(4), dp(5), dp(4), dp(5))
-                    setBackgroundColor(Color.argb(175, 28, 43, 39))
-                }
-                if (stack == null) {
-                    cell.addView(label("ПУСТО", 10f, GranitPalette.subtitle, false))
-                } else {
-                    cell.addView(
-                        InventoryPixelIconView(activity, stack.type.iconSpriteId),
-                        LinearLayout.LayoutParams(dp(42), dp(42))
-                    )
-                    cell.addView(label(
-                        stack.type.displayName + "\n×" + stack.quantity,
-                        10f, GranitPalette.textPrimary, true
-                    ))
-                    val useAction: (() -> Unit)? = when (stack.type) {
-                        ItemType.CANNED_FOOD -> ({
-                            if (consumeFood()) refresh() else showCannotUseMessage()
-                        })
-                        ItemType.WATER -> ({
-                            if (drinkWater()) refresh() else showCannotUseMessage()
-                        })
-                        ItemType.BANDAGE -> ({
-                            if (useBandage()) refresh() else showCannotUseMessage()
-                        })
-                        ItemType.MEDICAL_KIT -> ({
-                            if (useMedicalKit()) refresh() else showCannotUseMessage()
-                        })
-                        else -> null
-                    }
-                    if (useAction != null) {
-                        cell.isClickable = true
-                        cell.setOnClickListener {
-                            AlertDialog.Builder(activity)
-                                .setTitle(stack.type.displayName)
-                                .setItems(arrayOf("ИСПОЛЬЗОВАТЬ")) { _, _ -> useAction.invoke() }
-                                .setNegativeButton("ОТМЕНА", null)
-                                .show()
-                        }
-                    }
-                }
-                val params = LinearLayout.LayoutParams(0, dp(104), 1f).apply {
-                    setMargins(dp(2), dp(2), dp(2), dp(2))
-                }
-                row.addView(cell, params)
+            if (useAction != null) {
+                AlertDialog.Builder(activity)
+                    .setTitle(stack.type.displayName)
+                    .setItems(arrayOf("ИСПОЛЬЗОВАТЬ")) { _, _ -> useAction.invoke() }
+                    .setNegativeButton("ОТМЕНА", null)
+                    .show()
             }
-            panel.addView(row)
-        }
+        })
         panel.addView(menuButton("ЗАКРЫТЬ РЮКЗАК", true) { close() })
         showOverlay(panel)
     }
