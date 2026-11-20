@@ -55,4 +55,19 @@ class ItemContainerContractTest {
         assertFalse(container.canAdd(ItemType.WOOD, 0))
         assertEquals(before, container.snapshot())
     }
+
+    @Test
+    fun transferApiAcceptsAnyItemContainerImplementation() {
+        val source: ItemContainer = Inventory(columns = 2, rows = 1)
+        val destination = BunkerStorage(columns = 2, rows = 1)
+        source.add(ItemType.WOOD, 6)
+
+        assertTrue(destination.deposit(source, ItemType.WOOD, 4))
+        assertEquals(2, source.count(ItemType.WOOD))
+        assertEquals(4, destination.count(ItemType.WOOD))
+        assertTrue(destination.withdraw(source, ItemType.WOOD, 3))
+        assertEquals(5, source.count(ItemType.WOOD))
+        assertEquals(1, destination.count(ItemType.WOOD))
+    }
+
 }
