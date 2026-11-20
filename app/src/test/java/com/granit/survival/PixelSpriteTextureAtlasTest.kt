@@ -107,8 +107,8 @@ class PixelSpriteTextureAtlasTest {
     @Test
     fun characterAndEnvironmentFramesShareOneAtlas() {
         val playerEntry = requireNotNull(plan.entry("player"))
-        assertEquals(listOf(48, 48, 48, 48), playerEntry.frames.map { it.height })
-        assertEquals(listOf(32, 32, 32, 32), playerEntry.frames.map { it.width })
+        assertEquals(listOf(96, 96, 96, 96), playerEntry.frames.map { it.height })
+        assertEquals(listOf(64, 64, 64, 64), playerEntry.frames.map { it.width })
 
         val treeEntry = requireNotNull(plan.entry("tree"))
         assertEquals(32, treeEntry.frameHeight)
