@@ -405,6 +405,26 @@ class MainActivity : Activity() {
                 panel.addView(label(observation.note, 12f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED)) {
+            panel.addView(label("ПЕРВАЯ ГИПОТЕЗА АНДРЕЯ", 15f, Color.rgb(207, 194, 155), true))
+            val theoryRadio = story.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE)
+            val theoryEquipment = story.hasEvent(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST)
+            when {
+                theoryRadio -> panel.addView(label("Выбрано: проверить связь в другом месте. Андрей пока не считает эту версию доказанной.", 13f, Color.LTGRAY))
+                theoryEquipment -> panel.addView(label("Выбрано: сначала проверить оборудование. Андрей пока не считает эту версию доказанной.", 13f, Color.LTGRAY))
+                else -> {
+                    panel.addView(label("Что проверить в первую очередь? Это предварительная версия, а не окончательный вывод.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ПРОВЕРИТЬ СВЯЗЬ В ДРУГОМ МЕСТЕ") {
+                        story.chooseFirstTheory(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE)
+                        showJournal()
+                    })
+                    panel.addView(menuButton("СНАЧАЛА ПРОВЕРИТЬ ОБОРУДОВАНИЕ") {
+                        story.chooseFirstTheory(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST)
+                        showJournal()
+                    })
+                }
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
