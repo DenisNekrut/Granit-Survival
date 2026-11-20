@@ -48,15 +48,23 @@ internal class BunkerStationPanels(
 
     fun showBed() {
         val engine = session.engine
-        if (!engine.canSleep()) {
-            showMessage("СПАЛЬНЯ", "Сейчас нельзя лечь спать.")
-            return
+        val canInspect = engine.zone == WorldZone.BUNKER &&
+            engine.tileMap.isNearTile(TileType.BED, engine.player.x, engine.player.y, 1.5f)
+        val firstInspection = canInspect && !engine.storyProgress.hasEvent(StoryEventIds.BED_INSPECTED)
+        if (canInspect) engine.storyProgress.recordEvent(StoryEventIds.BED_INSPECTED)
+        val canSleep = engine.canSleep()
+        val opening = if (firstInspection) {
+            "Андрей замечает на тумбе блокнот. Между бытовыми записями выведено: «Не забыть проверить связь». Почерк кажется торопливым."
+        } else {
+            "Место для отдыха. После сна будет создана контрольная точка."
         }
-        val firstInspection = !engine.storyProgress.hasEvent(StoryEventIds.BED_INSPECTED)
-        engine.storyProgress.recordEvent(StoryEventIds.BED_INSPECTED)
-        val panel = createPanel("СПАЛЬНЯ", (if (firstInspection) "Андрей замечает на тумбе блокнот. Между бытовыми записями выведено: «Не забыть проверить связь». Почерк кажется торопливым.\n\n" else "") + "Можно завершить день и восстановить силы")
-        panel.addView(label("Сон завершит текущий день. После пробуждения будет создана контрольная точка.", 13f, Color.rgb(206, 215, 202), false))
-        panel.addView(menuButton("СПАТЬ ДО 07:00", true) {
+        val panel = createPanel("СПАЛЬНЯ", opening)
+        panel.addView(label(
+            if (canSleep) "Можно завершить день и восстановить силы."
+            else "Сейчас отдых недоступен. Осмотреть спальню можно в любое время.",
+            13f, Color.rgb(206, 215, 202), false
+        ))
+        panel.addView(menuButton("СПАТЬ ДО 07:00", canSleep) {
             runCatching { session.sleepAndAutosave() }
                 .onSuccess { slept ->
                     if (slept) {
