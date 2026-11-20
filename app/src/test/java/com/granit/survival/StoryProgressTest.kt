@@ -85,6 +85,19 @@ class StoryProgressTest {
     }
 
     @Test
+    fun forestRelayInspectionIsIdempotentAndPersists() {
+        val story = StoryProgressSystem()
+        assertFalse(story.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED))
+        assertTrue(story.recordEvent(StoryEventIds.FOREST_RELAY_INSPECTED))
+        assertFalse(story.recordEvent(StoryEventIds.FOREST_RELAY_INSPECTED))
+        val restored = StoryProgressSystem(story.snapshot())
+        assertTrue(restored.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED))
+        assertTrue(restored.observations().any {
+            it.eventId == StoryEventIds.FOREST_RELAY_INSPECTED
+        })
+    }
+
+    @Test
     fun firstTheoryRequiresCrossCheckAndIsMutuallyExclusiveAndPersistent() {
         val story = StoryProgressSystem()
         assertFalse(story.chooseFirstTheory(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST))
