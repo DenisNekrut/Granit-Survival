@@ -48,3 +48,10 @@ The external atlas is currently an optional override. If absent, the game genera
 - Atlas cell bounds and manifest frame dimensions are scaled together; nearest-neighbour sampling remains mandatory.
 - World-space sprite dimensions, pivots, collision cells, animation timing and gameplay coordinates are unchanged.
 - This pass improves texture resolution/headroom and avoids fractional scaling artifacts, but does not pretend that duplicated texels add hand-painted detail. The next art pass must redraw priority characters and props with genuinely finer source pixels (not merely upscale them).
+
+
+## 2026-11-20 — player sprite detail pass
+- The four directional player walk cycles now use 32x48 authored frames instead of the 16x24 blockout.
+- Added small per-texel clothing seams, backpack/webbing accents, equipment highlights and boot details while keeping the existing silhouette, four-frame timing and bottom-centre world anchor.
+- The runtime atlas retains nearest-neighbour 2x rasterization, so player texture frames become 64x96 without changing world-space size.
+- Environment sprites remain on their existing 16x16 source cells for the next dedicated redraw pass.
