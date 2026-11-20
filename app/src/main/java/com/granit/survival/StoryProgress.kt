@@ -20,6 +20,7 @@ object StoryEventIds {
     const val FOREST_RELAY_REPAIRED = "chapter_01.forest_relay_repaired"
     const val FOREST_WATCH_POST_SIGNAL_CHECKED = "chapter_01.forest_watch_post_signal_checked"
     const val ROAD_MAP_SIGNAL_TRACE_FOUND = "chapter_01.road_map_signal_trace_found"
+    const val RUINS_SIGNAL_MARKER_REACHED = "chapter_01.ruins_signal_marker_reached"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -41,6 +42,7 @@ object StoryEventIds {
         FOREST_RELAY_REPAIRED,
         FOREST_WATCH_POST_SIGNAL_CHECKED,
         ROAD_MAP_SIGNAL_TRACE_FOUND,
+        RUINS_SIGNAL_MARKER_REACHED,
         WORKSHOP_INSPECTED
     )
 }
@@ -141,7 +143,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.FOREST_RELAY_INSPECTED, "Осмотр ретранслятора", "Андрей внимательно изучил старый ретранслятор и записал состояние устройства. Причина помех пока остаётся неизвестной."),
             StoryObservation(StoryEventIds.FOREST_RELAY_REPAIRED, "Ретранслятор восстановлен", "Андрей восстановил питание и заменил повреждённые соединения. Устройство подало короткий сигнал, но устойчивой связи пока нет. Теперь ретранслятор может стать ориентиром для дальнейшей проверки сигнала."),
             StoryObservation(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED, "Сверка сигнала на лесной вышке", "На старой вышке Андрей проверил направление и уровень сигнала восстановленного ретранслятора. Показания меняются, хотя положение антенны остаётся прежним. Он отмечает это на карте: следующий замер стоит провести уже за пределами леса."),
-            StoryObservation(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND, "След сигнала у старой дороги", "В брошенном автомобиле Андрей находит карту с отметками вдоль дороги. Одна из отметок совпадает с направлением, полученным на лесной вышке. Это не доказывает наличие источника сигнала, но даёт конкретную точку для следующей экспедиции.")
+            StoryObservation(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND, "След сигнала у старой дороги", "В брошенном автомобиле Андрей находит карту с отметками вдоль дороги. Одна из отметок совпадает с направлением, полученным на лесной вышке. Это не доказывает наличие источника сигнала, но даёт конкретную точку для следующей экспедиции."),
+            StoryObservation(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED, "Отметка на разбитом посту", "В руинах Андрей находит пост, отмеченный на карте. На табличке сохранился тот же условный знак, что и возле лесной вышки. След сигнала ведёт дальше, но теперь у него есть ещё одна проверяемая точка маршрута.")
         )
         return notes.filter { hasEvent(it.eventId) }
     }
