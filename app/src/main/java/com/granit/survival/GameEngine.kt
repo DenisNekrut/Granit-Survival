@@ -104,7 +104,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             dx * dx + dy * dy <= poi.discoveryRadius * poi.discoveryRadius &&
                 discoveredPoiIds.add(poi.id)
         }
-        if (found.any { it.id == "forest_radio_cache" }) {
+        if ("forest_radio_cache" in discoveredPoiIds) {
             when {
                 storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) ->
                     storyProgress.recordEvent(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND)
