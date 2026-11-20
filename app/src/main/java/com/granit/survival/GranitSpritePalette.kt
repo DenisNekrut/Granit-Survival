@@ -1,9 +1,8 @@
 package com.granit.survival
 
 /**
- * Replacement material palette for every in-game sprite.
- * Original silhouettes remain unchanged while source colours are remapped into
- * cold steel, oxidized teal, moss/olive, muted rust and amber highlight families.
+ * Material-aware recolouring for the built-in pixel atlas.
+ * Sprite silhouettes and source frame geometry are never modified.
  */
 internal object GranitSpritePalette {
     private data class Ramp(val shadow: FloatArray, val mid: FloatArray, val highlight: FloatArray)
@@ -15,10 +14,32 @@ internal object GranitSpritePalette {
     private val oxidized = GranitWorldPalette.spriteRamp("oxidized")
     private val steelBlue = GranitWorldPalette.spriteRamp("steelBlue")
 
-    fun remap(sprite: PixelSprite): PixelSprite = PixelSprite(
-        frames = sprite.frames,
-        palette = sprite.palette.mapValues { (_, color) -> remapColor(color) }
-    )
+    fun remap(sprite: PixelSprite): PixelSprite = remap(sprite, "")
+
+    fun remap(sprite: PixelSprite, spriteId: String): PixelSprite {
+        val material = materialForSprite(spriteId)
+        return PixelSprite(
+            frames = sprite.frames,
+            palette = sprite.palette.mapValues { (_, color) ->
+                if (material == null) remapColor(color) else remapColor(color, material)
+            }
+        )
+    }
+
+    /** Material routing is explicit so one hue cannot accidentally turn every object into foliage or rust. */
+    internal fun materialForSprite(spriteId: String): String? = when {
+        spriteId in setOf("tree", "bush", "grass_patch") -> "pine"
+        spriteId in setOf("fallen_log", "wood", "crate", "bed", "bookshelf", "dining_table") -> "wood"
+        spriteId in setOf("metal", "metal_scrap", "floor_grate", "radio", "generator", "storage",
+            "bunker_panel", "streetlamp", "road_sign", "road_barrier", "wreck", "workbench") -> "steel"
+        spriteId in setOf("rubble", "debris", "brick_wall", "ruined_wall") -> "brick"
+        spriteId in setOf("water", "puddle") -> "water"
+        spriteId in setOf("fabric", "item_fabric", "bandage", "item_bandage") -> "fabric"
+        spriteId in setOf("medical_station", "item_medical_kit") -> "medical"
+        spriteId in setOf("infected_shambler", "infected_runner", "infected_brute") -> "skin"
+        spriteId in setOf("food", "item_food") -> "hazard"
+        else -> null
+    }
 
     fun remapColor(source: FloatArray): FloatArray {
         require(source.size >= 3) { "Sprite palette colours must contain RGB channels" }
@@ -43,6 +64,20 @@ internal object GranitSpritePalette {
             hue < 255f -> steelBlue
             else -> rust
         }
+        return mapLuminance(source, ramp)
+    }
+
+    fun remapColor(source: FloatArray, material: String): FloatArray {
+        require(source.size >= 3) { "Sprite palette colours must contain RGB channels" }
+        return mapLuminance(source, GranitWorldPalette.materialRamp(material).let {
+            Ramp(it.shadow, it.mid, it.highlight)
+        })
+    }
+
+    private fun mapLuminance(source: FloatArray, ramp: Ramp): FloatArray {
+        val red = source[0].coerceIn(0f, 1f)
+        val green = source[1].coerceIn(0f, 1f)
+        val blue = source[2].coerceIn(0f, 1f)
         val luminance = (red * 0.2126f + green * 0.7152f + blue * 0.0722f).coerceIn(0f, 1f)
         val low = if (luminance < 0.48f) ramp.shadow else ramp.mid
         val high = if (luminance < 0.48f) ramp.mid else ramp.highlight
