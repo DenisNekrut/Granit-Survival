@@ -62,6 +62,22 @@ class Camera2DTest {
     }
 
     @Test
+    fun engineCameraTracksPlayerOnRenderFramesWithoutFixedStep() {
+        val engine = GameEngine()
+        engine.camera.setViewport(12.5f, 7.2f)
+        val beforeX = engine.camera.x
+        val beforeY = engine.camera.y
+        engine.player.x += 1f
+        engine.player.y += 1f
+
+        val steps = engine.updateFrame(1f / 240f, EngineInput())
+
+        assertEquals(0, steps)
+        assertTrue(engine.camera.x > beforeX)
+        assertTrue(engine.camera.y > beforeY)
+    }
+
+    @Test
     fun cameraStopsAtWorldEdges() {
         val camera = Camera2D(10f, 6f)
         camera.snapTo(50f, 30f, 100f, 60f)
