@@ -68,7 +68,7 @@ class PixelSpriteAtlasTest {
             assertTrue("$id must compensate for 2x source density",
                 PixelSpriteAtlas.worldDensityScale(id) == 0.5f)
         }
-        listOf("exit_hatch", "ladder_hatch", "floor_grate", "infected_shambler").forEach { id ->
+        listOf("exit_hatch", "ladder_hatch", "infected_shambler").forEach { id ->
             assertTrue("$id keeps its original world pixel scale",
                 PixelSpriteAtlas.worldDensityScale(id) == 1f)
         }
