@@ -33,10 +33,16 @@ class PixelSpriteAtlasTest {
 
     @Test
     fun environmentSpritesFitTheGeneratedAtlasCell() {
-        listOf("tree", "rubble", "road_barrier", "bunker_panel", "bush", "debris", "streetlamp", "floor_grate", "crate", "barrel", "wreck", "exit_hatch", "ladder_hatch", "vault_door", "control_console", "dining_table", "generator", "medical_station", "workbench", "locker", "bookshelf", "ceiling_lamp", "grass_patch", "fallen_log", "metal_scrap", "puddle", "road_sign").forEach { id ->
+        listOf("tree", "rubble", "road_barrier", "bunker_panel", "bush", "debris", "streetlamp", "floor_grate", "crate", "barrel", "wreck", "exit_hatch", "ladder_hatch", "vault_door", "control_console", "dining_table", "ceiling_lamp", "grass_patch", "fallen_log", "metal_scrap", "puddle", "road_sign").forEach { id ->
             val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
             assertTrue("$id must fit the 16x16 atlas cell", sprite.frames.all { frame ->
                 frame.size <= 16 && frame.all { it.length <= 16 }
+            })
+        }
+        listOf("bed", "generator", "medical_station", "workbench", "storage", "bookshelf", "radio").forEach { id ->
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
+            assertTrue("$id should use the detailed 32x32 bunker art", sprite.frames.all { frame ->
+                frame.size == 32 && frame.all { it.length == 32 }
             })
         }
     }
