@@ -194,17 +194,23 @@ class TileMap(
             if (offsetX == 0 && offsetY == 0) continue
             if (get(x + offsetX, y + offsetY) == TileType.WALL) return null
         }
-        if (zone != WorldZone.BUNKER) {
+        if (zone == WorldZone.BUNKER) {
+            // Keep the upper service corridor and the bunker hatch approach clear.
+            if (y <= 2) return null
+        } else {
             if (kotlin.math.abs(y - height / 2) <= 2) return null
             if (zone == WorldZone.FOREST && kotlin.math.abs(x - width / 2) <= 2) return null
             if (kotlin.math.abs(x + 0.5f - zone.spawnX) < 2.0f &&
                 kotlin.math.abs(y + 0.5f - zone.spawnY) < 2.0f) return null
-            var nearExit = false
-            forEachTile { exitX, exitY, type ->
-                if (type in setOf(TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD, TileType.EXIT_TO_BUNKER) &&
-                    kotlin.math.abs(x - exitX) < 2 && kotlin.math.abs(y - exitY) < 2) nearExit = true
+            val exitPositions = when (zone) {
+                WorldZone.FOREST -> listOf(width / 2 to height - 2, 1 to height / 2, width - 2 to height / 2)
+                WorldZone.RUINS -> listOf(width - 2 to height / 2)
+                WorldZone.ROAD -> listOf(1 to height / 2)
+                WorldZone.BUNKER -> emptyList()
             }
-            if (nearExit) return null
+            if (exitPositions.any { (exitX, exitY) ->
+                kotlin.math.abs(x - exitX) < 2 && kotlin.math.abs(y - exitY) < 2
+            }) return null
             if (PointOfInterestCatalog.inZone(zone).any { poi ->
                 val dx = x + 0.5f - poi.x
                 val dy = y + 0.5f - poi.y
