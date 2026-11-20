@@ -83,6 +83,65 @@ object PixelSpriteAtlas {
         return PixelSprite(frames, palette)
     }
 
+
+    private fun inventoryIcon(palette: Map<Char, FloatArray>, vararg rows: String) =
+        PixelSprite(listOf(rows.toList()), palette)
+
+    /** Original 16x16 inventory item icons, kept separate from world props. */
+    private val inventoryIcons = mapOf(
+        "item_wood" to inventoryIcon(mapOf(
+            'B' to floatArrayOf(0.20f, 0.12f, 0.075f),
+            'W' to floatArrayOf(0.58f, 0.36f, 0.19f)
+        ),
+            "................","................","....BBBBBBBB....","...BWWWWWWWWB...","..BWWWWWWWWWWB..","..BWWWWWWWWWWB..","...BWWWWWWWWB...","....BBBBBBBB....",
+            "....BBBBBBBB....","...BWWWWWWWWB...","..BWWWWWWWWWWB..","..BWWWWWWWWWWB..","...BWWWWWWWWB...","....BBBBBBBB....","................","................"
+        ),
+        "item_metal" to inventoryIcon(mapOf(
+            'M' to floatArrayOf(0.18f, 0.23f, 0.23f),
+            'S' to floatArrayOf(0.64f, 0.72f, 0.72f)
+        ),
+            "................","................","......MMMM......",".....MSSSSM.....","....MSSSSSSM....","...MSSSSSSSSM...","..MSSSSSSSSSSM..","..MSSSSSSSSSSM..",
+            "...MSSSSSSSSM...","....MSSSSSSM....",".....MSSSSM.....","......MMMM......",".......MM.......","................","................","................"
+        ),
+        "item_fabric" to inventoryIcon(mapOf(
+            'B' to floatArrayOf(0.13f, 0.25f, 0.22f),
+            'W' to floatArrayOf(0.48f, 0.66f, 0.58f)
+        ),
+            "................","..BBBBBBBBBBBB..",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",".BBBBBBBBBBBBBW.","..BWWWWWWWWWWB..","...BWWWWWWWWB...",
+            "....BWWWWWWWB...",".....BBBBBBBB...","................","................","................","................","................","................"
+        ),
+        "item_food" to inventoryIcon(mapOf(
+            'M' to floatArrayOf(0.29f, 0.20f, 0.11f),
+            'W' to floatArrayOf(0.77f, 0.55f, 0.22f),
+            'S' to floatArrayOf(0.91f, 0.82f, 0.59f)
+        ),
+            "................",".....MMMMMM.....","....MWWWWWWM....","...MWWWWWWWWM...","...MWWSSSSWWM...","...MWWSSSSWWM...","...MWWSSSSWWM...","...MWWSSSSWWM...",
+            "...MWWSSSSWWM...","...MWWSSSSWWM...","...MWWWWWWWWM...","....MWWWWWWM....",".....MMMMMM.....","................","................","................"
+        ),
+        "item_water" to inventoryIcon(mapOf(
+            'B' to floatArrayOf(0.10f, 0.22f, 0.29f),
+            'W' to floatArrayOf(0.26f, 0.62f, 0.82f)
+        ),
+            "................","......BBBB......",".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....",
+            ".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....","......BBBB......",".......BB.......",".......BB.......","................","................"
+        ),
+        "item_medical_kit" to inventoryIcon(mapOf(
+            'M' to floatArrayOf(0.31f, 0.12f, 0.12f),
+            'W' to floatArrayOf(0.88f, 0.84f, 0.73f),
+            'R' to floatArrayOf(0.76f, 0.25f, 0.20f)
+        ),
+            "................","...MMMMMMMMMM...","..MWWWWWWWWWWM..","..MWWWWWWWWWWM..","..MWWWWRRWWWWWM.","..MWWWWRRWWWWWM.","..MWWWRRRRWWWWM.","..MWWWRRRRWWWWM.",
+            "..MWWWWRRWWWWWM.","..MWWWWRRWWWWWM.","..MWWWWWWWWWWM..","...MMMMMMMMMM...","................","................","................","................"
+        ),
+        "item_bandage" to inventoryIcon(mapOf(
+            'B' to floatArrayOf(0.30f, 0.27f, 0.20f),
+            'W' to floatArrayOf(0.85f, 0.80f, 0.66f)
+        ),
+            "................","......BBBB......","....BBWWWWBB....","...BWWWWWWWWB...","..BWWWWWWWWWWB..",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",
+            "..BWWWWWWWWWWB..","...BWWWWWWWWB...","....BBWWWWBB....","......BBBB......","................","................","................","................"
+        )
+    )
+
     private val sprites = (mapOf(
         "player" to PixelSprite(
             frames = listOf(
@@ -629,7 +688,7 @@ object PixelSpriteAtlas {
         if (id in setOf("tree", "bush", "rubble", "streetlamp", "road_sign", "wreck", "crate", "barrel", "road_barrier")) {
             detailEnvironmentSprite(sprite, id)
         } else sprite
-    }
+    } + inventoryIcons
 
     /**
      * Hand-authored style variants are derived from the original pixel silhouettes.
