@@ -196,14 +196,13 @@ class TileMap(
         }
         if (zone != WorldZone.BUNKER) {
             if (kotlin.math.abs(y - height / 2) <= 2) return null
+            if (zone == WorldZone.FOREST && kotlin.math.abs(x - width / 2) <= 2) return null
             if (kotlin.math.abs(x + 0.5f - zone.spawnX) < 2.0f &&
                 kotlin.math.abs(y + 0.5f - zone.spawnY) < 2.0f) return null
-            val nearExit = (0 until height).any { exitY ->
-                listOf(1, width - 2).any { exitX ->
-                    val type = get(exitX, exitY)
-                    type in setOf(TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD, TileType.EXIT_TO_BUNKER) &&
-                        kotlin.math.abs(x - exitX) < 2 && kotlin.math.abs(y - exitY) < 2
-                }
+            var nearExit = false
+            forEachTile { exitX, exitY, type ->
+                if (type in setOf(TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD, TileType.EXIT_TO_BUNKER) &&
+                    kotlin.math.abs(x - exitX) < 2 && kotlin.math.abs(y - exitY) < 2) nearExit = true
             }
             if (nearExit) return null
             if (PointOfInterestCatalog.inZone(zone).any { poi ->
@@ -215,17 +214,23 @@ class TileMap(
         return ZonePropSelector.spriteFor(zone, x, y)
     }
 
-    private fun isInsideBlockingProp(worldX: Float, worldY: Float): Boolean {
+    private fun overlapsBlockingProp(worldX: Float, worldY: Float, radius: Float): Boolean {
+        val playerLeft = worldX - radius
+        val playerRight = worldX + radius
+        val playerTop = worldY - radius
+        val playerBottom = worldY + radius
         val cellX = kotlin.math.floor(worldX).toInt()
         val cellY = kotlin.math.floor(worldY).toInt()
         for (propY in cellY - 1..cellY + 1) for (propX in cellX - 1..cellX + 1) {
             val spriteId = environmentPropAt(propX, propY) ?: continue
             if (!ZonePropSelector.blocksMovement(spriteId)) continue
             val footprint = SpriteWorldMetrics.footprint(spriteId, 0.0625f)
-            val left = propX + 0.5f - footprint.width * 0.5f
-            val top = propY.toFloat()
-            if (worldX >= left && worldX <= left + footprint.width &&
-                worldY >= top && worldY <= top + footprint.height) return true
+            val propLeft = propX + 0.5f - footprint.width * 0.5f
+            val propRight = propLeft + footprint.width
+            val propTop = propY.toFloat()
+            val propBottom = propTop + footprint.height
+            if (playerLeft < propRight && playerRight > propLeft &&
+                playerTop < propBottom && playerBottom > propTop) return true
         }
         return false
     }
@@ -238,14 +243,14 @@ class TileMap(
             worldX + radius to worldY + radius,
             worldX to worldY
         )
-        return points.all { (x, y) ->
+        val tilesClear = points.all { (x, y) ->
             val type = get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())
-            val tileBlocked = type in setOf(
+            type !in setOf(
                 TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF,
                 TileType.RADIO, TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION
             )
-            !tileBlocked && !isInsideBlockingProp(x, y)
         }
+        return tilesClear && !overlapsBlockingProp(worldX, worldY, radius)
     }
 
     /** Return the first walkable tile on a shortest four-way path to a destination. */
