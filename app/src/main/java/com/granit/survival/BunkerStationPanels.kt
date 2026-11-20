@@ -7,6 +7,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Button
 import android.widget.Toast
+import android.view.Gravity
 
 /** Native UI panels for the bunker utility stations. */
 internal class BunkerStationPanels(
@@ -157,6 +158,7 @@ internal class BunkerStationPanels(
 
     fun showStorage() {
         val engine = session.engine
+        fun dp(value: Int): Int = (value * activity.resources.displayMetrics.density).toInt()
         val panel = createPanel(
             "ХРАНИЛИЩЕ УБЕЖИЩА",
             "Выбирай отдельную ячейку. Само открытие контейнера ничего не перемещает."
@@ -178,35 +180,50 @@ internal class BunkerStationPanels(
                 for (column in 0 until columns) {
                     val index = rowIndex * columns + column
                     val stack = slotAt(index)
-                    val caption = if (stack == null) {
-                        "—"
-                    } else {
-                        stack.type.displayName + "\n×" + stack.quantity
+                    val cell = LinearLayout(activity).apply {
+                        orientation = LinearLayout.VERTICAL
+                        gravity = Gravity.CENTER
+                        setPadding(dp(3), dp(4), dp(3), dp(4))
+                        setBackgroundColor(Color.argb(175, 28, 43, 39))
                     }
-                    row.addView(menuButton(caption, stack != null) {
-                        val selected = stack ?: return@menuButton
-                        val actions = if (selected.quantity > 1) {
-                            arrayOf("$actionVerb 1 предмет", "$actionVerb всю стопку (${selected.quantity})")
-                        } else {
-                            arrayOf("$actionVerb предмет")
-                        }
-                        AlertDialog.Builder(activity)
-                            .setTitle(selected.type.displayName)
-                            .setItems(actions) { _, choice ->
-                                val amount = if (choice == 0) 1 else selected.quantity
-                                if (transfer(index, amount)) {
-                                    showStorage()
-                                } else {
-                                    Toast.makeText(
-                                        activity,
-                                        "Перенос невозможен: проверь свободные ячейки и доступ к хранилищу",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+                    if (stack == null) {
+                        cell.addView(label("ПУСТО", 9f, Color.rgb(151, 170, 157), false))
+                    } else {
+                        cell.addView(
+                            InventoryPixelIconView(activity, stack.type.iconSpriteId),
+                            LinearLayout.LayoutParams(dp(38), dp(38))
+                        )
+                        cell.addView(label("×${stack.quantity}", 10f, Color.WHITE, true))
+                        cell.isClickable = true
+                        cell.setOnClickListener {
+                            val selected = stack
+                            val actions = if (selected.quantity > 1) {
+                                arrayOf("$actionVerb 1 предмет", "$actionVerb всю стопку (${selected.quantity})")
+                            } else {
+                                arrayOf("$actionVerb предмет")
                             }
-                            .setNegativeButton("ОТМЕНА", null)
-                            .show()
-                    }, weightedParams())
+                            AlertDialog.Builder(activity)
+                                .setTitle(selected.type.displayName)
+                                .setItems(actions) { _, choice ->
+                                    val amount = if (choice == 0) 1 else selected.quantity
+                                    if (transfer(index, amount)) {
+                                        showStorage()
+                                    } else {
+                                        Toast.makeText(
+                                            activity,
+                                            "Перенос невозможен: проверь свободные ячейки и доступ к хранилищу",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                                .setNegativeButton("ОТМЕНА", null)
+                                .show()
+                        }
+                    }
+                    val cellParams = LinearLayout.LayoutParams(0, dp(78), 1f).apply {
+                        setMargins(dp(2), dp(2), dp(2), dp(2))
+                    }
+                    row.addView(cell, cellParams)
                 }
                 panel.addView(row)
             }
