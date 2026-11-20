@@ -53,4 +53,17 @@ class StoryProgressTest {
         assertEquals(notes, restored.observations())
     }
 
+
+    @Test
+    fun libraryMarginNotesRequireExplicitInspectionAndAreIdempotent() {
+        val story = StoryProgressSystem()
+        assertFalse(story.hasEvent(StoryEventIds.LIBRARY_NOTES_READ))
+
+        assertTrue(story.recordEvent(StoryEventIds.LIBRARY_NOTES_READ))
+        assertFalse(story.recordEvent(StoryEventIds.LIBRARY_NOTES_READ))
+        assertTrue(story.observations().any { it.eventId == StoryEventIds.LIBRARY_NOTES_READ })
+
+        val restored = StoryProgressSystem(story.snapshot())
+        assertTrue(restored.hasEvent(StoryEventIds.LIBRARY_NOTES_READ))
+    }
 }
