@@ -39,6 +39,8 @@ object StoryEventIds {
     const val COMMUNICATION_NODE_ROUTE_RECORD_FOUND = "chapter_01.communication_node_route_record_found"
     const val ROAD_LINE_08_MARKER_FOUND = "chapter_01.road_line_08_marker_found"
     const val ROAD_LINE_08_MARKER_INSPECTED = "chapter_01.road_line_08_marker_inspected"
+    const val ROAD_LINE_08_BRANCH_FOUND = "chapter_01.road_line_08_branch_found"
+    const val ROAD_LINE_08_BRANCH_INSPECTED = "chapter_01.road_line_08_branch_inspected"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -79,6 +81,8 @@ object StoryEventIds {
         COMMUNICATION_NODE_ROUTE_RECORD_FOUND,
         ROAD_LINE_08_MARKER_FOUND,
         ROAD_LINE_08_MARKER_INSPECTED,
+        ROAD_LINE_08_BRANCH_FOUND,
+        ROAD_LINE_08_BRANCH_INSPECTED,
         WORKSHOP_INSPECTED
     )
 }
@@ -199,6 +203,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND, "Маршрутный лист линии 08", "В нижнем ящике пульта Андрей находит маршрутный лист. В нём указано, что линия 08 проходила через удалённый контрольный пункт, обозначенный только как «узел Б». Точные координаты в копии отсутствуют; сохранилось направление от старой дороги и пометка о резервной трассе. Это новая цель для исследования, но пока не доказательство того, что пункт продолжает работать."),
             StoryObservation(StoryEventIds.ROAD_LINE_08_MARKER_FOUND, "Маркировка резервной трассы", "На старой дороге Андрей находит отдельную метку линии 08 у дорожной опоры. Её номер совпадает с архивным листом, а стрелка указывает на просёлочный участок, которого нет на обычной схеме. Маркировка подтверждает только существование маршрута — не то, что линия сейчас действует."),
             StoryObservation(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED, "Осмотр метки линии 08", "Под слоем грязи Андрей обнаруживает вторую, более старую отметку и условный знак ответвления. Он переносит его в карту и отмечает направление к следующему участку. До проверки на месте нельзя сказать, сохранился ли сам проезд."),
+            StoryObservation(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND, "Ответвление резервной трассы", "За дорожной опорой Андрей находит старую отметку на бетонном основании. Она совпадает со знаком на карте и указывает на узкий просёлочный проезд между зарослями. Само ответвление частично скрыто, поэтому маршрут ещё предстоит проверить."),
+            StoryObservation(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED, "Осмотр ответвления линии 08", "Под слоем земли проступает фрагмент дорожной таблички: «контрольный пункт Б». Ниже сохранилась часть стрелки и номер линии. Андрей отмечает ориентир на карте; точное положение узла Б пока неизвестно."),
         )
         return notes.filter { hasEvent(it.eventId) }
     }
