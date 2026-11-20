@@ -31,7 +31,10 @@ class GameSaveSnapshotTest {
     @Test
     fun serializedSaveSnapshotRoundTripsThroughCurrentCodec() {
         val original = GameEngine { 808L }
-        original.inventory.add(ItemType.WOOD, 3)
+        original.inventory.add(ItemType.WOOD, 23)
+        original.inventory.add(ItemType.METAL, 5)
+        assertTrue(original.bunkerStorage.deposit(original.inventory, ItemType.WOOD, 7))
+        assertTrue(original.bunkerStorage.deposit(original.inventory, ItemType.METAL, 2))
         original.changeZone(WorldZone.FOREST)
         original.player.x = 11f
         original.player.y = 12f
@@ -44,6 +47,7 @@ class GameSaveSnapshotTest {
 
         assertEquals(expected.player, restored.player)
         assertEquals(expected.inventory, restored.inventory)
+        assertEquals(expected.bunkerStorage, restored.bunkerStorage)
         assertEquals(expected.needs, restored.needs)
         assertEquals(expected.clock, restored.clock)
         assertEquals(expected.zone, restored.zone)
