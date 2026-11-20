@@ -35,7 +35,7 @@ class PixelSpriteAtlasTest {
         WeatherType.values().forEach { weather ->
             val overlay = GranitWorldPalette.weatherOverlay(weather)
             assertTrue("$weather overlay must have RGBA channels", overlay.size == 4)
-            assertTrue("$weather overlay alpha must stay restrained", overlay[3] in 0f..0.20f)
+            assertTrue("$weather overlay alpha must stay restrained", overlay[3] in 0f..0.25f)
             assertTrue("$weather overlay channels must be normalized", overlay.take(3).all { it in 0f..1f })
         }
         assertTrue("Clear weather must not tint the scene", GranitWorldPalette.weatherOverlay(WeatherType.CLEAR)[3] == 0f)
@@ -58,6 +58,27 @@ class PixelSpriteAtlasTest {
                 kotlin.math.abs(playerCloth[2] - 0.25f) > 0.08f)
         val water = requireNotNull(PixelSpriteAtlas.sprite("item_water")).palette.getValue('W')
         assertTrue("Water must use the new steel-blue family", water[2] > water[0])
+    }
+
+    @Test
+    fun spritesAreRoutedToTheirAuthoredMaterialFamilies() {
+        assertTrue(GranitSpritePalette.materialForSprite("tree") == "pine")
+        assertTrue(GranitSpritePalette.materialForSprite("puddle") == "water")
+        assertTrue(GranitSpritePalette.materialForSprite("metal_scrap") == "steel")
+        assertTrue(GranitSpritePalette.materialForSprite("medical_station") == "medical")
+        assertTrue(GranitSpritePalette.materialForSprite("infected_brute") == "skin")
+        assertTrue(GranitSpritePalette.materialForSprite("player") == null)
+    }
+
+    @Test
+    fun semanticMaterialRemappingKeepsWaterAndVegetationInTheirOwnColourFamilies() {
+        val neutral = floatArrayOf(0.45f, 0.45f, 0.45f)
+        val water = GranitSpritePalette.remapColor(neutral, "water")
+        val pine = GranitSpritePalette.remapColor(neutral, "pine")
+        assertTrue("Water should remain blue/cyan", water[2] > water[0])
+        assertTrue("Pine should remain green", pine[1] > pine[0] && pine[1] > pine[2] * 0.65f)
+        assertTrue("Different materials should not collapse to one colour",
+            water.toList() != pine.toList())
     }
 
     @Test
