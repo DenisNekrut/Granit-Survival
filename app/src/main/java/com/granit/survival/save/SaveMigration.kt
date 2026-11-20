@@ -134,7 +134,30 @@ internal object SaveMigration {
             } else {
                 normalized.put("seed", JSONObject.NULL)
             }
+            normalized.put("containers", validContainers(entry.optJSONArray("containers"), zone))
             result.put(normalized)
+        }
+        return result
+    }
+
+    private fun validContainers(source: JSONArray?, zone: String): JSONArray {
+        val result = JSONArray()
+        if (source == null) return result
+        val width = if (zone == WorldZone.BUNKER.name) 17 else GameEngine.WORLD_WIDTH.toInt()
+        val height = if (zone == WorldZone.BUNKER.name) 10 else GameEngine.WORLD_HEIGHT.toInt()
+        for (index in 0 until source.length()) {
+            val item = source.optJSONObject(index) ?: continue
+            val id = item.optString("id")
+            val x = item.optInt("x", Int.MIN_VALUE)
+            val y = item.optInt("y", Int.MIN_VALUE)
+            if (id.isBlank() || x !in 0 until width || y !in 0 until height) continue
+            val contents = validItemStacks(item.optJSONArray("contents"), 12)
+            result.put(JSONObject()
+                .put("id", id)
+                .put("x", x)
+                .put("y", y)
+                .put("title", item.optString("title", "ТАЙНИК С ПРИПАСАМИ"))
+                .put("contents", contents))
         }
         return result
     }
