@@ -141,4 +141,34 @@ class BunkerStorageTest {
         assertEquals(4, storage.slot(0)?.quantity)
     }
 
+
+    @Test
+    fun typeTransferRejectedByCapacityPreservesExactSourceAndDestinationSlots() {
+        val backpack = Inventory(columns = 3, rows = 1, stackLimit = 5)
+        val storage = BunkerStorage(columns = 1, rows = 1, stackLimit = 5)
+        backpack.add(ItemType.WOOD, 2)
+        backpack.add(ItemType.METAL, 5)
+        backpack.add(ItemType.FABRIC, 1)
+        storage.restore(listOf(ItemStack(ItemType.WOOD, 5)))
+        val backpackBefore = backpack.snapshot()
+        val storageBefore = storage.snapshot()
+
+        assertFalse(storage.deposit(backpack, ItemType.METAL, 5))
+        assertEquals(backpackBefore, backpack.snapshot())
+        assertEquals(storageBefore, storage.snapshot())
+    }
+
+    @Test
+    fun typeTransferMergesIntoExistingStackWhenCapacityAllows() {
+        val backpack = Inventory(columns = 2, rows = 1, stackLimit = 10)
+        val storage = BunkerStorage(columns = 2, rows = 1, stackLimit = 10)
+        backpack.add(ItemType.WOOD, 6)
+        storage.restore(listOf(ItemStack(ItemType.WOOD, 7), null))
+
+        assertTrue(storage.deposit(backpack, ItemType.WOOD, 3))
+        assertEquals(3, backpack.count(ItemType.WOOD))
+        assertEquals(10, storage.slot(0)?.quantity)
+        assertEquals(null, storage.slot(1))
+    }
+
 }
