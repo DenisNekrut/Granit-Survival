@@ -359,4 +359,30 @@ class PointOfInterestTest {
         assertTrue(restored.isPoiDiscovered(poi.id))
         assertEquals(setOf(poi.id), restored.discoveredPointsOfInterest())
     }
+    @Test
+    fun communicationNodeSignalSequenceRequiresConsoleAndLogAndPersistsOnce() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.COMMUNICATION_NODE)
+        engine.storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED)
+        val console = PointOfInterestCatalog.byId("communication_node_console")!!
+        engine.player.x = console.x
+        engine.player.y = console.y
+
+        assertFalse(engine.extractCommunicationNodeSignalSequence())
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == console.id })
+        assertFalse(engine.extractCommunicationNodeSignalSequence())
+        assertTrue(engine.inspectCommunicationNodeConsole())
+        assertFalse(engine.extractCommunicationNodeSignalSequence())
+        assertTrue(engine.readCommunicationNodeShiftLog())
+        assertTrue(engine.extractCommunicationNodeSignalSequence())
+        assertFalse(engine.extractCommunicationNodeSignalSequence())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED
+        })
+    }
+
 }
