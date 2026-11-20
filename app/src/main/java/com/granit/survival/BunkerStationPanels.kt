@@ -1,6 +1,7 @@
 package com.granit.survival
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.graphics.Color
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -155,25 +156,78 @@ internal class BunkerStationPanels(
     }
 
     fun showStorage() {
-        val panel = createPanel("ХРАНИЛИЩЕ УБЕЖИЩА", "Перенос ресурсов между рюкзаком и контейнером")
-        ItemType.values().forEach { type ->
-            val backpack = session.engine.inventory.count(type)
-            val stored = session.engine.bunkerStorage.count(type)
-            panel.addView(label(
-                "${type.displayName}:  рюкзак $backpack  ·  хранилище $stored",
-                14f, Color.WHITE, false
-            ))
-            val row = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
-            row.addView(menuButton("ПОЛОЖИТЬ ВСЁ", backpack > 0) {
-                if (session.transferToStorage(type)) showStorage()
-                else Toast.makeText(activity, "Не удалось переместить предметы", Toast.LENGTH_SHORT).show()
-            }, weightedParams())
-            row.addView(menuButton("ЗАБРАТЬ ВСЁ", stored > 0) {
-                if (session.transferFromStorage(type)) showStorage()
-                else Toast.makeText(activity, "В рюкзаке недостаточно места", Toast.LENGTH_SHORT).show()
-            }, weightedParams())
-            panel.addView(row)
+        val engine = session.engine
+        val panel = createPanel(
+            "ХРАНИЛИЩЕ УБЕЖИЩА",
+            "Выбирай отдельную ячейку. Само открытие контейнера ничего не перемещает."
+        )
+
+        fun addGrid(
+            title: String,
+            columns: Int,
+            rows: Int,
+            slotAt: (Int) -> ItemStack?,
+            transfer: (Int, Int) -> Boolean,
+            actionVerb: String
+        ) {
+            panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
+            for (rowIndex in 0 until rows) {
+                val row = LinearLayout(activity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                }
+                for (column in 0 until columns) {
+                    val index = rowIndex * columns + column
+                    val stack = slotAt(index)
+                    val caption = if (stack == null) {
+                        "—"
+                    } else {
+                        stack.type.displayName + "\n×" + stack.quantity
+                    }
+                    row.addView(menuButton(caption, stack != null) {
+                        val selected = stack ?: return@menuButton
+                        val actions = if (selected.quantity > 1) {
+                            arrayOf("$actionVerb 1 предмет", "$actionVerb всю стопку (${selected.quantity})")
+                        } else {
+                            arrayOf("$actionVerb предмет")
+                        }
+                        AlertDialog.Builder(activity)
+                            .setTitle(selected.type.displayName)
+                            .setItems(actions) { _, choice ->
+                                val amount = if (choice == 0) 1 else selected.quantity
+                                if (transfer(index, amount)) {
+                                    showStorage()
+                                } else {
+                                    Toast.makeText(
+                                        activity,
+                                        "Перенос невозможен: проверь свободные ячейки и доступ к хранилищу",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                            .setNegativeButton("ОТМЕНА", null)
+                            .show()
+                    }, weightedParams())
+                }
+                panel.addView(row)
+            }
         }
+
+        addGrid(
+            "РЮКЗАК · ${engine.inventory.columns} × ${engine.inventory.rows}",
+            engine.inventory.columns,
+            engine.inventory.rows,
+            engine.inventory::slot,
+            engine::transferToStorageAt,
+            "ПОЛОЖИТЬ"
+        )
+        addGrid(
+            "ХРАНИЛИЩЕ · ${engine.bunkerStorage.columns} × ${engine.bunkerStorage.rows}",
+            engine.bunkerStorage.columns,
+            engine.bunkerStorage.rows,
+            engine.bunkerStorage::slot,
+            engine::transferFromStorageAt,
+            "ЗАБРАТЬ"
+        )
         panel.addView(menuButton("ЗАКРЫТЬ", true) { closeStationPanel() })
         showOverlay(panel)
     }
