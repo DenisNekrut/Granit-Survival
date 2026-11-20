@@ -160,6 +160,21 @@ internal class BunkerStationPanels(
                 showLibrary()
             })
         }
+        val canCrossCheck = canInspect &&
+            engine.storyProgress.hasEvent(StoryEventIds.LIBRARY_NOTES_READ) &&
+            engine.storyProgress.hasEvent(StoryEventIds.RADIO_PANEL_OPENED)
+        if (canCrossCheck) {
+            val crossChecked = engine.storyProgress.hasEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED)
+            panel.addView(menuButton(
+                if (crossChecked) "ЗАПИСИ СВЕРЕНЫ С ЭФИРОМ" else "СОПОСТАВИТЬ ПОМЕТКИ С РАДИО",
+                !crossChecked
+            ) {
+                if (engine.storyProgress.recordEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED)) {
+                    Toast.makeText(activity, "Новая запись добавлена в журнал", Toast.LENGTH_SHORT).show()
+                }
+                showLibrary()
+            })
+        }
         BookCatalog.all.forEach { book ->
             val read = session.engine.bookLibrary.hasRead(book.id)
             panel.addView(label(book.title + " · " + book.category.displayName, 15f, Color.WHITE, false))
