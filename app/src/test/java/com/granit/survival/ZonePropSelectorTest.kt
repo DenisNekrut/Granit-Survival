@@ -23,7 +23,8 @@ class ZonePropSelectorTest {
             WorldZone.BUNKER to setOf("crate", "crate_weathered", "crate_painted", "floor_grate", "floor_grate_rust"),
             WorldZone.FOREST to setOf("bush", "bush_dry", "bush_lush", "tree", "tree_autumn", "tree_dead", "grass_patch", "grass_patch_dry", "fallen_log", "fallen_log_mossy"),
             WorldZone.RUINS to setOf("barrel", "barrel_rust", "barrel_dark", "debris", "debris_light", "metal_scrap", "metal_scrap_copper", "puddle", "puddle_ice"),
-            WorldZone.ROAD to setOf("streetlamp", "streetlamp_broken", "wreck", "wreck_rust", "wreck_blue", "road_sign", "road_sign_faded", "puddle", "puddle_ice")
+            WorldZone.ROAD to setOf("streetlamp", "streetlamp_broken", "wreck", "wreck_rust", "wreck_blue", "road_sign", "road_sign_faded", "puddle", "puddle_ice"),
+            WorldZone.COMMUNICATION_NODE to setOf("floor_grate", "floor_grate_rust")
         )
         WorldZone.values().forEach { zone ->
             val selected = (0 until 100).flatMap { x ->
