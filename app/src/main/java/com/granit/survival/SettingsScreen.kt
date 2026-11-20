@@ -31,8 +31,8 @@ internal class SettingsScreen(
             render: (Int) -> String,
             changed: (Int) -> Unit
         ) {
-            panel.addView(label(name, 14f, Color.LTGRAY, false))
-            val valueLabel = label(render(initial.toInt()), 12f, Color.rgb(190, 185, 160), false)
+            panel.addView(label(name, 14f, GranitPalette.textSecondary, false))
+            val valueLabel = label(render(initial.toInt()), 12f, GranitPalette.title, false)
             panel.addView(valueLabel)
             panel.addView(SeekBar(activity).apply {
                 this.max = max
@@ -69,7 +69,7 @@ internal class SettingsScreen(
         panel.addView(quality)
         val vibration = Switch(activity).apply {
             text = "ВИБРАЦИЯ"
-            setTextColor(Color.WHITE)
+            setTextColor(GranitPalette.textPrimary)
             isChecked = current.vibrationEnabled
         }
         panel.addView(vibration)
