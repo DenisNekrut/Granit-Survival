@@ -19,9 +19,9 @@ data class SpriteAtlasPackEntry(
 /**
  * Platform-independent atlas layout.
  *
- * The cell size follows the largest authored frame, so tall character frames
- * (16×24) and small environment props (16×16) share one texture without any
- * frame exceeding its cell. This type intentionally avoids Android classes so
+ * The cell size follows the largest authored frame after the 2x raster pass,
+ * so tall character frames and small environment props share one texture
+ * without any frame exceeding its cell. This type intentionally avoids Android classes so
  * the packing rules can be verified by JVM unit tests.
  */
 data class SpriteAtlasPackPlan(
@@ -44,6 +44,13 @@ data class SpriteAtlasPackPlan(
  */
 object PixelSpriteTextureAtlas {
     const val COLUMNS = 16
+
+    /**
+     * Rasterize each authored logical pixel into a 2x2 block in the runtime
+     * texture. World-space sprite bounds remain unchanged; nearest filtering
+     * keeps the higher-density atlas crisp on high-DPI phone displays.
+     */
+    const val RASTER_SCALE = 2
 
     /**
      * Compute the texture layout for every authored sprite.
@@ -71,7 +78,7 @@ object PixelSpriteTextureAtlas {
             frameWidth to frameHeight
         }
 
-        val cellSize = bounds.values.maxOf { (width, height) -> maxOf(width, height) }
+        val cellSize = bounds.values.maxOf { (width, height) -> maxOf(width, height) } * RASTER_SCALE
         val totalFrames = ids.sumOf { requireNotNull(PixelSpriteAtlas.sprite(it)).frames.size }
         val rows = (totalFrames + COLUMNS - 1) / COLUMNS
 
@@ -83,7 +90,7 @@ object PixelSpriteTextureAtlas {
                 val cellX = (frameIndex % COLUMNS) * cellSize
                 val cellY = (frameIndex / COLUMNS) * cellSize
                 frameIndex++
-                SpriteAtlasFrame(cellX, cellY, frameWidth, frameHeight)
+                SpriteAtlasFrame(cellX, cellY, frameWidth * RASTER_SCALE, frameHeight * RASTER_SCALE)
             }
             SpriteAtlasPackEntry(id, frameWidth, frameHeight, frames)
         }
@@ -108,7 +115,13 @@ object PixelSpriteTextureAtlas {
                                 (graded[1] * 255f).toInt(),
                                 (graded[2] * 255f).toInt()
                             )
-                            bitmap.setPixel(frame.x + x, frame.y + y, argb)
+                            val pixelX = frame.x + x * RASTER_SCALE
+                            val pixelY = frame.y + y * RASTER_SCALE
+                            for (dy in 0 until RASTER_SCALE) {
+                                for (dx in 0 until RASTER_SCALE) {
+                                    bitmap.setPixel(pixelX + dx, pixelY + dy, argb)
+                                }
+                            }
                         }
                     }
                 }
