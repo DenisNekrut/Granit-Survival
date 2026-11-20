@@ -341,7 +341,18 @@ class MainActivity : Activity() {
 
     private fun showJournal() {
         val discovered = session.engine.discoveredPointDetails()
-        val panel = createPanel("ЖУРНАЛ ЭКСПЕДИЦИЙ", discovered.size.toString() + " / " + PointOfInterestCatalog.all().size + " мест обнаружено")
+        val story = session.engine.storyProgress
+        val panel = createPanel("ЖУРНАЛ ИСТОРИИ И ЭКСПЕДИЦИЙ", discovered.size.toString() + " / " + PointOfInterestCatalog.all().size + " мест обнаружено")
+        panel.addView(label("ГЛАВА I · ${StoryProgressSystem.CHAPTER_ONE_TITLE.uppercase()}", 16f, Color.rgb(207, 194, 155), true))
+        panel.addView(label("Начальный этап: ${story.completedObjectiveCount} / ${story.objectives.size} задач выполнено", 13f, Color.LTGRAY))
+        story.currentObjective?.let { objective ->
+            panel.addView(label("ТЕКУЩАЯ ЗАДАЧА · ${objective.title}", 14f, Color.WHITE, true))
+            panel.addView(label(objective.description, 13f, Color.LTGRAY))
+        } ?: panel.addView(label("Начальный этап убежища завершён. Продолжение главы будет открываться по мере реализации следующих сюжетных сцен.", 13f, Color.LTGRAY))
+        story.objectives.filter { story.isCompleted(it) }.forEach { objective ->
+            panel.addView(label("✓ ${objective.title}", 12f, Color.rgb(151, 190, 151)))
+        }
+        panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
         } else {
