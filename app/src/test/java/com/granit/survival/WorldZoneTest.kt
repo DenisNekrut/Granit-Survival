@@ -217,7 +217,8 @@ class WorldZoneTest {
             WorldZone.BUNKER to listOf(8 to 1),
             WorldZone.FOREST to listOf(20 to 22, 1 to 12, 38 to 12),
             WorldZone.RUINS to listOf(38 to 12),
-            WorldZone.ROAD to listOf(1 to 12)
+            WorldZone.ROAD to listOf(1 to 12),
+            WorldZone.COMMUNICATION_NODE to listOf(8 to 8)
         )
         WorldZone.values().forEach { zone ->
             val map = TileMap(zone = zone)
