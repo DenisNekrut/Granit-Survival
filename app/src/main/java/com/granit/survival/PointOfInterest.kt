@@ -10,7 +10,9 @@ data class PointOfInterest(
     val hudLabel: String,
     val spriteId: String = "crate",
     val discoveryRadius: Float = 1.15f,
-    val cacheTier: WorldLootTier? = null
+    val cacheTier: WorldLootTier? = null,
+    /** Optional story gate for landmarks that should appear only after a clue is found. */
+    val requiredStoryEventId: String? = null
 )
 
 /** Authored landmarks; discovery state is stored separately in save/checkpoint snapshots. */
@@ -20,7 +22,7 @@ object PointOfInterestCatalog {
         PointOfInterest("forest_camp", WorldZone.FOREST, 34.5f, 19.5f, "Пустой привал", "Кострище давно остыло. Рядом остались следы чужого лагеря.", "EMPTY CAMP", spriteId = "fallen_log_mossy", cacheTier = WorldLootTier.PROVISIONS),
         PointOfInterest("forest_radio_cache", WorldZone.FOREST, 5.5f, 12.5f, "Сломанный ретранслятор", "На корпусе сохранилась частота старой аварийной сети.", "OLD RELAY", spriteId = "radio", cacheTier = WorldLootTier.MATERIALS),
         PointOfInterest("forest_supply_crate", WorldZone.FOREST, 30.5f, 5.5f, "Лесной тайник", "Под корнями спрятан пустой ящик с маркировкой экспедиции.", "HIDDEN CRATE", spriteId = "crate_weathered"),
-        PointOfInterest("ruins_checkpoint", WorldZone.RUINS, 5.5f, 13.5f, "Разбитый пост", "У стены сохранилась табличка с обозначением старого поста.", "OLD CHECKPOINT", spriteId = "road_barrier_faded"),
+        PointOfInterest("ruins_checkpoint", WorldZone.RUINS, 5.5f, 13.5f, "Разбитый пост", "У стены сохранилась табличка с тем же условным знаком, что и на карте из брошенного автомобиля.", "OLD CHECKPOINT", spriteId = "road_barrier_faded", requiredStoryEventId = StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND),
         PointOfInterest("ruins_shelter", WorldZone.RUINS, 25.5f, 19.5f, "Подвальное укрытие", "Вход завален, но на двери заметны свежие отметки.", "HIDDEN SHELTER", spriteId = "rubble", cacheTier = WorldLootTier.MEDICAL),
         PointOfInterest("ruins_archive", WorldZone.RUINS, 20.5f, 5.5f, "Архивный коридор", "На полу разбросаны папки с планами старого жилого квартала.", "OLD ARCHIVE", spriteId = "bookshelf"),
         PointOfInterest("ruins_generator_room", WorldZone.RUINS, 33.5f, 5.5f, "Техническая комната", "На стене осталась схема автономного электроснабжения.", "SERVICE ROOM", spriteId = "generator", cacheTier = WorldLootTier.MATERIALS),
