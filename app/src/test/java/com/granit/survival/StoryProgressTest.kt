@@ -38,4 +38,19 @@ class StoryProgressTest {
         assertEquals("inspect_radio", restored.currentObjective?.id)
         assertTrue(restored.hasEvent(StoryEventIds.STORAGE_OPENED))
     }
+    @Test
+    fun observationsAppearOnlyAfterInspectionAndSurviveRestore() {
+        val story = StoryProgressSystem()
+
+        assertTrue(story.observations().isEmpty())
+        story.recordEvent(StoryEventIds.BED_INSPECTED)
+        val notes = story.observations()
+
+        assertEquals(1, notes.size)
+        assertEquals("Спальня", notes.single().title)
+
+        val restored = StoryProgressSystem(story.snapshot())
+        assertEquals(notes, restored.observations())
+    }
+
 }
