@@ -30,6 +30,8 @@ object StoryEventIds {
     const val RUINS_POWER_JUNCTION_INSPECTED = "chapter_01.ruins_power_junction_inspected"
     const val RUINS_SERVICE_POWER_RESTORED = "chapter_01.ruins_service_power_restored"
     const val RUINS_SERVICE_ACCESS_OPENED = "chapter_01.ruins_service_access_opened"
+    const val COMMUNICATION_NODE_ENTERED = "chapter_01.communication_node_entered"
+    const val COMMUNICATION_NODE_CONSOLE_FOUND = "chapter_01.communication_node_console_found"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -61,6 +63,8 @@ object StoryEventIds {
         RUINS_POWER_JUNCTION_INSPECTED,
         RUINS_SERVICE_POWER_RESTORED,
         RUINS_SERVICE_ACCESS_OPENED,
+        COMMUNICATION_NODE_ENTERED,
+        COMMUNICATION_NODE_CONSOLE_FOUND,
         WORKSHOP_INSPECTED
     )
 }
@@ -171,7 +175,9 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.RUINS_POWER_JUNCTION_FOUND, "Распределительная коробка", "У дальней стены Андрей находит коробку, к которой подходит кабель от служебного входа. На крышке сохранилась маркировка той же линии питания."),
             StoryObservation(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED, "Осмотр распределительной коробки", "Внутри обнаружен отключённый участок линии и повреждённый контакт. По внешним обозначениям понятно, что питание замка можно восстановить после замены повреждённого соединения."),
             StoryObservation(StoryEventIds.RUINS_SERVICE_POWER_RESTORED, "Питание служебного входа восстановлено", "После ремонта линия снова подаёт питание. На двери загорается индикатор замка, но механизм ещё не разблокирован."),
-            StoryObservation(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED, "Служебный вход открыт", "Электромеханический замок срабатывает. Дверь коммуникационного узла теперь можно открыть; за ней начинается тёмный внутренний коридор.")
+            StoryObservation(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED, "Служебный вход открыт", "Электромеханический замок срабатывает. Дверь коммуникационного узла теперь можно открыть; за ней начинается тёмный внутренний коридор."),
+            StoryObservation(StoryEventIds.COMMUNICATION_NODE_ENTERED, "Вход в коммуникационный узел", "Внутри прохладно и почти не слышно улицы. На стенах сохранились кабельные каналы, а в глубине помещения виден пульт с тусклым индикатором."),
+            StoryObservation(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND, "Пульт коммуникационного узла", "На пульте горит индикатор линии. Рядом лежит журнал дежурной смены, но последние записи обрываются на середине строки.")
         )
         return notes.filter { hasEvent(it.eventId) }
     }
