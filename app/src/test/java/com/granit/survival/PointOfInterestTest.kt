@@ -447,4 +447,35 @@ class PointOfInterestTest {
         })
     }
 
+    @Test
+    fun line08BranchRequiresInspectedMarkerAndPersistsOnce() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.ROAD, regenerate = false)
+        val marker = PointOfInterestCatalog.byId("road_line_08_marker")!!
+        val branch = PointOfInterestCatalog.byId("road_line_08_branch")!!
+        engine.player.x = branch.x
+        engine.player.y = branch.y
+
+        engine.storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == marker.id })
+        assertTrue(engine.scanNearbyPointsOfInterest().none { it.id == branch.id })
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND))
+        assertFalse(engine.inspectRoadLine08Branch())
+
+        engine.storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND)
+        engine.storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED)
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == branch.id })
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND))
+        assertTrue(engine.inspectRoadLine08Branch())
+        assertFalse(engine.inspectRoadLine08Branch())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED
+        })
+    }
+
 }
