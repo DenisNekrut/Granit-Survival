@@ -20,3 +20,12 @@ Leave at least one transparent pixel between independent regions and use edge ex
 Run python3 tools/validate_sprite_assets.py. It checks manifest structure, IDs, paths, dimensions, pivots, frame bounds and PNG IHDR. Example manifests are checked structurally but do not require their demonstration texture. The code-generated atlas is additionally checked by PixelSpriteAtlas.validate() and Kotlin unit tests.
 
 The external atlas is currently an optional override. If absent, the game generates a built-in atlas from PixelSpriteAtlas. This is a fallback, not a completed external art-import pipeline.
+
+
+## 2026-11-20 — expanded pixel-art direction
+- World sprites use a shared 1.18 scale multiplier; collision tiles, map dimensions and gameplay coordinates remain unchanged.
+- The built-in atlas and fallback renderer share one cold-weather color grade: deeper slate shadows, clearer midtones and restrained warm highlights.
+- Repeated environmental props use deterministic shape/material variants. Variant selection is coordinate-based and stable across visits and save restoration.
+- Every variant remains a pixel sprite with nearest-neighbour rendering. No SVG or vector runtime assets are introduced.
+- Variant families currently cover crates, floor grates, trees, bushes, grass, fallen logs, barrels, rubble, debris, metal scraps, puddles, streetlamps, road signs and wrecks.
+- Further hand-authored redraws of the player, bunker furniture and large landmark sprites remain part of the visual pass; the present change establishes consistent scaling, grading and repeatable prop variation.
