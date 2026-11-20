@@ -97,6 +97,20 @@ class SaveMigrationTest {
     }
 
     @Test
+    fun migratesOlderSavesWithAnEmptyStoryProgressRecord() {
+        val legacy = JSONObject()
+            .put("saveVersion", 9)
+            .put("state", JSONObject().put("clock", JSONObject()))
+
+        val state = SaveCodec.decode(legacy.toString()).getJSONObject("state")
+        val story = state.getJSONObject("storyProgress")
+
+        assertEquals(10, SaveVersion.CURRENT)
+        assertEquals("chapter_01", story.getString("chapterId"))
+        assertEquals(0, story.getJSONArray("completedEventIds").length())
+    }
+
+    @Test
     fun rejectsSavesFromAFutureSchema() {
         val future = JSONObject()
             .put("saveVersion", SaveVersion.CURRENT + 1)
