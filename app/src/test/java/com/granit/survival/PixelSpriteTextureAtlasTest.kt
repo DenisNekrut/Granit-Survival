@@ -114,7 +114,7 @@ class PixelSpriteTextureAtlasTest {
             val transparentPixels = frame.sumOf { row -> row.count { it == '.' } }
             val totalPixels = frame.sumOf { it.length }
             assertTrue("$id must retain transparent background pixels", transparentPixels > totalPixels / 3)
-            assertTrue("$id must not be a full rectangular tile", frame.first().contains('.') && frame.last().contains('.'))
+            assertTrue("$id must keep transparent corners", frame.first().first() == '.' && frame.first().last() == '.' && frame.last().first() == '.' && frame.last().last() == '.')
         }
     }
 
