@@ -1,13 +1,13 @@
 package com.granit.survival
 
-enum class ItemType(val displayName: String, val color: Int) {
-    WOOD("Древесина", 0xFF9A7046.toInt()),
-    METAL("Металл", 0xFF8A969A.toInt()),
-    FABRIC("Ткань", 0xFF718B86.toInt()),
-    CANNED_FOOD("Консервы", 0xFFB28A43.toInt()),
-    WATER("Вода", 0xFF4E91B5.toInt()),
-    MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt()),
-    BANDAGE("Бинт", 0xFFD8D0B5.toInt())
+enum class ItemType(val displayName: String, val color: Int, val iconSpriteId: String) {
+    WOOD("Древесина", 0xFF9A7046.toInt(), "item_wood"),
+    METAL("Металл", 0xFF8A969A.toInt(), "item_metal"),
+    FABRIC("Ткань", 0xFF718B86.toInt(), "item_fabric"),
+    CANNED_FOOD("Консервы", 0xFFB28A43.toInt(), "item_food"),
+    WATER("Вода", 0xFF4E91B5.toInt(), "item_water"),
+    MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt(), "item_medical_kit"),
+    BANDAGE("Бинт", 0xFFD8D0B5.toInt(), "item_bandage")
 }
 
 data class ItemStack(
