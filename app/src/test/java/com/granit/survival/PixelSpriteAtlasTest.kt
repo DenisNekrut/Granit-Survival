@@ -8,7 +8,7 @@ class PixelSpriteAtlasTest {
     fun allSpritesHaveConsistentFramesAndDefinedPaletteSymbols() {
         assertTrue(PixelSpriteAtlas.validate().joinToString(), PixelSpriteAtlas.validate().isEmpty())
         assertTrue(PixelSpriteAtlas.allIds().containsAll(
-            setOf("player", "player_back", "player_side_left", "player_side_right", "exit_hatch", "ladder_hatch", "vault_door", "control_console", "dining_table", "generator", "medical_station", "locker", "bookshelf", "tree", "bush", "rubble", "streetlamp", "ceiling_lamp", "crate", "storage", "radio", "bunker_panel", "road_barrier", "barrel", "wreck", "debris", "wood", "metal", "fabric", "food", "water", "bandage", "bed", "workbench", "floor_grate", "grass_patch", "fallen_log", "metal_scrap", "puddle", "road_sign", "infected_shambler", "infected_runner", "infected_brute")
+            setOf("item_wood", "item_metal", "item_fabric", "item_food", "item_water", "item_medical_kit", "item_bandage", "player", "player_back", "player_side_left", "player_side_right", "exit_hatch", "ladder_hatch", "vault_door", "control_console", "dining_table", "generator", "medical_station", "locker", "bookshelf", "tree", "bush", "rubble", "streetlamp", "ceiling_lamp", "crate", "storage", "radio", "bunker_panel", "road_barrier", "barrel", "wreck", "debris", "wood", "metal", "fabric", "food", "water", "bandage", "bed", "workbench", "floor_grate", "grass_patch", "fallen_log", "metal_scrap", "puddle", "road_sign", "infected_shambler", "infected_runner", "infected_brute")
         ))
     }
 
@@ -53,6 +53,19 @@ class PixelSpriteAtlasTest {
         }
     }
 
+
+    @Test
+    fun inventoryIconsHaveUniquePixelArtFrames() {
+        val ids = listOf("item_wood", "item_metal", "item_fabric", "item_food", "item_water", "item_medical_kit", "item_bandage")
+        ids.forEach { id ->
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
+            assertTrue("$id must be a 16x16 icon", sprite.frames.single().size == 16 &&
+                sprite.frames.single().all { it.length == 16 })
+            assertTrue("$id must define a palette", sprite.palette.isNotEmpty())
+        }
+        assertTrue("Inventory icons should be visually distinct",
+            ids.map { PixelSpriteAtlas.sprite(it)?.frames?.single() }.distinct().size == ids.size)
+    }
 
     @Test
     fun infectedArchetypesHaveDistinctTwoFramePixelSilhouettes() {
