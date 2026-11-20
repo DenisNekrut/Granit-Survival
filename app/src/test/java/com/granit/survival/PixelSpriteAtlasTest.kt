@@ -26,7 +26,7 @@ class PixelSpriteAtlasTest {
             val frames = requireNotNull(PixelSpriteAtlas.sprite(id)).frames
             assertTrue("$id should have 4 frames", frames.size == 4)
             assertTrue("$id frames should be 16x24", frames.all { frame ->
-                frame.size == 24 && frame.all { it.length == 16 }
+                frame.size == 48 && frame.all { it.length == 32 }
             })
         }
     }
