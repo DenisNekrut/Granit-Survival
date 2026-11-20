@@ -17,11 +17,12 @@ class WorldContainer(
     val y: Int,
     val title: String,
     override val columns: Int = 4,
-    override val rows: Int = 3
+    override val rows: Int = 3,
+    lootTierOverride: WorldLootTier? = null
 ) : ItemContainer {
     private val contents = Inventory(columns, rows)
 
-    val lootTier: WorldLootTier = WorldLootTier.values()[Math.floorMod(id.hashCode(), WorldLootTier.values().size)]
+    val lootTier: WorldLootTier = lootTierOverride ?: WorldLootTier.values()[Math.floorMod(id.hashCode(), WorldLootTier.values().size)]
     val displayTitle: String get() = "$title · ${lootTier.label}"
 
     override fun slot(index: Int): ItemStack? = contents.slot(index)
