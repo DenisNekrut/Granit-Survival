@@ -22,6 +22,23 @@ object ZonePropSelector {
     }
 
     fun spriteFor(zone: WorldZone, tileX: Int, tileY: Int): String? {
+        val candidate = rawSpriteFor(zone, tileX, tileY) ?: return null
+        val currentRank = placementRank(zone, tileX, tileY)
+        for (neighborY in tileY - 1..tileY + 1) {
+            for (neighborX in tileX - 1..tileX + 1) {
+                if (neighborX == tileX && neighborY == tileY) continue
+                if (rawSpriteFor(zone, neighborX, neighborY) == null) continue
+                val neighborRank = placementRank(zone, neighborX, neighborY)
+                if (neighborRank < currentRank ||
+                    (neighborRank == currentRank && (neighborY < tileY || (neighborY == tileY && neighborX < tileX)))) {
+                    return null
+                }
+            }
+        }
+        return candidate
+    }
+
+    private fun rawSpriteFor(zone: WorldZone, tileX: Int, tileY: Int): String? {
         val hash = Math.floorMod(
             (tileX * 73_856_093) xor (tileY * 19_349_663) xor (zone.ordinal * 83_492_791),
             101
@@ -55,4 +72,14 @@ object ZonePropSelector {
             }
         }
     }
+
+    private fun placementRank(zone: WorldZone, x: Int, y: Int): Long =
+        ((x.toLong() * 73_856_093L) xor (y.toLong() * 19_349_663L) xor (zone.ordinal.toLong() * 83_492_791L)) and Long.MAX_VALUE
+
+    fun blocksMovement(spriteId: String): Boolean =
+        spriteId.startsWith("tree") || spriteId.startsWith("bush") ||
+            spriteId.startsWith("fallen_log") || spriteId.startsWith("crate") ||
+            spriteId.startsWith("barrel") || spriteId.startsWith("wreck") ||
+            spriteId.startsWith("road_barrier") || spriteId.startsWith("streetlamp") ||
+            spriteId.startsWith("road_sign")
 }
