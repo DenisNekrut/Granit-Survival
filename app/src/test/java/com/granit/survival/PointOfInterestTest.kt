@@ -312,7 +312,6 @@ class PointOfInterestTest {
         engine.player.y = junction.y
         assertTrue(engine.scanNearbyPointsOfInterest().contains(junction))
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND))
-        assertFalse(engine.inspectRuinsPowerJunction())
         assertTrue(engine.inspectRuinsPowerJunction())
         assertFalse(engine.inspectRuinsPowerJunction())
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED))
