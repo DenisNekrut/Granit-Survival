@@ -8,6 +8,19 @@ package com.granit.survival
  * collision or movement tiles.
  */
 object ZonePropSelector {
+    fun wallSpriteFor(zone: WorldZone, tileX: Int, tileY: Int): String {
+        val hash = Math.floorMod(
+            (tileX * 73_856_093) xor (tileY * 19_349_663) xor (zone.ordinal * 83_492_791),
+            101
+        )
+        return when (zone) {
+            WorldZone.BUNKER -> if (hash % 4 == 0) "bunker_panel_rusted" else "bunker_panel"
+            WorldZone.FOREST -> listOf("tree", "tree_dark", "tree_dead")[hash % 3]
+            WorldZone.RUINS -> listOf("rubble", "rubble_brick", "debris")[hash % 3]
+            WorldZone.ROAD -> if (hash % 3 == 0) "road_barrier_faded" else "road_barrier"
+        }
+    }
+
     fun spriteFor(zone: WorldZone, tileX: Int, tileY: Int): String? {
         val hash = Math.floorMod(
             (tileX * 73_856_093) xor (tileY * 19_349_663) xor (zone.ordinal * 83_492_791),
