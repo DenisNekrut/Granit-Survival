@@ -66,4 +66,21 @@ class StoryProgressTest {
         val restored = StoryProgressSystem(story.snapshot())
         assertTrue(restored.hasEvent(StoryEventIds.LIBRARY_NOTES_READ))
     }
+
+    @Test
+    fun radioAndLibraryCluesCanBeCrossCheckedOnceAndPersist() {
+        val story = StoryProgressSystem()
+        story.recordEvent(StoryEventIds.LIBRARY_NOTES_READ)
+        assertFalse(story.hasEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED))
+
+        story.recordEvent(StoryEventIds.RADIO_PANEL_OPENED)
+        assertTrue(story.recordEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED))
+        assertFalse(story.recordEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED))
+        assertTrue(story.observations().any {
+            it.eventId == StoryEventIds.RADIO_NOTES_CROSS_CHECKED
+        })
+
+        val restored = StoryProgressSystem(story.snapshot())
+        assertTrue(restored.hasEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED))
+    }
 }
