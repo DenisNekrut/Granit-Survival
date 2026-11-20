@@ -31,10 +31,10 @@ internal class PauseMenuScreen(
     fun show() {
         val engine = session.engine
         val panel = createPanel("ПАУЗА", "Состояние игры сохранено в памяти")
-        panel.addView(label("Психологическое состояние", 16f, Color.WHITE, false))
+        panel.addView(label("Психологическое состояние", 16f, GranitPalette.textPrimary, false))
         panel.addView(label(
             "Стресс: ${engine.psychology.stress.toInt()}  ·  Одиночество: ${engine.psychology.loneliness.toInt()}",
-            13f, Color.LTGRAY, false
+            13f, GranitPalette.textSecondary, false
         ))
         panel.addView(label(
             "Усталость: ${engine.psychology.fatigue.toInt()}  ·  Мораль: ${engine.psychology.morale.toInt()}",
