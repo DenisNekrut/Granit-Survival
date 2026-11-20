@@ -565,6 +565,22 @@ class MainActivity : Activity() {
                     panel.addView(label("Проследуй по ответвлению линии 08 до старого дорожного поста у съезда. Ищи обозначение контрольного пункта Б.", 13f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED)) {
+            panel.addView(label("ЦЕЛЬ · СЛУЖЕБНАЯ ПОЛОСА ВДОЛЬ ОГРАЖДЕНИЯ", 14f, Color.rgb(207, 194, 155), true))
+            when {
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED) ->
+                    panel.addView(label("Маркер линии 08-Б найден. Технический коридор продолжается за ограждением, но проход закрыт. Нужно искать другой доступ.", 12f, Color.rgb(151, 190, 151)))
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND) -> {
+                    panel.addView(label("Служебная полоса найдена. Осмотри сетчатую секцию и номерной знак у её основания.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ОСМОТРЕТЬ СЛУЖЕБНУЮ ПОЛОСУ") {
+                        session.engine.inspectRoadLine08ServiceLane()
+                        showJournal()
+                    })
+                }
+                else ->
+                    panel.addView(label("От дорожного поста Б проследуй вдоль внешнего ограждения. Ищи узкую служебную полосу и старую сетчатую секцию.", 13f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
