@@ -13,6 +13,25 @@ class PixelSpriteAtlasTest {
     }
 
     @Test
+    fun everySpriteUsesTheReplacementColdSurvivalPalette() {
+        PixelSpriteAtlas.allIds().forEach { id ->
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
+            sprite.palette.values.forEach { color ->
+                assertTrue("$id red channel must be normalized", color[0] in 0f..1f)
+                assertTrue("$id green channel must be normalized", color[1] in 0f..1f)
+                assertTrue("$id blue channel must be normalized", color[2] in 0f..1f)
+            }
+        }
+        val playerCloth = requireNotNull(PixelSpriteAtlas.sprite("player")).palette.getValue('A')
+        assertTrue("Character cloth must no longer use the former tan source colour",
+            kotlin.math.abs(playerCloth[0] - 0.64f) > 0.08f ||
+                kotlin.math.abs(playerCloth[1] - 0.48f) > 0.08f ||
+                kotlin.math.abs(playerCloth[2] - 0.25f) > 0.08f)
+        val water = requireNotNull(PixelSpriteAtlas.sprite("item_water")).palette.getValue('W')
+        assertTrue("Water must use the new steel-blue family", water[2] > water[0])
+    }
+
+    @Test
     fun playerHasFourDirectionalWalkFrames() {
         listOf("player", "player_back", "player_side_left", "player_side_right").forEach { id ->
             assertTrue("$id should provide a four-frame walk cycle",
