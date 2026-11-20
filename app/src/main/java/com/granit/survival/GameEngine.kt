@@ -112,6 +112,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (found.any { it.id == "ruins_checkpoint" }) {
             storyProgress.recordEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED)
         }
+        if (found.any { it.id == "ruins_outer_route" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND)
+        }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
                 storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) ->
