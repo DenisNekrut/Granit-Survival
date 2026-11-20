@@ -5,8 +5,6 @@ package com.granit.survival
  * Sprite silhouettes and source frame geometry are never modified.
  */
 internal object GranitSpritePalette {
-    private data class Ramp(val shadow: FloatArray, val mid: FloatArray, val highlight: FloatArray)
-
     private val slate = GranitWorldPalette.spriteRamp("slate")
     private val rust = GranitWorldPalette.spriteRamp("rust")
     private val ochre = GranitWorldPalette.spriteRamp("ochre")
@@ -76,12 +74,10 @@ internal object GranitSpritePalette {
 
     fun remapColor(source: FloatArray, material: String): FloatArray {
         require(source.size >= 3) { "Sprite palette colours must contain RGB channels" }
-        return mapLuminance(source, GranitWorldPalette.materialRamp(material).let {
-            Ramp(it.shadow, it.mid, it.highlight)
-        })
+        return mapLuminance(source, GranitWorldPalette.materialRamp(material))
     }
 
-    private fun mapLuminance(source: FloatArray, ramp: Ramp): FloatArray {
+    private fun mapLuminance(source: FloatArray, ramp: GranitWorldPalette.Ramp): FloatArray {
         val red = source[0].coerceIn(0f, 1f)
         val green = source[1].coerceIn(0f, 1f)
         val blue = source[2].coerceIn(0f, 1f)
