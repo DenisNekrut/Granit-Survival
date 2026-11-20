@@ -796,7 +796,12 @@ object PixelSpriteAtlas {
         return if (width >= 32 || height >= 48) 0.5f else 1f
     }
 
-    fun sprite(id: String): PixelSprite? = sprites[id] ?: variants[id]
+    /** Cache the replacement palette once; every renderer path receives the same RGB values. */
+    private val recoloredSprites: Map<String, PixelSprite> by lazy {
+        (sprites + variants).mapValues { (_, sprite) -> GranitSpritePalette.remap(sprite) }
+    }
+
+    fun sprite(id: String): PixelSprite? = recoloredSprites[id]
 
     fun allIds(): Set<String> = sprites.keys + variants.keys
 
