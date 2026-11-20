@@ -34,7 +34,7 @@ object PointOfInterestCatalog {
         PointOfInterest("road_milestone", WorldZone.ROAD, 25.5f, 10.5f, "Старый указатель", "Надписи почти стёрлись, но направление на город ещё читается.", "OLD SIGNPOST", spriteId = "road_sign"),
         PointOfInterest("road_bus_stop", WorldZone.ROAD, 18.5f, 19.5f, "Автобусная остановка", "Расписание всё ещё висит под стеклом, хотя маршруты давно не ходят.", "BUS STOP", spriteId = "road_sign_faded"),
         PointOfInterest("road_checkpoint", WorldZone.ROAD, 34.5f, 14.5f, "Дорожный пост", "Пустой пост контроля перекрывает старый съезд с трассы.", "ROAD POST", spriteId = "road_barrier"),
-        PointOfInterest("road_line_08_marker", WorldZone.ROAD, 29.5f, 7.5f, "Метка резервной линии 08", "На дорожной опоре сохранилась маркировка, совпадающая с архивным маршрутным листом.", "LINE 08 MARKER", spriteId = "road_sign", requiredStoryEventId = StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+        PointOfInterest("road_line_08_marker", WorldZone.ROAD, 29.5f, 9.5f, "Метка резервной линии 08", "На дорожной опоре сохранилась маркировка, совпадающая с архивным маршрутным листом.", "LINE 08 MARKER", spriteId = "road_sign", requiredStoryEventId = StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
     )
 
     fun all(): List<PointOfInterest> = entries
