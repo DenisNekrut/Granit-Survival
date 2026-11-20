@@ -58,7 +58,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val storyProgress = StoryProgressSystem()
     val weather: WeatherType get() = WeatherSystem.forDay(worldClock.day)
     val weatherMovementMultiplier: Float get() =
-        if (zone == WorldZone.BUNKER) 1f else weather.outdoorMovementMultiplier
+        if (zone == WorldZone.BUNKER || zone == WorldZone.COMMUNICATION_NODE) 1f else weather.outdoorMovementMultiplier
     val checkpointSystem = CheckpointSystem()
     private val clockAndNeedsSystem = ClockAndNeedsSystem(
         worldClock, bunkerPower, statistics, needs, psychology
@@ -123,6 +123,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         }
         if (found.any { it.id == "ruins_power_junction" }) {
             storyProgress.recordEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND)
+        }
+        if (found.any { it.id == "communication_node_console" }) {
+            storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND)
         }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
@@ -540,6 +543,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             storyProgress.recordEvent(StoryEventIds.FIRST_BUNKER_EXIT)
         }
         changeZone(target, entryFrom = source)
+        if (target == WorldZone.COMMUNICATION_NODE) {
+            storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED)
+        }
         advanceGameMinutes(ZONE_TRAVEL_MINUTES)
     }
 
