@@ -23,12 +23,12 @@ interface ItemContainer {
     val columns: Int
     val rows: Int
     override fun slot(index: Int): ItemStack?
-    override fun count(type: ItemType): Int
-    override fun snapshot(): List<ItemStack?>
-    override fun restore(snapshot: List<ItemStack?>)
-    override fun canAdd(type: ItemType, amount: Int = 1): Boolean
-    override fun add(type: ItemType, amount: Int = 1): Int
-    override fun removeAt(index: Int, amount: Int = 1): Boolean
+    fun count(type: ItemType): Int
+    fun snapshot(): List<ItemStack?>
+    fun restore(snapshot: List<ItemStack?>)
+    fun canAdd(type: ItemType, amount: Int = 1): Boolean
+    fun add(type: ItemType, amount: Int = 1): Int
+    fun removeAt(index: Int, amount: Int = 1): Boolean
 }
 
 /** Fixed-size item container. Stack size is intentionally small for the first prototype. */
