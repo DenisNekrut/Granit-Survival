@@ -336,8 +336,19 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val containers = zoneContainers.getOrPut(target) { linkedMapOf() }
         map.forEachTile { x, y, type -> if (type == TileType.LOOT_CACHE) {
             val id = "${target.name.lowercase()}_${x}_$y"
-            containers.getOrPut(id) { WorldContainer(id, target, x, y, "ТАЙНИК С ПРИПАСАМИ").apply { seedInitialContents() } }
+            containers.getOrPut(id) {
+                WorldContainer(id, target, x, y, "ТАЙНИК С ПРИПАСАМИ").apply { seedInitialContents() }
+            }
         } }
+        PointOfInterestCatalog.inZone(target).filter { it.cacheTier != null }.forEach { poi ->
+            val x = kotlin.math.floor(poi.x).toInt()
+            val y = kotlin.math.floor(poi.y).toInt()
+            val id = "poi_${poi.id}"
+            containers.getOrPut(id) {
+                WorldContainer(id, target, x, y, "ТАЙНИК: ${poi.title}", lootTierOverride = poi.cacheTier)
+                    .apply { seedInitialContents() }
+            }
+        }
     }
 
     fun nearestWorldContainer(maxDistance: Float = 1.35f): WorldContainer? {
