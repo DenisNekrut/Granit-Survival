@@ -170,7 +170,8 @@ internal class BunkerStationPanels(
             rows: Int,
             slotAt: (Int) -> ItemStack?,
             transfer: (Int, Int) -> Boolean,
-            actionVerb: String
+            actionVerb: String,
+            useSelected: ((ItemType) -> Boolean)? = null
         ) {
             panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
             for (rowIndex in 0 until rows) {
@@ -197,16 +198,31 @@ internal class BunkerStationPanels(
                         cell.isClickable = true
                         cell.setOnClickListener {
                             val selected = stack
-                            val actions = if (selected.quantity > 1) {
-                                arrayOf("$actionVerb 1 предмет", "$actionVerb всю стопку (${selected.quantity})")
-                            } else {
-                                arrayOf("$actionVerb предмет")
-                            }
+                            val canUse = useSelected != null && selected.type in setOf(
+                                ItemType.CANNED_FOOD, ItemType.WATER,
+                                ItemType.BANDAGE, ItemType.MEDICAL_KIT
+                            )
+                            val actions = buildList {
+                                add(if (selected.quantity > 1) "$actionVerb 1 предмет" else "$actionVerb предмет")
+                                if (selected.quantity > 1) add("$actionVerb всю стопку (${selected.quantity})")
+                                if (canUse) add("ЗАБРАТЬ И ИСПОЛЬЗОВАТЬ")
+                            }.toTypedArray()
                             AlertDialog.Builder(activity)
                                 .setTitle(selected.type.displayName)
                                 .setItems(actions) { _, choice ->
-                                    val amount = if (choice == 0) 1 else selected.quantity
+                                    val useChoice = canUse && choice == actions.lastIndex
+                                    val amount = if (choice == 1 && selected.quantity > 1) selected.quantity else 1
                                     if (transfer(index, amount)) {
+                                        if (useChoice) {
+                                            val used = useSelected?.invoke(selected.type) == true
+                                            if (!used) {
+                                                Toast.makeText(
+                                                    activity,
+                                                    "Предмет забран в рюкзак, но сейчас его нельзя использовать",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
                                         showStorage()
                                     } else {
                                         Toast.makeText(
@@ -244,7 +260,15 @@ internal class BunkerStationPanels(
             engine.bunkerStorage::slot,
             engine::transferFromStorageAt,
             "ЗАБРАТЬ"
-        )
+        ) { type ->
+            when (type) {
+                ItemType.CANNED_FOOD -> session.consumeFood()
+                ItemType.WATER -> session.drinkWater()
+                ItemType.BANDAGE -> engine.useBandage()
+                ItemType.MEDICAL_KIT -> engine.useMedicalKit()
+                else -> false
+            }
+        }
         panel.addView(menuButton("ЗАКРЫТЬ", true) { closeStationPanel() })
         showOverlay(panel)
     }
