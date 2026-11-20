@@ -6,7 +6,7 @@ import kotlin.random.Random
 enum class TileType {
     FLOOR, WALL, BED, WORKBENCH, STORAGE, BOOKSHELF, RADIO, EXIT,
     EXIT_TO_BUNKER, EXIT_TO_FOREST, EXIT_TO_RUINS, EXIT_TO_ROAD,
-    DINING_TABLE, GENERATOR, MEDICAL_STATION,
+    DINING_TABLE, GENERATOR, MEDICAL_STATION, LOOT_CACHE,
     RESOURCE_WOOD, RESOURCE_METAL, RESOURCE_FABRIC, RESOURCE_FOOD, RESOURCE_WATER
 }
 
@@ -89,6 +89,7 @@ class TileMap(
         set(19, 6, TileType.RESOURCE_WOOD); set(23, 15, TileType.RESOURCE_WOOD)
         set(29, 10, TileType.RESOURCE_FABRIC); set(14, 17, TileType.RESOURCE_WATER)
         set(34, 6, TileType.RESOURCE_FOOD); set(6, 17, TileType.RESOURCE_METAL)
+        set(30, 5, TileType.LOOT_CACHE)
     }
 
     private fun buildRuins() {
@@ -167,6 +168,14 @@ class TileMap(
             if (validPlacement(x, y)) set(x, y, TileType.WALL)
         }
 
+        var cachesPlaced = 0
+        var cacheAttempts = 0
+        while (cachesPlaced < 2 && cacheAttempts < 360) {
+            cacheAttempts++
+            val x = random.nextInt(2, width - 2); val y = random.nextInt(2, height - 2)
+            if (validPlacement(x, y)) { set(x, y, TileType.LOOT_CACHE); cachesPlaced++ }
+        }
+
         val resourceTiles = listOf(
             TileType.RESOURCE_WOOD,
             TileType.RESOURCE_METAL,
@@ -234,6 +243,7 @@ class TileMap(
                 TileType.BED -> "bed"
                 TileType.WORKBENCH -> "workbench"
                 TileType.STORAGE -> "storage"
+                TileType.LOOT_CACHE -> "crate"
                 TileType.BOOKSHELF -> "bookshelf"
                 TileType.RADIO -> "radio"
                 TileType.DINING_TABLE -> "dining_table"
@@ -356,7 +366,7 @@ class TileMap(
     private fun blocksVision(type: TileType): Boolean = when (type) {
         TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE,
         TileType.BOOKSHELF, TileType.RADIO, TileType.DINING_TABLE,
-        TileType.GENERATOR, TileType.MEDICAL_STATION -> true
+        TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.LOOT_CACHE -> true
         else -> false
     }
 
@@ -432,7 +442,7 @@ class TileMap(
         forEachTile { x, y, type ->
             val valid = when (type) {
                 TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF, TileType.RADIO,
-                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.EXIT,
+                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.LOOT_CACHE, TileType.EXIT,
                 TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS,
                 TileType.EXIT_TO_ROAD -> true
                 else -> false

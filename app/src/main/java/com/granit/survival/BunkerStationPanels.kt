@@ -156,6 +156,26 @@ internal class BunkerStationPanels(
         showOverlay(panel)
     }
 
+    fun showWorldContainer() {
+        val engine = session.engine
+        val container = engine.nearestWorldContainer() ?: run { showMessage("ТАЙНИК", "Подойди ближе к ящику, чтобы осмотреть его."); return }
+        fun dp(value: Int) = (value * activity.resources.displayMetrics.density).toInt()
+        val panel = createPanel(container.title, "Содержимое сохраняется в этой локации. Перенос предметов выполняется вручную.")
+        fun grid(title: String, source: ItemContainer, move: (Int, Int) -> Boolean, verb: String) {
+            panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
+            panel.addView(InventoryGridView(context = activity, container = source, cellHeightDp = 82, iconSizeDp = 34, dp = ::dp) { index, stack ->
+                val options = if (stack.quantity > 1) arrayOf("$verb 1 предмет", "$verb всю стопку (${stack.quantity})") else arrayOf("$verb предмет")
+                AlertDialog.Builder(activity).setTitle(stack.type.displayName).setItems(options) { _, choice ->
+                    if (move(index, if (choice == 1) stack.quantity else 1)) showWorldContainer()
+                    else Toast.makeText(activity, "Не удалось переместить предмет: проверь свободное место", Toast.LENGTH_SHORT).show()
+                }.setNegativeButton("ОТМЕНА", null).show()
+            })
+        }
+        grid("РЮКЗАК", engine.inventory, { i, n -> engine.transferToWorldContainerAt(container.id, i, n) }, "ПОЛОЖИТЬ")
+        grid("ЯЩИК", container, { i, n -> engine.transferFromWorldContainerAt(container.id, i, n) }, "ЗАБРАТЬ")
+        panel.addView(menuButton("ЗАКРЫТЬ", true) { closeStationPanel() }); showOverlay(panel)
+    }
+
     fun showStorage() {
         val engine = session.engine
         fun dp(value: Int): Int = (value * activity.resources.displayMetrics.density).toInt()

@@ -208,7 +208,7 @@ class PixelRenderer {
                 TileType.FLOOR -> if (engine.zone != WorldZone.BUNKER) drawFloorDetail(tileX, tileY, engine.zone) else Unit
                 TileType.WALL -> Unit
                 TileType.BED, TileType.WORKBENCH, TileType.RADIO, TileType.BOOKSHELF, TileType.STORAGE,
-                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> Unit
+                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.LOOT_CACHE -> Unit
                 TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
                 TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY, type)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
@@ -238,6 +238,7 @@ class PixelRenderer {
                 TileType.BED -> "bed"
                 TileType.WORKBENCH -> "workbench"
                 TileType.STORAGE -> "storage"
+                TileType.LOOT_CACHE -> "crate"
                 TileType.BOOKSHELF -> "bookshelf"
                 TileType.RADIO -> "radio"
                 TileType.DINING_TABLE -> "dining_table"
@@ -280,7 +281,9 @@ class PixelRenderer {
 
         // Authored points of interest use original pixel-art props.
         // Procedural generation reserves these cells, keeping landmarks visible and reachable.
-        PointOfInterestCatalog.inZone(engine.zone).forEach { poi ->
+        PointOfInterestCatalog.inZone(engine.zone)
+            .filterNot { it.id == "forest_supply_crate" && engine.tileMap[30, 5] == TileType.LOOT_CACHE }
+            .forEach { poi ->
             worldSprites += WorldSpriteCommand(
                 sortY = poi.y + 0.92f, sortOrder = 0, spriteId = poi.spriteId,
                 centerX = poi.x, topY = poi.y - 0.12f,

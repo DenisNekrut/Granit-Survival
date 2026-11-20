@@ -134,8 +134,11 @@ class MainActivity : Activity() {
         val target = engine.tileMap.nearestInteractable(
             engine.player.x, engine.player.y, 1.35f
         )
+        if (target == TileType.LOOT_CACHE) { showWorldContainerPanel(); return }
         stationPanelRouter.route(target, hasNearbyResource)
     }
+
+    private fun showWorldContainerPanel() = bunkerStationPanels.showWorldContainer()
 
     private fun showRadioPanel() = bunkerStationPanels.showRadio()
 
