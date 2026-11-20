@@ -474,6 +474,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED)
     }
 
+    /** Compare the node sequence with the forest measurement only after both records exist. */
+    fun crossCheckCommunicationNodeSignal(): Boolean {
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED)) return false
+        if (!storyProgress.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED)
+    }
+
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
     fun inspectForestWatchPostSignal(): Boolean {
         if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
