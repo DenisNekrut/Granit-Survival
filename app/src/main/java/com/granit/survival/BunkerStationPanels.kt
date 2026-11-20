@@ -174,81 +174,52 @@ internal class BunkerStationPanels(
             useSelected: ((ItemType) -> Boolean)? = null
         ) {
             panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
-            for (rowIndex in 0 until rows) {
-                val row = LinearLayout(activity).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                }
-                for (column in 0 until columns) {
-                    val index = rowIndex * columns + column
-                    val stack = slotAt(index)
-                    val cell = LinearLayout(activity).apply {
-                        orientation = LinearLayout.VERTICAL
-                        gravity = Gravity.CENTER
-                        setPadding(dp(3), dp(4), dp(3), dp(4))
-                        setBackgroundColor(Color.argb(175, 28, 43, 39))
-                    }
-                    if (stack == null) {
-                        cell.addView(label("ПУСТО", 9f, Color.rgb(151, 170, 157), false))
-                    } else {
-                        cell.addView(
-                            InventoryPixelIconView(activity, stack.type.iconSpriteId),
-                            LinearLayout.LayoutParams(dp(38), dp(38))
-                        )
-                        cell.addView(label(
-                            stack.type.displayName,
-                            8f,
-                            Color.rgb(214, 221, 207),
-                            false
-                        ))
-                        cell.addView(label("×${stack.quantity}", 10f, Color.WHITE, true))
-                        cell.isClickable = true
-                        cell.setOnClickListener {
-                            val selected = stack
-                            val canUse = useSelected != null && selected.type in setOf(
-                                ItemType.CANNED_FOOD, ItemType.WATER,
-                                ItemType.BANDAGE, ItemType.MEDICAL_KIT
-                            )
-                            val actions = buildList {
-                                add(if (selected.quantity > 1) "$actionVerb 1 предмет" else "$actionVerb предмет")
-                                if (selected.quantity > 1) add("$actionVerb всю стопку (${selected.quantity})")
-                                if (canUse) add("ЗАБРАТЬ И ИСПОЛЬЗОВАТЬ")
-                            }.toTypedArray()
-                            AlertDialog.Builder(activity)
-                                .setTitle(selected.type.displayName)
-                                .setItems(actions) { _, choice ->
-                                    val useChoice = canUse && choice == actions.lastIndex
-                                    val amount = if (choice == 1 && selected.quantity > 1) selected.quantity else 1
-                                    if (transfer(index, amount)) {
-                                        if (useChoice) {
-                                            val used = useSelected?.invoke(selected.type) == true
-                                            if (!used) {
-                                                Toast.makeText(
-                                                    activity,
-                                                    "Предмет забран в рюкзак, но сейчас его нельзя использовать",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                        }
-                                        showStorage()
-                                    } else {
-                                        Toast.makeText(
-                                            activity,
-                                            "Перенос невозможен: проверь свободные ячейки и доступ к хранилищу",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
+            panel.addView(InventoryGridView(
+                context = activity,
+                columns = columns,
+                rows = rows,
+                cellHeightDp = 90,
+                iconSizeDp = 38,
+                dp = ::dp,
+                slotAt = slotAt
+            ) { index, selected ->
+                val canUse = useSelected != null && selected.type in setOf(
+                    ItemType.CANNED_FOOD, ItemType.WATER,
+                    ItemType.BANDAGE, ItemType.MEDICAL_KIT
+                )
+                val actions = buildList {
+                    add(if (selected.quantity > 1) "$actionVerb 1 предмет" else "$actionVerb предмет")
+                    if (selected.quantity > 1) add("$actionVerb всю стопку (${selected.quantity})")
+                    if (canUse) add("ЗАБРАТЬ И ИСПОЛЬЗОВАТЬ")
+                }.toTypedArray()
+                AlertDialog.Builder(activity)
+                    .setTitle(selected.type.displayName)
+                    .setItems(actions) { _, choice ->
+                        val useChoice = canUse && choice == actions.lastIndex
+                        val amount = if (choice == 1 && selected.quantity > 1) selected.quantity else 1
+                        if (transfer(index, amount)) {
+                            if (useChoice) {
+                                val used = useSelected?.invoke(selected.type) == true
+                                if (!used) {
+                                    Toast.makeText(
+                                        activity,
+                                        "Предмет забран в рюкзак, но сейчас его нельзя использовать",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
-                                .setNegativeButton("ОТМЕНА", null)
-                                .show()
+                            }
+                            showStorage()
+                        } else {
+                            Toast.makeText(
+                                activity,
+                                "Перенос невозможен: проверь свободные ячейки и доступ к хранилищу",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
-                    val cellParams = LinearLayout.LayoutParams(0, dp(90), 1f).apply {
-                        setMargins(dp(2), dp(2), dp(2), dp(2))
-                    }
-                    row.addView(cell, cellParams)
-                }
-                panel.addView(row)
-            }
+                    .setNegativeButton("ОТМЕНА", null)
+                    .show()
+            })
         }
 
         addGrid(
