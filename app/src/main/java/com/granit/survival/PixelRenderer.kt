@@ -280,6 +280,16 @@ class PixelRenderer {
             }
         }
 
+        // Authored points of interest use original pixel-art props.
+        // Procedural generation reserves these cells, keeping landmarks visible and reachable.
+        PointOfInterestCatalog.inZone(engine.zone).forEach { poi ->
+            worldSprites += WorldSpriteCommand(
+                sortY = poi.y + 0.92f, sortOrder = 0, spriteId = poi.spriteId,
+                centerX = poi.x, topY = poi.y - 0.12f,
+                pixelSize = 0.052f, contactShadow = true
+            )
+        }
+
         val px = engine.player.x
         val py = engine.player.y
         val playerFrame = if (engine.isMoving) (engine.simulationTimeSeconds * 4.0).toInt() else 0
