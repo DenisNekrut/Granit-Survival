@@ -29,11 +29,11 @@ internal object GranitSpritePalette {
     /** Material routing is explicit so one hue cannot accidentally turn every object into foliage or rust. */
     internal fun materialForSprite(spriteId: String): String? = when {
         spriteId in setOf("tree", "bush", "grass_patch") -> "pine"
-        spriteId in setOf("fallen_log", "wood", "crate", "bed", "bookshelf", "dining_table") -> "wood"
+        spriteId in setOf("fallen_log", "wood", "item_wood", "crate", "bed", "bookshelf", "dining_table") -> "wood"
         spriteId in setOf("metal", "metal_scrap", "floor_grate", "radio", "generator", "storage",
             "bunker_panel", "streetlamp", "road_sign", "road_barrier", "wreck", "workbench") -> "steel"
         spriteId in setOf("rubble", "debris", "brick_wall", "ruined_wall") -> "brick"
-        spriteId in setOf("water", "puddle") -> "water"
+        spriteId in setOf("water", "item_water", "puddle") -> "water"
         spriteId in setOf("fabric", "item_fabric", "bandage", "item_bandage") -> "fabric"
         spriteId in setOf("medical_station", "item_medical_kit") -> "medical"
         spriteId in setOf("infected_shambler", "infected_runner", "infected_brute") -> "skin"
