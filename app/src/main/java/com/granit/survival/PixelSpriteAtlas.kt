@@ -628,8 +628,6 @@ object PixelSpriteAtlas {
 
     fun allIds(): Set<String> = sprites.keys + variants.keys
 
-    fun allIds(): Set<String> = sprites.keys
-
     /** Returns atlas integrity errors; an empty list means every frame is renderable. */
     fun validate(): List<String> {
         val errors = mutableListOf<String>()
