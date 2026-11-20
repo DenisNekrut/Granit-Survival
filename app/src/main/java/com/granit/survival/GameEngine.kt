@@ -122,6 +122,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         isMoving = false
     }
 
+    /** Apply a render viewport change and reframe immediately around the player. */
+    fun setCameraViewport(width: Float, height: Float) {
+        val changed = camera.viewportWidth != width || camera.viewportHeight != height
+        camera.setViewport(width, height)
+        if (changed) camera.snapTo(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+    }
+
     fun updateFrame(frameDeltaSeconds: Float, input: EngineInput): Int {
         accumulator += frameDeltaSeconds.coerceIn(0f, MAX_FRAME_SECONDS)
         var steps = 0
