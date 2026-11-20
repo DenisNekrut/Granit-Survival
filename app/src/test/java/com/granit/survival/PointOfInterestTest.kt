@@ -420,4 +420,31 @@ class PointOfInterestTest {
         })
     }
 
+    @Test
+    fun line08MarkerIsHiddenUntilRouteRecordAndInspectionPersists() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.ROAD, regenerate = false)
+        val marker = PointOfInterestCatalog.byId("road_line_08_marker")!!
+        engine.player.x = marker.x
+        engine.player.y = marker.y
+
+        assertTrue(engine.scanNearbyPointsOfInterest().none { it.id == marker.id })
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND))
+        assertFalse(engine.inspectRoadLine08Marker())
+
+        engine.storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == marker.id })
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND))
+        assertTrue(engine.inspectRoadLine08Marker())
+        assertFalse(engine.inspectRoadLine08Marker())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED
+        })
+    }
+
 }
