@@ -22,6 +22,7 @@ object StoryEventIds {
     const val ROAD_MAP_SIGNAL_TRACE_FOUND = "chapter_01.road_map_signal_trace_found"
     const val RUINS_SIGNAL_MARKER_REACHED = "chapter_01.ruins_signal_marker_reached"
     const val RUINS_SIGNAL_MARKER_INSPECTED = "chapter_01.ruins_signal_marker_inspected"
+    const val RUINS_OUTER_ROUTE_FOUND = "chapter_01.ruins_outer_route_found"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -45,6 +46,7 @@ object StoryEventIds {
         ROAD_MAP_SIGNAL_TRACE_FOUND,
         RUINS_SIGNAL_MARKER_REACHED,
         RUINS_SIGNAL_MARKER_INSPECTED,
+        RUINS_OUTER_ROUTE_FOUND,
         WORKSHOP_INSPECTED
     )
 }
@@ -147,7 +149,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED, "Сверка сигнала на лесной вышке", "На старой вышке Андрей проверил направление и уровень сигнала восстановленного ретранслятора. Показания меняются, хотя положение антенны остаётся прежним. Он отмечает это на карте: следующий замер стоит провести уже за пределами леса."),
             StoryObservation(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND, "След сигнала у старой дороги", "В брошенном автомобиле Андрей находит карту с отметками вдоль дороги. Одна из отметок совпадает с направлением, полученным на лесной вышке. Это не доказывает наличие источника сигнала, но даёт конкретную точку для следующей экспедиции."),
             StoryObservation(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED, "Отметка на разбитом посту", "В руинах Андрей находит пост, отмеченный на карте. На табличке сохранился тот же условный знак, что и возле лесной вышки. След сигнала ведёт дальше, но теперь у него есть ещё одна проверяемая точка маршрута."),
-            StoryObservation(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED, "Осмотр отметки на посту", "Андрей внимательно сверяет табличку с картой. Под старым знаком видна дополнительная маркировка и направление к следующему участку маршрута. Он переносит её в журнал, не делая выводов о том, кто оставил отметку.")
+            StoryObservation(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED, "Осмотр отметки на посту", "Андрей внимательно сверяет табличку с картой. Под старым знаком видна дополнительная маркировка и направление к следующему участку маршрута. Он переносит её в журнал, не делая выводов о том, кто оставил отметку."),
+            StoryObservation(StoryEventIds.RUINS_OUTER_ROUTE_FOUND, "Указатель внешнего маршрута", "За разбитым постом Андрей находит старый указатель линии связи. Его маркировка совпадает с дополнительной отметкой на табличке. Теперь у экспедиции есть новая точка для проверки маршрута.")
         )
         return notes.filter { hasEvent(it.eventId) }
     }
