@@ -46,10 +46,12 @@ class WorldContainer(
             WorldZone.RUINS -> {
                 contents.add(ItemType.METAL, 4)
                 contents.add(ItemType.FABRIC, 2)
+                contents.add(ItemType.BANDAGE, 1)
             }
             WorldZone.ROAD -> {
                 contents.add(ItemType.CANNED_FOOD, 2)
                 contents.add(ItemType.WATER, 2)
+                contents.add(ItemType.METAL, 1)
             }
         }
 
