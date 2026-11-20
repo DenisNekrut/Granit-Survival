@@ -59,6 +59,26 @@ internal object GranitWorldPalette {
         "moss" to ramp(PINE_SHADOW, MOSS, TOXIC_LIME)
     )
 
+    /** Distinct ground identities for the four authored zones. */
+    fun zoneFloor(zone: WorldZone): FloatArray = when (zone) {
+        WorldZone.BUNKER -> channels(0x293B43)
+        WorldZone.FOREST -> channels(0x355B38)
+        WorldZone.RUINS -> channels(0x79513D)
+        WorldZone.ROAD -> channels(0x405D70)
+    }
+
+    /**
+     * Subtle full-world weather grade. Alpha is deliberately restrained so
+     * authored sprite colours and silhouettes remain readable.
+     */
+    fun weatherOverlay(weather: WeatherType): FloatArray = when (weather) {
+        WeatherType.CLEAR -> floatArrayOf(0f, 0f, 0f, 0f)
+        WeatherType.FOG -> floatArrayOf(0.66f, 0.76f, 0.77f, 0.15f)
+        WeatherType.RAIN -> floatArrayOf(0.12f, 0.24f, 0.34f, 0.19f)
+        WeatherType.COLD -> floatArrayOf(0.48f, 0.68f, 0.78f, 0.13f)
+        WeatherType.OVERCAST -> floatArrayOf(0.42f, 0.49f, 0.51f, 0.12f)
+    }
+
     /** Return fresh arrays so callers cannot mutate the shared palette. */
     fun spriteRamp(name: String): Ramp {
         val source = when (name) {
