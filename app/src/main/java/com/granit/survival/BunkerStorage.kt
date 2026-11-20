@@ -21,22 +21,24 @@ class BunkerStorage(
 
     override fun removeAt(index: Int, amount: Int): Boolean = contents.removeAt(index, amount)
 
+    override fun remove(type: ItemType, amount: Int): Boolean = contents.remove(type, amount)
 
-    fun deposit(from: Inventory, type: ItemType, amount: Int): Boolean =
+
+    fun deposit(from: ItemContainer, type: ItemType, amount: Int): Boolean =
         transfer(from, contents, type, amount)
 
-    fun withdraw(to: Inventory, type: ItemType, amount: Int): Boolean =
+    fun withdraw(to: ItemContainer, type: ItemType, amount: Int): Boolean =
         transfer(contents, to, type, amount)
 
     /** Moves items from one explicitly selected backpack cell. */
-    fun depositAt(from: Inventory, slotIndex: Int, amount: Int): Boolean =
+    fun depositAt(from: ItemContainer, slotIndex: Int, amount: Int): Boolean =
         transferAt(from, contents, slotIndex, amount)
 
     /** Moves items from one explicitly selected storage cell. */
-    fun withdrawAt(to: Inventory, slotIndex: Int, amount: Int): Boolean =
+    fun withdrawAt(to: ItemContainer, slotIndex: Int, amount: Int): Boolean =
         transferAt(contents, to, slotIndex, amount)
 
-    private fun transferAt(from: Inventory, to: Inventory, slotIndex: Int, amount: Int): Boolean {
+    private fun transferAt(from: ItemContainer, to: ItemContainer, slotIndex: Int, amount: Int): Boolean {
         val stack = from.slot(slotIndex) ?: return false
         if (amount <= 0 || stack.quantity < amount || !to.canAdd(stack.type, amount)) return false
         if (!from.removeAt(slotIndex, amount)) return false
@@ -48,7 +50,7 @@ class BunkerStorage(
         return true
     }
 
-    private fun transfer(from: Inventory, to: Inventory, type: ItemType, amount: Int): Boolean {
+    private fun transfer(from: ItemContainer, to: ItemContainer, type: ItemType, amount: Int): Boolean {
         if (amount <= 0 || from.count(type) < amount || !to.canAdd(type, amount)) return false
         if (!from.remove(type, amount)) return false
 
