@@ -48,6 +48,7 @@ internal object GranitWorldPalette {
     val oxidized = ramp(DEEP_GRAPHITE, OXIDIZED_TEAL, TEAL_HIGHLIGHT)
     val steelBlue = ramp(VOID_BLACK, STEEL_BLUE, MIST_BLUE)
 
+    /** Authored semantic ramps; unlike a global hue shift, each material keeps its identity. */
     val materialRamps: Map<String, Ramp> = mapOf(
         "concrete" to ramp(COLD_CHARCOAL, CONCRETE, PALE_CONCRETE),
         "steel" to ramp(VOID_BLACK, STEEL_BLUE, MIST_BLUE),
@@ -56,7 +57,12 @@ internal object GranitWorldPalette {
         "soil" to ramp(SOIL_SHADOW, EARTH_BROWN, DUST_OCHRE),
         "brick" to ramp(RUST_SHADOW, BRICK, AMBER),
         "water" to ramp(0x102B3A, 0x287A91, 0x79C4D1),
-        "moss" to ramp(PINE_SHADOW, MOSS, TOXIC_LIME)
+        "moss" to ramp(PINE_SHADOW, MOSS, TOXIC_LIME),
+        "wood" to ramp(0x39291F, 0x805638, 0xC18A4D),
+        "fabric" to ramp(0x263B38, 0x52766A, 0x9BB99A),
+        "skin" to ramp(0x684638, 0xB77C58, 0xE2B184),
+        "hazard" to ramp(0x4B3820, 0xB58A2E, 0xE6D15A),
+        "medical" to ramp(0x6B3030, 0xC65349, 0xF0A08A)
     )
 
     /** Distinct ground identities for the four authored zones. */
@@ -67,16 +73,25 @@ internal object GranitWorldPalette {
         WorldZone.ROAD -> channels(0x405D70)
     }
 
+    /** Accent colours used by zone props, landmarks and lighting cues. */
+    fun zoneAccent(zone: WorldZone): FloatArray = when (zone) {
+        WorldZone.BUNKER -> channels(OXIDIZED_TEAL)
+        WorldZone.FOREST -> channels(LEAF_GREEN)
+        WorldZone.RUINS -> channels(BRICK)
+        WorldZone.ROAD -> channels(MIST_BLUE)
+    }
+
     /**
-     * Subtle full-world weather grade. Alpha is deliberately restrained so
-     * authored sprite colours and silhouettes remain readable.
+     * Weather colour grades are intentionally visible, not a barely perceptible
+     * overlay. Keep alpha below 0.25 so silhouettes and authored material ramps
+     * remain readable on the 128x128 tile grid.
      */
     fun weatherOverlay(weather: WeatherType): FloatArray = when (weather) {
         WeatherType.CLEAR -> floatArrayOf(0f, 0f, 0f, 0f)
-        WeatherType.FOG -> floatArrayOf(0.66f, 0.76f, 0.77f, 0.15f)
-        WeatherType.RAIN -> floatArrayOf(0.12f, 0.24f, 0.34f, 0.19f)
-        WeatherType.COLD -> floatArrayOf(0.48f, 0.68f, 0.78f, 0.13f)
-        WeatherType.OVERCAST -> floatArrayOf(0.42f, 0.49f, 0.51f, 0.12f)
+        WeatherType.FOG -> floatArrayOf(0.66f, 0.76f, 0.77f, 0.21f)
+        WeatherType.RAIN -> floatArrayOf(0.12f, 0.24f, 0.34f, 0.23f)
+        WeatherType.COLD -> floatArrayOf(0.48f, 0.68f, 0.78f, 0.20f)
+        WeatherType.OVERCAST -> floatArrayOf(0.42f, 0.49f, 0.51f, 0.17f)
     }
 
     /** Return fresh arrays so callers cannot mutate the shared palette. */
@@ -90,6 +105,11 @@ internal object GranitWorldPalette {
             "steelBlue" -> steelBlue
             else -> error("Unknown sprite ramp: $name")
         }
+        return Ramp(source.shadow.copyOf(), source.mid.copyOf(), source.highlight.copyOf())
+    }
+
+    fun materialRamp(name: String): Ramp {
+        val source = materialRamps[name] ?: error("Unknown material ramp: $name")
         return Ramp(source.shadow.copyOf(), source.mid.copyOf(), source.highlight.copyOf())
     }
 
