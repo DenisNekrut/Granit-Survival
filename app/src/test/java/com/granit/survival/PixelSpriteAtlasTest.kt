@@ -25,7 +25,7 @@ class PixelSpriteAtlasTest {
         listOf("player", "player_back", "player_side_left", "player_side_right").forEach { id ->
             val frames = requireNotNull(PixelSpriteAtlas.sprite(id)).frames
             assertTrue("$id should have 4 frames", frames.size == 4)
-            assertTrue("$id frames should be 16x24", frames.all { frame ->
+            assertTrue("$id frames should be 32x48", frames.all { frame ->
                 frame.size == 48 && frame.all { it.length == 32 }
             })
         }
@@ -33,10 +33,16 @@ class PixelSpriteAtlasTest {
 
     @Test
     fun environmentSpritesFitTheGeneratedAtlasCell() {
-        listOf("tree", "rubble", "road_barrier", "bunker_panel", "bush", "debris", "streetlamp", "floor_grate", "crate", "barrel", "wreck", "exit_hatch", "ladder_hatch", "vault_door", "control_console", "dining_table", "ceiling_lamp", "grass_patch", "fallen_log", "metal_scrap", "puddle", "road_sign").forEach { id ->
+        listOf("bunker_panel", "debris", "floor_grate", "exit_hatch", "ladder_hatch", "vault_door", "control_console", "dining_table", "ceiling_lamp", "grass_patch", "fallen_log", "metal_scrap", "puddle").forEach { id ->
             val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
             assertTrue("$id must fit the 16x16 atlas cell", sprite.frames.all { frame ->
                 frame.size <= 16 && frame.all { it.length <= 16 }
+            })
+        }
+        listOf("tree", "bush", "rubble", "streetlamp", "road_sign", "wreck", "crate", "barrel", "road_barrier").forEach { id ->
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
+            assertTrue("$id should use detailed 32x32 environment art", sprite.frames.all { frame ->
+                frame.size == 32 && frame.all { it.length == 32 }
             })
         }
         listOf("bed", "generator", "medical_station", "workbench", "storage", "bookshelf", "radio").forEach { id ->
