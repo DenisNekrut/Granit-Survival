@@ -223,11 +223,8 @@ class PixelRenderer {
         // This keeps the player behind objects to the south and in front of objects to the north.
         val worldSprites = mutableListOf<WorldSpriteCommand>()
         engine.tileMap.forEachTile { tileX, tileY, type ->
-            val wallSprite = if (type == TileType.WALL) when (engine.zone) {
-                WorldZone.BUNKER -> "bunker_panel"
-                WorldZone.FOREST -> "tree"
-                WorldZone.RUINS -> "rubble"
-                WorldZone.ROAD -> "road_barrier"
+            val wallSprite = if (type == TileType.WALL) {
+                ZonePropSelector.wallSpriteFor(engine.zone, tileX, tileY)
             } else null
             if (wallSprite != null) {
                 worldSprites += WorldSpriteCommand(
