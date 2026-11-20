@@ -21,6 +21,7 @@ class EngineRenderThread(
     private val session: GameSession,
     private val appContext: Context,
     private val onInteractionProcessed: () -> Unit = {},
+    private val onStopped: (EngineRenderThread) -> Unit = {},
     private val onRenderFailure: (Throwable) -> Unit = {}
 ) : Thread("Granit-RenderThread") {
     companion object { private const val TAG = "GranitEGL"; private const val TAG_PERFORMANCE = "GranitPerf"; private const val PERFORMANCE_LOG_INTERVAL_NANOS = 5_000_000_000L }
@@ -219,6 +220,9 @@ class EngineRenderThread(
                 EGL14.eglTerminate(display)
                 Log.i(TAG, "EGL display terminated")
             }
+            // Notify the SurfaceView only after EGL has released its surface/context.
+            runCatching { onStopped(this) }
+                .onFailure { Log.e(TAG, "Render-thread stop callback failed", it) }
         }
     }
 }
