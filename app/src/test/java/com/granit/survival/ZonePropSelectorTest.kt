@@ -39,6 +39,24 @@ class ZonePropSelectorTest {
     }
 
     @Test
+    fun acceptedWorldPropsNeverOverlapAdjacentSpriteFootprints() {
+        WorldZone.values().forEach { zone ->
+            val selected = (0 until 100).flatMap { x ->
+                (0 until 100).mapNotNull { y ->
+                    ZonePropSelector.spriteFor(zone, x, y)?.let { x to y }
+                }
+            }.toSet()
+            selected.forEach { (x, y) ->
+                for (dy in -1..1) for (dx in -1..1) {
+                    if (dx == 0 && dy == 0) continue
+                    assertTrue("$zone props overlap at ($x,$y) and (${x + dx},${y + dy})",
+                        (x + dx to y + dy) !in selected)
+                }
+            }
+        }
+    }
+
+    @Test
     fun wallTilesAlsoUseDeterministicVisualVariants() {
         WorldZone.values().forEach { zone ->
             val ids = (0 until 80).flatMap { x ->
