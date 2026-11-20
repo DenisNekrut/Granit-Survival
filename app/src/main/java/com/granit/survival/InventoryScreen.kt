@@ -30,7 +30,7 @@ internal class InventoryScreen(
         for (index in 0 until engine.inventory.columns * engine.inventory.rows) {
             val stack = engine.inventory.slot(index)
             if (stack == null) {
-                panel.addView(label("Ячейка ${index + 1} · пусто", 12f, Color.rgb(126, 139, 132), false))
+                panel.addView(label("Ячейка ${index + 1} · пусто", 12f, GranitPalette.textSecondary, false))
                 continue
             }
             val row = LinearLayout(activity).apply {
@@ -38,7 +38,7 @@ internal class InventoryScreen(
                 gravity = Gravity.CENTER_VERTICAL
                 setPadding(dp(6), dp(3), dp(6), dp(3))
             }
-            row.addView(label(stack.type.displayName + " × " + stack.quantity, 13f, Color.WHITE, false).apply {
+            row.addView(label(stack.type.displayName + " × " + stack.quantity, 13f, GranitPalette.textPrimary, false).apply {
                 gravity = Gravity.CENTER_VERTICAL
             }, LinearLayout.LayoutParams(0, -2, 1f))
             val useAction: (() -> Unit)? = when (stack.type) {
@@ -54,7 +54,7 @@ internal class InventoryScreen(
                     else -> true
                 }) { useAction.invoke() }, LinearLayout.LayoutParams(dp(142), -2))
             } else {
-                row.addView(label("ПАССИВНЫЙ ПРЕДМЕТ", 10f, Color.rgb(145, 160, 149), false))
+                row.addView(label("ПАССИВНЫЙ ПРЕДМЕТ", 10f, GranitPalette.subtitle, false))
             }
             panel.addView(row)
         }
