@@ -8,12 +8,12 @@ package com.granit.survival
 internal object GranitSpritePalette {
     private data class Ramp(val shadow: FloatArray, val mid: FloatArray, val highlight: FloatArray)
 
-    private val slate = Ramp(floatArrayOf(0.055f, 0.075f, 0.080f), floatArrayOf(0.25f, 0.31f, 0.31f), floatArrayOf(0.64f, 0.68f, 0.62f))
-    private val rust = Ramp(floatArrayOf(0.12f, 0.075f, 0.065f), floatArrayOf(0.43f, 0.23f, 0.16f), floatArrayOf(0.78f, 0.52f, 0.31f))
-    private val ochre = Ramp(floatArrayOf(0.12f, 0.10f, 0.06f), floatArrayOf(0.43f, 0.34f, 0.18f), floatArrayOf(0.78f, 0.68f, 0.43f))
-    private val moss = Ramp(floatArrayOf(0.055f, 0.095f, 0.065f), floatArrayOf(0.22f, 0.34f, 0.21f), floatArrayOf(0.56f, 0.67f, 0.40f))
-    private val oxidized = Ramp(floatArrayOf(0.045f, 0.09f, 0.10f), floatArrayOf(0.17f, 0.31f, 0.32f), floatArrayOf(0.52f, 0.66f, 0.63f))
-    private val steelBlue = Ramp(floatArrayOf(0.055f, 0.075f, 0.10f), floatArrayOf(0.22f, 0.31f, 0.40f), floatArrayOf(0.60f, 0.68f, 0.72f))
+    private val slate = GranitWorldPalette.spriteRamp("slate")
+    private val rust = GranitWorldPalette.spriteRamp("rust")
+    private val ochre = GranitWorldPalette.spriteRamp("ochre")
+    private val moss = GranitWorldPalette.spriteRamp("moss")
+    private val oxidized = GranitWorldPalette.spriteRamp("oxidized")
+    private val steelBlue = GranitWorldPalette.spriteRamp("steelBlue")
 
     fun remap(sprite: PixelSprite): PixelSprite = PixelSprite(
         frames = sprite.frames,
