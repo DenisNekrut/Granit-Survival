@@ -72,6 +72,23 @@ class CraftingTest {
     }
 
     @Test
+    fun batteryPackRecipeConsumesElectronicsAndMetal() {
+        val engine = GameEngine()
+        engine.player.x = 8.5f
+        engine.player.y = 7.5f
+        engine.inventory.add(ItemType.ELECTRONICS, 1)
+        engine.inventory.add(ItemType.METAL, 2)
+        val start = engine.worldClock.totalMinutes
+
+        assertTrue(engine.canCraft("battery_pack"))
+        assertTrue(engine.craft("battery_pack"))
+        assertEquals(0, engine.inventory.count(ItemType.ELECTRONICS))
+        assertEquals(0, engine.inventory.count(ItemType.METAL))
+        assertEquals(2, engine.inventory.count(ItemType.BATTERY))
+        assertEquals(start + 5, engine.worldClock.totalMinutes)
+    }
+
+    @Test
     fun medicalKitRestoresHealthAndIsConsumed() {
         val engine = GameEngine()
         engine.needs.restore(SurvivalNeedsSnapshot(health = 50f, hunger = 80f, thirst = 80f, energy = 50f))
