@@ -22,14 +22,14 @@ internal class InventoryGridView(
 ) : LinearLayout(context) {
 
     init {
-        require(columns > 0 && rows > 0)
+        require(container.columns > 0 && container.rows > 0)
         orientation = VERTICAL
 
-        for (rowIndex in 0 until rows) {
+        for (rowIndex in 0 until container.rows) {
             val row = LinearLayout(context).apply {
                 orientation = HORIZONTAL
             }
-            for (column in 0 until columns) {
+            for (column in 0 until container.columns) {
                 val index = rowIndex * columns + column
                 val stack = slotAt(index)
                 val cell = LinearLayout(context).apply {
