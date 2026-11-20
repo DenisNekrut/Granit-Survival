@@ -10,6 +10,7 @@ object StoryEventIds {
     const val MEDICAL_INSPECTED = "chapter_01.medical_inspected"
     const val BED_INSPECTED = "chapter_01.bed_inspected"
     const val LIBRARY_INSPECTED = "chapter_01.library_inspected"
+    const val LIBRARY_NOTES_READ = "chapter_01.library_notes_read"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -21,6 +22,7 @@ object StoryEventIds {
         MEDICAL_INSPECTED,
         BED_INSPECTED,
         LIBRARY_INSPECTED,
+        LIBRARY_NOTES_READ,
         WORKSHOP_INSPECTED
     )
 }
@@ -111,6 +113,7 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.MEDICAL_INSPECTED, "Медчасть", "Инструменты разложены по местам. На шкафу висит карточка проверки запасов, но имя ответственного стёрлось."),
             StoryObservation(StoryEventIds.BED_INSPECTED, "Спальня", "На тумбе лежит блокнот с короткой пометкой: «Не забыть проверить связь»."),
             StoryObservation(StoryEventIds.LIBRARY_INSPECTED, "Библиотека", "На полях нескольких справочников есть карандашные пометки."),
+            StoryObservation(StoryEventIds.LIBRARY_NOTES_READ, "Пометки в справочнике", "В пометках повторяются короткие указания: сверять показания приборов перед выходом и не полагаться на один источник связи. Рядом несколько раз написано слово «контур»."),
             StoryObservation(StoryEventIds.WORKSHOP_INSPECTED, "Мастерская", "На верстаке оставлены измерительный инструмент и список мелких ремонтных работ.")
         )
         return notes.filter { hasEvent(it.eventId) }
