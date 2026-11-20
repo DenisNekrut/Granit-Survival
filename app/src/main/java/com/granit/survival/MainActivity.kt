@@ -478,6 +478,14 @@ class MainActivity : Activity() {
                     panel.addView(label("Дополнительная маркировка указывает за разбитый пост. Исследуй участок руин и найди указатель старой линии связи.", 13f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED)) {
+            panel.addView(label("СЛЕДУЮЩАЯ ЦЕЛЬ · СЛУЖЕБНЫЙ ВХОД", 14f, Color.rgb(207, 194, 155), true))
+            if (story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)) {
+                panel.addView(label("Служебный вход найден. На двери видна маркировка коммуникационного узла, но проход закрыт.", 12f, Color.rgb(151, 190, 151)))
+            } else {
+                panel.addView(label("Следуй по техническому проезду к дальней окраине руин и найди служебный вход старого коммуникационного узла.", 13f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
