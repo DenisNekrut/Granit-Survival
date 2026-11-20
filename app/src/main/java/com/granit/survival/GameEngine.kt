@@ -28,6 +28,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         const val FOREST_RELAY_REPAIR_MINUTES = 20
         const val FOREST_RELAY_REPAIR_METAL = 2
         const val FOREST_RELAY_REPAIR_FABRIC = 1
+        const val RUINS_SERVICE_POWER_REPAIR_MINUTES = 15
+        const val RUINS_SERVICE_POWER_REPAIR_METAL = 1
+        const val RUINS_SERVICE_POWER_REPAIR_FABRIC = 1
         const val ZONE_TRAVEL_MINUTES = 8
         private const val FIXED_STEP_SECONDS = 1f / 60f
         private const val MAX_FRAME_SECONDS = 0.25f
@@ -117,6 +120,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         }
         if (found.any { it.id == "ruins_service_access" }) {
             storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)
+        }
+        if (found.any { it.id == "ruins_power_junction" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND)
         }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
@@ -406,6 +412,38 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (!isPoiDiscovered("ruins_service_access")) return false
         if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)) return false
         return storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)
+    }
+
+    /** The power junction is available only after the service entrance has been inspected. */
+    fun inspectRuinsPowerJunction(): Boolean {
+        if (!isPoiDiscovered("ruins_power_junction")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED)
+    }
+
+    fun canRestoreRuinsServicePower(): Boolean =
+        storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED) &&
+            !storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED) &&
+            inventory.count(ItemType.METAL) >= RUINS_SERVICE_POWER_REPAIR_METAL &&
+            inventory.count(ItemType.FABRIC) >= RUINS_SERVICE_POWER_REPAIR_FABRIC
+
+    /** Restores the service line once, consuming materials only after survival time is advanced. */
+    fun restoreRuinsServicePower(): Boolean {
+        if (!canRestoreRuinsServicePower()) return false
+        if (!advanceGameMinutes(RUINS_SERVICE_POWER_REPAIR_MINUTES)) return false
+        if (!inventory.remove(ItemType.METAL, RUINS_SERVICE_POWER_REPAIR_METAL)) return false
+        if (!inventory.remove(ItemType.FABRIC, RUINS_SERVICE_POWER_REPAIR_FABRIC)) {
+            inventory.add(ItemType.METAL, RUINS_SERVICE_POWER_REPAIR_METAL)
+            return false
+        }
+        return storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED)
+    }
+
+    fun openRuinsServiceAccess(): Boolean {
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED)
     }
 
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
