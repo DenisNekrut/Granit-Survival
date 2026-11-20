@@ -330,6 +330,16 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return advanceGameMinutes(1)
     }
 
+    fun transferToStorageAt(slotIndex: Int, amount: Int): Boolean {
+        if (!canAccessStorage() || !inventorySystem.transferToStorageAt(slotIndex, amount)) return false
+        return advanceGameMinutes(1)
+    }
+
+    fun transferFromStorageAt(slotIndex: Int, amount: Int): Boolean {
+        if (!canAccessStorage() || !inventorySystem.transferFromStorageAt(slotIndex, amount)) return false
+        return advanceGameMinutes(1)
+    }
+
     fun consumeFood(): Boolean {
         if (!inventorySystem.remove(ItemType.CANNED_FOOD, 1)) return false
         needs.consumeFood()
