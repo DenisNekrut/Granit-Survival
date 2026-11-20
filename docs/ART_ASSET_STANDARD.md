@@ -23,7 +23,7 @@ The external atlas is currently an optional override. If absent, the game genera
 
 
 ## 2026-11-20 — expanded pixel-art direction
-- World sprites use a shared 1.18 scale multiplier; collision tiles, map dimensions and gameplay coordinates remain unchanged.
+- The map-cell standard is 128x128 logical pixels, equal to 1x1 world unit. Every world sprite is normalized by its longest authored frame side and fits within a configurable fraction of one tile; aspect ratio is preserved.
 - The built-in atlas and fallback renderer share one cold-weather color grade: deeper slate shadows, clearer midtones and restrained warm highlights.
 - Repeated environmental props use deterministic shape/material variants. Variant selection is coordinate-based and stable across visits and save restoration.
 - Every variant remains a pixel sprite with nearest-neighbour rendering. No SVG or vector runtime assets are introduced.
@@ -72,23 +72,25 @@ The external atlas is currently an optional override. If absent, the game genera
 - The backpack list now renders the matching icon beside each item; the compact HUD inventory uses the same sprite IDs and generated atlas.
 - HUD icons are drawn in screen space and retain crisp nearest-neighbour pixels; a Canvas pixel fallback is used when the texture atlas is unavailable.
 
-## 2026-11-20 — world footprint correction for 2x sprites
-- Authored source resolution and world-space footprint are independent. Any world sprite with a 32px-wide or 48px-tall authored frame uses a 0.5 world-density multiplier; 16px/24px source assets remain at 1.0.
-- The rule applies to base sprites and generated variants, including the 32x48 player, 32x32 bunker fixtures and enlarged outdoor props. Atlas rasterization remains 2x and nearest-neighbour.
-- Furniture anchoring now derives its occupied width from the actual authored frame width and density multiplier, preventing visual overhang from shifting the wall anchor.
-- Inventory HUD icons remain independently sized in screen space and are not affected by world-density compensation.
+## 2026-11-20 — 128x128 map-tile sizing standard
+- One map cell is defined as 128x128 logical pixels and exactly 1x1 world unit.
+- Each world sprite is normalized by its longest authored frame dimension. A square prop fills one tile; a 32x48 character keeps its aspect ratio and occupies 2/3 tile width by 1 tile height; smaller archetypes are scaled by the same rule.
+- A caller may request a fractional tile extent (for example, 0.5 tile) but may not provide an arbitrary per-pixel world multiplier.
+- The 2x runtime atlas is a texture-storage detail only. Textured rendering divides atlas texel dimensions by RASTER_SCALE before applying the logical pixel size, so atlas resolution cannot change world size.
+- Rendering, furniture anchoring and movement collision all use SpriteWorldMetrics, preventing the same sprite from having different visual and physical footprints.
+- HUD icons remain screen-space elements with their own pixel sizing and are not normalized to world tiles.
 
 
 ## 2026-11-20 — secondary terrain and utility prop detail pass
 - Seven additional world props now use 32x32 authored pixel frames: bunker panels, debris, floor grates, grass patches, fallen logs, metal scrap and puddles.
 - Added per-material seam, bolt, grass blade, metal glint and water ripple accents while preserving source silhouettes and tile placement.
-- The shared world-density compensation keeps their logical footprint unchanged; inventory icons and UI-space sprites remain on their independent sizing path.
+- The shared 128x128 tile normalization keeps their logical footprint bounded; inventory icons and UI-space sprites remain on their independent sizing path.
 
 
 ## 2026-11-20 — sprite footprint and replacement palette
-- World footprint is computed from authored frame dimensions, logical density, draw pixel size and shared world scale. Never infer collision size from texture-atlas texels.
+- World footprint is computed only from authored frame dimensions and the requested tile fraction via SpriteWorldMetrics. Never infer collision size from texture-atlas texels.
 - Large world props require a one-cell clearance from walls and each other, plus protected areas around landmarks, exits, spawn points and the main route.
 - Large props that physically occupy space are checked by movement collision using the same footprint as rendering.
 - The active sprite palette is remapped to cold steel, oxidized teal, moss/olive, muted rust and amber. The same palette is used by the texture atlas, CPU fallback renderer and HUD icon renderer.
 
-- Wall-tile sprites use a 0.052 world-pixel size so their 32px authored frames occupy at most one 1x1 map cell. Large free-standing props keep the 0.0625 scale and are separated by the placement/clearance system.
+- Wall, furniture and environmental props use explicit tile extents rather than per-pixel coefficients. Blocking prop collision uses the same normalized footprint as rendering.
