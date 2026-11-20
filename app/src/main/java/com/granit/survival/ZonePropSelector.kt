@@ -4,8 +4,8 @@ package com.granit.survival
  * Sparse, deterministic environmental dressing.
  *
  * Coordinate hashing keeps every prop stable across visits and save restoration.
- * Each family has several silhouette/material variants; selection never changes
- * collision or movement tiles.
+ * Each family has several silhouette/material variants. Accepted large props are
+ * separated so their visible world footprints do not overlap.
  */
 object ZonePropSelector {
     fun wallSpriteFor(zone: WorldZone, tileX: Int, tileY: Int): String {
