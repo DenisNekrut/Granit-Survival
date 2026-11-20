@@ -481,6 +481,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED)
     }
 
+    /** The archived route sheet is available only after the node/forest signal comparison. */
+    fun inspectCommunicationNodeRouteRecord(): Boolean {
+        if (zone != WorldZone.COMMUNICATION_NODE) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+    }
+
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
     fun inspectForestWatchPostSignal(): Boolean {
         if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
