@@ -41,3 +41,10 @@ The external atlas is currently an optional override. If absent, the game genera
 - Three distinct 12x24 pixel-art silhouettes are authored for the shambler, runner and brute archetypes.
 - Each archetype has two frames; the renderer selects its matching sprite and alternates frames during movement/attack cooldown updates.
 - The infected remain non-graphic, stylized game characters and share the atlas palette/nearest-neighbour pipeline.
+
+
+## 2026-11-20 — 2x runtime sprite atlas density
+- Built-in pixel sprites are now rasterized into the runtime atlas at 2x source-pixel density (each authored logical pixel becomes a crisp 2×2 texel block).
+- Atlas cell bounds and manifest frame dimensions are scaled together; nearest-neighbour sampling remains mandatory.
+- World-space sprite dimensions, pivots, collision cells, animation timing and gameplay coordinates are unchanged.
+- This pass improves texture resolution/headroom and avoids fractional scaling artifacts, but does not pretend that duplicated texels add hand-painted detail. The next art pass must redraw priority characters and props with genuinely finer source pixels (not merely upscale them).
