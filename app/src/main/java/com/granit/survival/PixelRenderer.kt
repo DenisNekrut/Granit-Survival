@@ -229,7 +229,8 @@ class PixelRenderer {
                 worldSprites += WorldSpriteCommand(
                     sortY = tileY + 1f, sortOrder = 0, spriteId = wallSprite,
                     centerX = tileX + 0.5f, topY = tileY.toFloat(),
-                    pixelSize = 0.0625f, contactShadow = true
+                    // Wall sprites must fit exactly inside their occupied 1x1 map cell.
+                    pixelSize = 0.052f, contactShadow = true
                 )
             }
             val furnitureSprite = when (type) {
