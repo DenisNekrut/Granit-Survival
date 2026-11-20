@@ -449,7 +449,23 @@ class MainActivity : Activity() {
         if (story.hasEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)) {
             panel.addView(label("СЛЕДУЮЩАЯ ЦЕЛЬ · РАЗБИТЫЙ ПОСТ В РУИНАХ", 14f, Color.rgb(207, 194, 155), true))
             if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED)) {
-                if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)) {
+                if (story.hasEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)) {
+            panel.addView(label("НОВАЯ ЦЕЛЬ · РЕЗЕРВНАЯ ТРАССА ЛИНИИ 08", 14f, Color.rgb(207, 194, 155), true))
+            when {
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED) ->
+                    panel.addView(label("Метка изучена. Дополнительный знак ответвления сохранён на карте.", 12f, Color.rgb(151, 190, 151)))
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND) -> {
+                    panel.addView(label("Метка линии 08 найдена. Осмотри её и сверь номер с архивным листом.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ИЗУЧИТЬ МЕТКУ ЛИНИИ 08") {
+                        session.engine.inspectRoadLine08Marker()
+                        showJournal()
+                    })
+                }
+                else ->
+                    panel.addView(label("Вернись на старую дорогу и найди дорожную опору с маркировкой линии 08.", 13f, Color.LTGRAY))
+            }
+        }
+        if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)) {
                     panel.addView(label("Отметка изучена. Дополнительное направление сохранено в журнале.", 12f, Color.rgb(151, 190, 151)))
                 } else {
                     panel.addView(label("Разбитый пост найден. Осмотри табличку и сверь её маркировку с картой.", 13f, Color.LTGRAY))
