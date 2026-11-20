@@ -90,3 +90,5 @@ The external atlas is currently an optional override. If absent, the game genera
 - Large world props require a one-cell clearance from walls and each other, plus protected areas around landmarks, exits, spawn points and the main route.
 - Large props that physically occupy space are checked by movement collision using the same footprint as rendering.
 - The active sprite palette is remapped to cold steel, oxidized teal, moss/olive, muted rust and amber. The same palette is used by the texture atlas, CPU fallback renderer and HUD icon renderer.
+
+- Wall-tile sprites use a 0.052 world-pixel size so their 32px authored frames occupy at most one 1x1 map cell. Large free-standing props keep the 0.0625 scale and are separated by the placement/clearance system.
