@@ -32,6 +32,21 @@ class PixelSpriteAtlasTest {
     }
 
     @Test
+    fun wallSpriteFootprintsFitSingleOccupiedMapCells() {
+        val wallSprites = listOf(
+            "bunker_panel", "bunker_panel_rusted",
+            "tree", "tree_dark", "tree_dead",
+            "rubble", "rubble_brick", "debris",
+            "road_barrier", "road_barrier_faded"
+        )
+        wallSprites.forEach { id ->
+            val footprint = SpriteWorldMetrics.footprint(id, 0.052f)
+            assertTrue("$id wall width must fit one map cell", footprint.width <= 1.001f)
+            assertTrue("$id wall height must fit one map cell", footprint.height <= 1.001f)
+        }
+    }
+
+    @Test
     fun playerHasFourDirectionalWalkFrames() {
         listOf("player", "player_back", "player_side_left", "player_side_right").forEach { id ->
             assertTrue("$id should provide a four-frame walk cycle",
