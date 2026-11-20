@@ -561,14 +561,77 @@ object PixelSpriteAtlas {
         ))
     )
 
-    fun sprite(id: String): PixelSprite? = sprites[id]
+    /**
+     * Hand-authored style variants are derived from the original pixel silhouettes.
+     * Small contour offsets and independent material grading prevent repeated props
+     * from looking like exact copies while keeping the same collision footprint.
+     */
+    private fun createVariant(
+        baseId: String,
+        mirror: Boolean = false,
+        rowShift: Int = 0,
+        redScale: Float = 1f,
+        greenScale: Float = 1f,
+        blueScale: Float = 1f,
+        lift: Float = 0f
+    ): PixelSprite {
+        val source = requireNotNull(sprites[baseId]) { "Missing base sprite $baseId" }
+        val frames = source.frames.map { frame ->
+            frame.mapIndexed { rowIndex, row ->
+                val oriented = if (mirror) row.reversed() else row
+                val shift = if (rowIndex % 3 == 1) rowShift else 0
+                when {
+                    shift > 0 -> ".".repeat(shift) + oriented.dropLast(shift)
+                    shift < 0 -> oriented.drop(-shift) + ".".repeat(-shift)
+                    else -> oriented
+                }
+            }
+        }
+        val palette = source.palette.mapValues { (_, color) ->
+            floatArrayOf(
+                (color[0] * redScale + lift).coerceIn(0f, 1f),
+                (color[1] * greenScale + lift).coerceIn(0f, 1f),
+                (color[2] * blueScale + lift).coerceIn(0f, 1f)
+            )
+        }
+        return PixelSprite(frames, palette)
+    }
+
+    private val variants: Map<String, PixelSprite> by lazy {
+        mapOf(
+            "tree_autumn" to createVariant("tree", mirror = true, rowShift = 1, redScale = 1.18f, greenScale = 0.88f, blueScale = 0.72f, lift = 0.015f),
+            "tree_dead" to createVariant("tree", rowShift = -1, redScale = 0.78f, greenScale = 0.82f, blueScale = 0.86f),
+            "tree_dark" to createVariant("tree", mirror = true, redScale = 0.76f, greenScale = 0.91f, blueScale = 0.80f),
+            "bush_dry" to createVariant("bush", mirror = true, rowShift = 1, redScale = 1.15f, greenScale = 0.96f, blueScale = 0.72f, lift = 0.02f),
+            "bush_lush" to createVariant("bush", rowShift = -1, redScale = 0.82f, greenScale = 1.16f, blueScale = 0.78f),
+            "crate_weathered" to createVariant("crate", mirror = true, rowShift = 1, redScale = 0.88f, greenScale = 0.82f, blueScale = 0.72f),
+            "crate_painted" to createVariant("crate", rowShift = -1, redScale = 0.76f, greenScale = 1.08f, blueScale = 1.14f, lift = 0.015f),
+            "barrel_rust" to createVariant("barrel", mirror = true, redScale = 1.18f, greenScale = 0.82f, blueScale = 0.72f, lift = 0.015f),
+            "barrel_dark" to createVariant("barrel", rowShift = 1, redScale = 0.72f, greenScale = 0.78f, blueScale = 0.76f),
+            "debris_light" to createVariant("debris", mirror = true, rowShift = 1, redScale = 1.12f, greenScale = 1.08f, blueScale = 1.02f, lift = 0.025f),
+            "rubble_brick" to createVariant("rubble", mirror = true, rowShift = -1, redScale = 1.20f, greenScale = 0.86f, blueScale = 0.76f, lift = 0.01f),
+            "metal_scrap_copper" to createVariant("metal_scrap", mirror = true, rowShift = 1, redScale = 1.20f, greenScale = 0.91f, blueScale = 0.72f, lift = 0.01f),
+            "puddle_ice" to createVariant("puddle", mirror = true, redScale = 0.82f, greenScale = 1.05f, blueScale = 1.18f, lift = 0.025f),
+            "wreck_rust" to createVariant("wreck", mirror = true, rowShift = 1, redScale = 1.18f, greenScale = 0.84f, blueScale = 0.74f, lift = 0.012f),
+            "wreck_blue" to createVariant("wreck", rowShift = -1, redScale = 0.78f, greenScale = 0.98f, blueScale = 1.18f),
+            "road_sign_faded" to createVariant("road_sign", mirror = true, rowShift = 1, redScale = 0.88f, greenScale = 0.92f, blueScale = 0.90f, lift = 0.04f),
+            "fallen_log_mossy" to createVariant("fallen_log", mirror = true, rowShift = -1, redScale = 0.82f, greenScale = 1.12f, blueScale = 0.78f),
+            "grass_patch_dry" to createVariant("grass_patch", mirror = true, rowShift = 1, redScale = 1.14f, greenScale = 0.94f, blueScale = 0.70f, lift = 0.02f),
+            "streetlamp_broken" to createVariant("streetlamp", mirror = true, rowShift = 1, redScale = 0.82f, greenScale = 0.86f, blueScale = 0.84f),
+            "floor_grate_rust" to createVariant("floor_grate", mirror = true, redScale = 1.16f, greenScale = 0.88f, blueScale = 0.72f, lift = 0.01f)
+        )
+    }
+
+    fun sprite(id: String): PixelSprite? = sprites[id] ?: variants[id]
+
+    fun allIds(): Set<String> = sprites.keys + variants.keys
 
     fun allIds(): Set<String> = sprites.keys
 
     /** Returns atlas integrity errors; an empty list means every frame is renderable. */
     fun validate(): List<String> {
         val errors = mutableListOf<String>()
-        sprites.forEach { (id, sprite) ->
+        allIds().forEach { id ->\n            val sprite = requireNotNull(sprite(id))
             val expectedHeight = sprite.frames.firstOrNull()?.size ?: 0
             val expectedWidth = sprite.frames.firstOrNull()?.firstOrNull()?.length ?: 0
             if (expectedHeight == 0 || expectedWidth == 0) errors += "$id has an empty frame"
