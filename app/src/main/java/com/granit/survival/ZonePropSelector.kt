@@ -18,7 +18,7 @@ object ZonePropSelector {
             WorldZone.FOREST -> listOf("tree", "tree_dark", "tree_dead")[hash % 3]
             WorldZone.RUINS -> listOf("rubble", "rubble_brick", "debris")[hash % 3]
             WorldZone.ROAD -> if (hash % 3 == 0) "road_barrier_faded" else "road_barrier"
-            WorldZone.COMMUNICATION_NODE -> "bunker_panel"
+            WorldZone.COMMUNICATION_NODE -> if (hash % 4 == 0) "bunker_panel_rusted" else "bunker_panel"
         }
     }
 
