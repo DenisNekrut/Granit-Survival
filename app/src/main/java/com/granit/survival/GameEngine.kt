@@ -230,7 +230,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             "Прогноз на завтра: " + WeatherSystem.forDay(listeningDay + 1).forecastText
         } else event.description
         return event.copy(description = description + if (batteryPowered) {
-            "\\n\\nИспользована одна батарейка для аварийного питания радиоприёмника."
+            "\n\nИспользована одна батарейка для аварийного питания радиоприёмника."
         } else "")
     }
 
