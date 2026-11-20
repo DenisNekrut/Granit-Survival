@@ -461,6 +461,15 @@ class MainActivity : Activity() {
                 panel.addView(label("Отправляйся в зону «Руины» и найди разбитый пост. Его отметка совпадает с условным знаком на карте.", 13f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)) {
+            panel.addView(label("НОВАЯ ТОЧКА ЭКСПЕДИЦИИ · ВНЕШНИЙ МАРШРУТ", 14f, Color.rgb(207, 194, 155), true))
+            when {
+                story.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND) ->
+                    panel.addView(label("Указатель линии связи найден. Его положение сохранено в журнале.", 12f, Color.rgb(151, 190, 151)))
+                else ->
+                    panel.addView(label("Дополнительная маркировка указывает за разбитый пост. Исследуй участок руин и найди указатель старой линии связи.", 13f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
