@@ -428,6 +428,8 @@ class WorldZoneTest {
 
         engine.updateFrame(0.1f, EngineInput(interact = true))
         assertEquals(WorldZone.RUINS, engine.zone)
+        assertFalse(engine.inspectCommunicationNodeConsole())
+        assertFalse(engine.readCommunicationNodeShiftLog())
 
         engine.updateFrame(0.1f, EngineInput())
         engine.storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED)
@@ -439,12 +441,21 @@ class WorldZoneTest {
         engine.player.y = 5.5f
         assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == "communication_node_console" })
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND))
+        assertFalse(engine.readCommunicationNodeShiftLog())
+        assertTrue(engine.inspectCommunicationNodeConsole())
+        assertFalse(engine.inspectCommunicationNodeConsole())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED))
+        assertTrue(engine.readCommunicationNodeShiftLog())
+        assertFalse(engine.readCommunicationNodeShiftLog())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ))
 
         val restored = GameEngine()
         restored.restoreSaveSnapshot(engine.createSaveSnapshot())
         assertEquals(WorldZone.COMMUNICATION_NODE, restored.zone)
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED))
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ))
     }
 
 }
