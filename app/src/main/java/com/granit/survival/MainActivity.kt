@@ -581,6 +581,22 @@ class MainActivity : Activity() {
                     panel.addView(label("От дорожного поста Б проследуй вдоль внешнего ограждения. Ищи узкую служебную полосу и старую сетчатую секцию.", 13f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED)) {
+            panel.addView(label("ЦЕЛЬ · ПРОВЕРИТЬ ДРЕНАЖНЫЙ ДОСТУП", 14f, Color.rgb(207, 194, 155), true))
+            when {
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED) ->
+                    panel.addView(label("Люк линии 08-Б / 2 закрыт снаружи. Стрелка указывает в сторону руин — нужно искать продолжение линии с другой стороны ограждения.", 12f, Color.rgb(151, 190, 151)))
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND) -> {
+                    panel.addView(label("У основания насыпи найден люк с маркировкой 08-Б / 2. Осмотри крышку и сохрани направление на карте.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ОСМОТРЕТЬ ДРЕНАЖНЫЙ ЛЮК") {
+                        session.engine.inspectRoadLine08DrainAccess()
+                        showJournal()
+                    })
+                }
+                else ->
+                    panel.addView(label("Осмотри основание насыпи ниже служебной полосы. Ищи продолжение технической линии.", 13f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
