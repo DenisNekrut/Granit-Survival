@@ -18,6 +18,7 @@ object StoryEventIds {
     const val EQUIPMENT_FIRST_RELAY_INSPECTED = "chapter_01.equipment_first_relay_inspected"
     const val FOREST_RELAY_INSPECTED = "chapter_01.forest_relay_inspected"
     const val FOREST_RELAY_REPAIRED = "chapter_01.forest_relay_repaired"
+    const val FOREST_WATCH_POST_SIGNAL_CHECKED = "chapter_01.forest_watch_post_signal_checked"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -37,6 +38,7 @@ object StoryEventIds {
         EQUIPMENT_FIRST_RELAY_INSPECTED,
         FOREST_RELAY_INSPECTED,
         FOREST_RELAY_REPAIRED,
+        FOREST_WATCH_POST_SIGNAL_CHECKED,
         WORKSHOP_INSPECTED
     )
 }
@@ -135,7 +137,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND, "Сигнал за пределами убежища", "У старого ретранслятора Андрей замечает, что характер помех отличается от того, что он слышал в убежище. Это поддерживает мысль проверить связь в других местах, но пока ничего не доказывает."),
             StoryObservation(StoryEventIds.EQUIPMENT_FIRST_RELAY_INSPECTED, "Проверка старого ретранслятора", "Андрей осматривает корпус ретранслятора и замечает следы прежнего ремонта. Само устройство давно не обслуживали; по одному внешнему осмотру нельзя понять, связано ли это с помехами."),
             StoryObservation(StoryEventIds.FOREST_RELAY_INSPECTED, "Осмотр ретранслятора", "Андрей внимательно изучил старый ретранслятор и записал состояние устройства. Причина помех пока остаётся неизвестной."),
-            StoryObservation(StoryEventIds.FOREST_RELAY_REPAIRED, "Ретранслятор восстановлен", "Андрей восстановил питание и заменил повреждённые соединения. Устройство подало короткий сигнал, но устойчивой связи пока нет. Теперь ретранслятор может стать ориентиром для дальнейшей проверки сигнала.")
+            StoryObservation(StoryEventIds.FOREST_RELAY_REPAIRED, "Ретранслятор восстановлен", "Андрей восстановил питание и заменил повреждённые соединения. Устройство подало короткий сигнал, но устойчивой связи пока нет. Теперь ретранслятор может стать ориентиром для дальнейшей проверки сигнала."),
+            StoryObservation(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED, "Сверка сигнала на лесной вышке", "На старой вышке Андрей проверил направление и уровень сигнала восстановленного ретранслятора. Показания меняются, хотя положение антенны остаётся прежним. Он отмечает это на карте: следующий замер стоит провести уже за пределами леса.")
         )
         return notes.filter { hasEvent(it.eventId) }
     }
