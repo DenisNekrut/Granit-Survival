@@ -154,6 +154,20 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun forestRelayCannotBeInspectedBeforeDiscoveryAndInspectionPersists() {
+        val engine = GameEngine()
+        assertFalse(engine.inspectDiscoveredForestRelay())
+
+        engine.restoreDiscoveredPointsOfInterest(setOf("forest_radio_cache"))
+        assertTrue(engine.inspectDiscoveredForestRelay())
+        assertFalse(engine.inspectDiscoveredForestRelay())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED))
+    }
+
+    @Test
     fun discoveriesSurviveSaveSnapshotRestore() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first()
