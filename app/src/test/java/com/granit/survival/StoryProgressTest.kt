@@ -83,4 +83,24 @@ class StoryProgressTest {
         val restored = StoryProgressSystem(story.snapshot())
         assertTrue(restored.hasEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED))
     }
+
+    @Test
+    fun firstTheoryRequiresCrossCheckAndIsMutuallyExclusiveAndPersistent() {
+        val story = StoryProgressSystem()
+        assertFalse(story.chooseFirstTheory(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST))
+        story.recordEvent(StoryEventIds.LIBRARY_NOTES_READ)
+        story.recordEvent(StoryEventIds.RADIO_PANEL_OPENED)
+        story.recordEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED)
+
+        assertTrue(story.chooseFirstTheory(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST))
+        assertFalse(story.chooseFirstTheory(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE))
+        assertTrue(story.hasEvent(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST))
+        assertFalse(story.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE))
+
+        val restored = StoryProgressSystem(story.snapshot())
+        assertTrue(restored.hasEvent(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST))
+        assertTrue(restored.observations().any {
+            it.eventId == StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST
+        })
+    }
 }
