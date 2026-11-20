@@ -77,6 +77,37 @@ object PixelSpriteAtlas {
                     for (x in 8..24 step 4) { paint(x,8,'Z'); paint(x,14,'Y') }
                     paint(12,20,'Z'); paint(22,20,'Y')
                 }
+                "bunker_panel" -> {
+                    for (x in 6..26 step 4) { paint(x,8,'Z'); paint(x,24,'Y') }
+                    for (y in 10..22 step 4) { paint(8,y,'Y'); paint(24,y,'Z') }
+                    paint(16,14,'Z'); paint(16,18,'Y')
+                }
+                "debris" -> {
+                    for ((x,y) in listOf(8 to 12,12 to 8,18 to 14,24 to 10,14 to 22,22 to 24)) paint(x,y,'Z')
+                    for ((x,y) in listOf(10 to 18,20 to 20,26 to 16)) paint(x,y,'Y')
+                }
+                "floor_grate" -> {
+                    for (y in 8..24 step 4) for (x in 8..24 step 4) {
+                        paint(x,y,'Z')
+                        paint(x+1,y+1,'Y')
+                    }
+                }
+                "grass_patch" -> {
+                    for ((x,y) in listOf(8 to 20,12 to 14,16 to 18,20 to 12,24 to 18,28 to 14)) paint(x,y,'Z')
+                    for ((x,y) in listOf(10 to 22,18 to 24,26 to 20)) paint(x,y,'Y')
+                }
+                "fallen_log" -> {
+                    for (x in 8..24 step 4) { paint(x,14,'Z'); paint(x+2,20,'Y') }
+                    paint(10,10,'Y'); paint(22,24,'Z')
+                }
+                "metal_scrap" -> {
+                    for ((x,y) in listOf(8 to 10,12 to 8,18 to 12,22 to 16,14 to 22,26 to 18)) paint(x,y,'Z')
+                    for ((x,y) in listOf(10 to 18,20 to 22,24 to 10)) paint(x,y,'Y')
+                }
+                "puddle" -> {
+                    for (x in 10..24 step 4) { paint(x,14,'Z'); paint(x+2,20,'Y') }
+                    paint(14,18,'Y'); paint(22,16,'Z')
+                }
             }
             rows.map { String(it) }
         }
@@ -685,7 +716,7 @@ object PixelSpriteAtlas {
             'W' to floatArrayOf(0.63f, 0.59f, 0.43f)
         ))
     )).mapValues { (id, sprite) ->
-        if (id in setOf("tree", "bush", "rubble", "streetlamp", "road_sign", "wreck", "crate", "barrel", "road_barrier")) {
+        if (id in setOf("tree", "bush", "rubble", "streetlamp", "road_sign", "wreck", "crate", "barrel", "road_barrier", "bunker_panel", "debris", "floor_grate", "grass_patch", "fallen_log", "metal_scrap", "puddle")) {
             detailEnvironmentSprite(sprite, id)
         } else sprite
     } + inventoryIcons
