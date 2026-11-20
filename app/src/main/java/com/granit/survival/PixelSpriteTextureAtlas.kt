@@ -101,11 +101,12 @@ object PixelSpriteTextureAtlas {
                         if (symbol != '.') {
                             val color = sprite.palette[symbol]
                                 ?: error("Sprite ${packed.id} uses undefined palette symbol $symbol")
+                            val graded = GranitArtPalette.grade(color[0], color[1], color[2])
                             val argb = Color.argb(
                                 255,
-                                (color[0].coerceIn(0f, 1f) * 255f).toInt(),
-                                (color[1].coerceIn(0f, 1f) * 255f).toInt(),
-                                (color[2].coerceIn(0f, 1f) * 255f).toInt()
+                                (graded[0] * 255f).toInt(),
+                                (graded[1] * 255f).toInt(),
+                                (graded[2] * 255f).toInt()
                             )
                             bitmap.setPixel(frame.x + x, frame.y + y, argb)
                         }
