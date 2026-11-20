@@ -43,6 +43,10 @@ class PixelRenderer {
     private val textureUvBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
     private var queuedTextureVertexCount = 0
     private var frameDrawCalls = 0
+    // Environment props are static per TileMap instance; cache light sources to avoid
+    // scanning every tile and resolving neighbour footprints on every rendered frame.
+    private var cachedLampMap: TileMap? = null
+    private var cachedLampPositions: List<Pair<Float, Float>> = emptyList()
 
     fun create(assets: AssetManager? = null) {
         val atlasErrors = PixelSpriteAtlas.validate()
@@ -129,6 +133,8 @@ class PixelRenderer {
     fun destroy() {
         spriteTexture?.release()
         spriteTexture = null
+        cachedLampMap = null
+        cachedLampPositions = emptyList()
         if (program != 0) GLES20.glDeleteProgram(program)
         if (textureProgram != 0) GLES20.glDeleteProgram(textureProgram)
         program = 0
@@ -529,13 +535,12 @@ class PixelRenderer {
         )
         if (profile.intensity <= 0.001f) return
 
-        engine.tileMap.forEachTile { tileX, tileY, type ->
-            if (type != TileType.FLOOR) return@forEachTile
-            val spriteId = engine.tileMap.environmentPropAt(tileX, tileY)
-            if (!OutdoorLighting.isLightSource(spriteId)) return@forEachTile
-
-            val centerX = tileX + 0.5f
-            val centerY = tileY + 0.72f
+        val map = engine.tileMap
+        if (cachedLampMap !== map) {
+            cachedLampPositions = OutdoorLighting.streetlampPositions(map)
+            cachedLampMap = map
+        }
+        cachedLampPositions.forEach { (centerX, centerY) ->
             val radius = profile.radius
             val intensity = profile.intensity
             // Nested rectangular pools intentionally retain hard pixel-art edges.

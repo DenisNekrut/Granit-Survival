@@ -22,4 +22,16 @@ internal object OutdoorLighting {
 
     fun isLightSource(spriteId: String?): Boolean =
         spriteId != null && spriteId.startsWith("streetlamp") && !spriteId.endsWith("_broken")
+
+    /** Resolve static streetlamp positions once when a zone map enters the renderer. */
+    fun streetlampPositions(map: TileMap): List<Pair<Float, Float>> {
+        val result = ArrayList<Pair<Float, Float>>()
+        map.forEachTile { x, y, type ->
+            if (type != TileType.FLOOR) return@forEachTile
+            if (isLightSource(map.environmentPropAt(x, y))) {
+                result += (x + 0.5f) to (y + 0.72f)
+            }
+        }
+        return result
+    }
 }

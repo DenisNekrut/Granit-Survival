@@ -39,6 +39,19 @@ class OutdoorLightingTest {
     }
 
     @Test
+    fun streetlampPositionsAreDeterministicAndMatchActualMapProps() {
+        val map = createZoneMap(WorldZone.ROAD, seed = 481516L)
+        val first = OutdoorLighting.streetlampPositions(map)
+        val second = OutdoorLighting.streetlampPositions(map)
+        assertEquals(first, second)
+        first.forEach { (centerX, centerY) ->
+            val tileX = kotlin.math.floor(centerX).toInt()
+            val tileY = kotlin.math.floor(centerY - 0.72f).toInt()
+            assertTrue(OutdoorLighting.isLightSource(map.environmentPropAt(tileX, tileY)))
+        }
+    }
+
+    @Test
     fun lightProfileRemainsBoundedAcrossEveryMinuteAndWeather() {
         for (minute in 0 until WorldClock.MINUTES_PER_DAY) {
             WeatherType.values().forEach { weather ->
