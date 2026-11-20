@@ -786,7 +786,7 @@ object PixelSpriteAtlas {
 
     /** Cache the replacement palette once; every renderer path receives the same RGB values. */
     private val recoloredSprites: Map<String, PixelSprite> by lazy {
-        (sprites + variants).mapValues { (_, sprite) -> GranitSpritePalette.remap(sprite) }
+        (sprites + variants).mapValues { (id, sprite) -> GranitSpritePalette.remap(sprite, id) }
     }
 
     fun sprite(id: String): PixelSprite? = recoloredSprites[id]
