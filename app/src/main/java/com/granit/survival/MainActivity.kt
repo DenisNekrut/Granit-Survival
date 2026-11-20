@@ -199,6 +199,44 @@ class MainActivity : Activity() {
     private fun startNewGame() {
         session.startNewGame()
         enterGame()
+        introSequenceActive = true
+        introSequenceIndex = 0
+        showOpeningScenePage()
+    }
+
+    /** Short presentation-only opening; reading it does not consume in-game time. */
+    private fun showOpeningScenePage() {
+        val pages = listOf(
+            "Сначала пришёл звук. Ровный низкий гул где-то за стеной. Он не становился громче и не стихал — просто был.",
+            "Андрей открыл глаза. Над ним — низкий потолок убежища, тусклая лампа и следы конденсата на металлической панели. Воздух пах пылью и холодным железом.",
+            "Он попытался вспомнить, как оказался здесь. В памяти остались обрывки, но ни один не складывался в ответ. Даже собственные последние дни казались чужими.",
+            "На стене мерцал индикатор питания. Где-то рядом находились генераторная, запасы и радиостанция. Прежде чем выйти наружу, стоило проверить убежище."
+        )
+        if (introSequenceIndex >= pages.size) {
+            introSequenceActive = false
+            showChapterOneBriefing()
+            return
+        }
+        val panel = createPanel("ГЛАВА I · ТИХОЕ УБЕЖИЩЕ", "ПРОБУЖДЕНИЕ · ${introSequenceIndex + 1}/${pages.size}")
+        panel.addView(label(pages[introSequenceIndex], 15f, GranitPalette.textPrimary))
+        panel.addView(menuButton(if (introSequenceIndex == pages.lastIndex) "НАЧАТЬ ОСМОТР" else "ДАЛЕЕ") {
+            introSequenceIndex++
+            showOpeningScenePage()
+        })
+        showOverlay(panel)
+    }
+
+    private fun showChapterOneBriefing() {
+        val panel = createPanel("ПЕРВЫЕ ШАГИ", "ЗАДАЧА ОБНОВЛЕНА")
+        panel.addView(label(
+            "Убежище пока даёт укрытие. Осмотри генераторную, проверь запасы и радиоприёмник. Решение о выходе наружу останется за тобой.",
+            14f, GranitPalette.textPrimary
+        ))
+        panel.addView(menuButton("ПОНЯТНО") {
+            introSequenceActive = false
+            enterGame()
+        })
+        showOverlay(panel)
     }
 
     private fun enterGame() {
