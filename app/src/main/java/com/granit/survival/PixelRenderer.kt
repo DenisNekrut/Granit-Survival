@@ -210,7 +210,7 @@ class PixelRenderer {
                 TileType.BED, TileType.WORKBENCH, TileType.RADIO, TileType.BOOKSHELF, TileType.STORAGE,
                 TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.LOOT_CACHE -> Unit
                 TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
-                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY, type)
+                TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD, TileType.EXIT_TO_COMMUNICATION_NODE -> drawExitTile(tileX, tileY, type)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
                 TileType.RESOURCE_METAL -> drawResource(tileX, tileY, "metal")
                 TileType.RESOURCE_FABRIC -> drawResource(tileX, tileY, "fabric")
