@@ -190,6 +190,27 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun repairedRelayUnlocksWatchPostSignalCheckAndPersistsOnce() {
+        val engine = GameEngine()
+        engine.restoreDiscoveredPointsOfInterest(setOf("forest_radio_cache"))
+        assertFalse(engine.inspectForestWatchPostSignal())
+
+        assertTrue(engine.inspectDiscoveredForestRelay())
+        engine.inventory.add(ItemType.METAL, GameEngine.FOREST_RELAY_REPAIR_METAL)
+        engine.inventory.add(ItemType.FABRIC, GameEngine.FOREST_RELAY_REPAIR_FABRIC)
+        assertTrue(engine.repairDiscoveredForestRelay())
+        assertFalse(engine.inspectForestWatchPostSignal())
+
+        engine.restoreDiscoveredPointsOfInterest(setOf("forest_radio_cache", "forest_watch_post"))
+        assertTrue(engine.inspectForestWatchPostSignal())
+        assertFalse(engine.inspectForestWatchPostSignal())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED))
+    }
+
+    @Test
     fun discoveriesSurviveSaveSnapshotRestore() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first()
