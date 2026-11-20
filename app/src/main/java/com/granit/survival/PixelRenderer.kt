@@ -498,34 +498,21 @@ class PixelRenderer {
             return
         }
 
-        // Powered pools or dim emergency strips; ceiling fixtures remain invisible.
+        // Powered and emergency pools are concentric squares around each hidden
+        // ceiling fixture. Equal width/height and a shared center remove the old
+        // one-directional horizontal light bands while keeping crisp pixel edges.
         rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
-            0.012f, 0.018f, 0.020f, if (engine.bunkerPower.hasPower) 0.48f else 0.72f)
-        if (engine.bunkerPower.hasPower) {
-            bunkerLamps.forEach { (x, y) ->
-                val layers = listOf(
-                    floatArrayOf(6.0f, 3.8f, 0.035f, 0.72f, 0.48f, 0.25f),
-                    floatArrayOf(5.3f, 3.4f, 0.045f, 0.76f, 0.51f, 0.27f),
-                    floatArrayOf(4.7f, 3.0f, 0.055f, 0.80f, 0.55f, 0.29f),
-                    floatArrayOf(4.1f, 2.6f, 0.065f, 0.84f, 0.59f, 0.31f),
-                    floatArrayOf(3.5f, 2.2f, 0.078f, 0.88f, 0.63f, 0.33f),
-                    floatArrayOf(2.9f, 1.8f, 0.090f, 0.92f, 0.67f, 0.35f),
-                    floatArrayOf(2.3f, 1.4f, 0.105f, 0.96f, 0.71f, 0.37f),
-                    floatArrayOf(1.7f, 1.0f, 0.120f, 1.00f, 0.76f, 0.40f)
-                )
-                layers.forEach { layer ->
-                    val width = layer[0]
-                    val height = layer[1]
-                    rect(x - width * 0.5f, y + 0.12f, width, height,
-                        layer[3], layer[4], layer[5], layer[2])
-                }
-                rect(x - 0.62f, y + 0.28f, 1.24f, 0.16f, 1.0f, 0.78f, 0.47f, 0.10f)
-            }
+            0.012f, 0.018f, 0.020f, if (engine.bunkerPower.hasPower) 0.42f else 0.64f)
+        val layers = if (engine.bunkerPower.hasPower) {
+            BunkerLighting.poweredLayers
         } else {
-            // Emergency strips give minimal navigation light without full room illumination.
-            bunkerLamps.forEach { (x, y) ->
-                rect(x - 0.75f, y + 0.10f, 1.5f, 0.55f, 0.58f, 0.20f, 0.10f, 0.075f)
-                rect(x - 0.24f, y + 0.20f, 0.48f, 0.08f, 0.92f, 0.35f, 0.16f, 0.13f)
+            BunkerLighting.emergencyLayers
+        }
+        bunkerLamps.forEach { (x, y) ->
+            val centerY = y + 0.5f
+            layers.forEach { layer ->
+                rect(x - layer.size * 0.5f, centerY - layer.size * 0.5f,
+                    layer.size, layer.size, layer.red, layer.green, layer.blue, layer.alpha)
             }
         }
     }
