@@ -449,6 +449,23 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED)
     }
 
+    /** Inspect the communication console only after entering the node and discovering it. */
+    fun inspectCommunicationNodeConsole(): Boolean {
+        if (zone != WorldZone.COMMUNICATION_NODE) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED)) return false
+        if (!isPoiDiscovered("communication_node_console")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED)
+    }
+
+    /** The duty log can be read only after the console has been inspected. */
+    fun readCommunicationNodeShiftLog(): Boolean {
+        if (zone != WorldZone.COMMUNICATION_NODE) return false
+        if (!isPoiDiscovered("communication_node_console")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ)
+    }
+
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
     fun inspectForestWatchPostSignal(): Boolean {
         if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
