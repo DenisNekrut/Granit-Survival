@@ -406,4 +406,44 @@ class WorldZoneTest {
         assertTrue(snapshot.zoneResources.isNotEmpty())
         assertTrue(snapshot.wakeCheckpoint?.zoneResources?.isNotEmpty() == true)
     }
+
+    @Test
+    fun communicationNodeHasACompactInteriorAndConnectedReturnDoor() {
+        val map = createZoneMap(WorldZone.COMMUNICATION_NODE)
+        assertEquals(17, map.width)
+        assertEquals(10, map.height)
+        assertEquals(TileType.EXIT_TO_RUINS, map[8, 8])
+        assertEquals(TileType.RADIO, map[8, 2])
+        assertTrue(map.isWalkable(8.5f, 7.5f))
+        assertEquals(8.5f, map.spawnBesideExit(TileType.EXIT_TO_RUINS)!!.first, 0.01f)
+    }
+
+    @Test
+    fun communicationNodeRequiresUnlockedDoorAndItsVisitPersists() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.RUINS)
+        engine.player.x = 19.5f
+        engine.player.y = 21.5f
+
+        engine.updateFrame(0.1f, EngineInput(interact = true))
+        assertEquals(WorldZone.RUINS, engine.zone)
+
+        engine.updateFrame(0.1f, EngineInput())
+        engine.storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED)
+        engine.updateFrame(0.1f, EngineInput(interact = true))
+        assertEquals(WorldZone.COMMUNICATION_NODE, engine.zone)
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED))
+
+        engine.player.x = 8.5f
+        engine.player.y = 5.5f
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == "communication_node_console" })
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND))
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertEquals(WorldZone.COMMUNICATION_NODE, restored.zone)
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND))
+    }
+
 }
