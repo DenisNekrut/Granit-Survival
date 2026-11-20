@@ -139,6 +139,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (found.any { it.id == "road_service_lane" }) {
             storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND)
         }
+        if (found.any { it.id == "road_drain_hatch" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND)
+        }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
                 storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) ->
@@ -530,6 +533,14 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (!isPoiDiscovered("road_service_lane")) return false
         if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND)) return false
         return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED)
+    }
+
+    /** Records the sealed drainage access discovered below the service lane. */
+    fun inspectRoadLine08DrainAccess(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_drain_hatch")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED)
     }
 
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
