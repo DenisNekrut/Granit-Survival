@@ -307,8 +307,14 @@ class PixelRenderer {
         worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
         worldSprites.forEach { command ->
             if (command.contactShadow) {
-                rect(command.centerX - 0.38f, command.topY + 0.82f, 0.76f, 0.08f,
-                    0.035f, 0.045f, 0.04f, 0.65f)
+                // Three crisp pixel bands give props a grounded shadow without changing
+                // their authored footprint, anchor or draw-order contact point.
+                rect(command.centerX - 0.34f, command.topY + 0.82f, 0.68f, 0.10f,
+                    0.025f, 0.035f, 0.032f, 0.42f)
+                rect(command.centerX - 0.25f, command.topY + 0.90f, 0.50f, 0.07f,
+                    0.025f, 0.035f, 0.032f, 0.27f)
+                rect(command.centerX - 0.16f, command.topY + 0.95f, 0.32f, 0.04f,
+                    0.025f, 0.035f, 0.032f, 0.15f)
             }
             drawAtlasSprite(
                 command.spriteId, command.centerX, command.topY, command.tileExtent,
@@ -333,6 +339,7 @@ class PixelRenderer {
         // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
         drawWorldLighting(engine, bunkerLamps)
         if (engine.zone != WorldZone.BUNKER) {
+            drawOutdoorLocalLights(engine)
             drawWeatherEffects(engine)
             drawCorridorFog(engine)
         }
@@ -514,6 +521,37 @@ class PixelRenderer {
      * Particle coordinates are deterministic and derived from simulation time;
      * no random allocations or changes to map geometry/collision are involved.
      */
+    /** Warm pools are emitted only by intact road lamps and only after dusk. */
+    private fun drawOutdoorLocalLights(engine: GameEngine) {
+        val profile = OutdoorLighting.streetlampProfile(
+            engine.worldClock.minuteOfDay,
+            engine.weather
+        )
+        if (profile.intensity <= 0.001f) return
+
+        engine.tileMap.forEachTile { tileX, tileY, type ->
+            if (type != TileType.FLOOR) return@forEachTile
+            val spriteId = engine.tileMap.environmentPropAt(tileX, tileY)
+            if (!OutdoorLighting.isLightSource(spriteId)) return@forEachTile
+
+            val centerX = tileX + 0.5f
+            val centerY = tileY + 0.72f
+            val radius = profile.radius
+            val intensity = profile.intensity
+            // Nested rectangular pools intentionally retain hard pixel-art edges.
+            rect(centerX - radius, centerY - radius * 0.58f, radius * 2f, radius * 1.16f,
+                0.86f, 0.52f, 0.22f, 0.035f * intensity)
+            rect(centerX - radius * 0.72f, centerY - radius * 0.42f,
+                radius * 1.44f, radius * 0.84f,
+                0.96f, 0.64f, 0.31f, 0.045f * intensity)
+            rect(centerX - radius * 0.46f, centerY - radius * 0.28f,
+                radius * 0.92f, radius * 0.56f,
+                1.0f, 0.74f, 0.42f, 0.055f * intensity)
+            rect(centerX - 0.34f, centerY - 0.08f, 0.68f, 0.16f,
+                1.0f, 0.82f, 0.56f, 0.075f * intensity)
+        }
+    }
+
     private fun drawWeatherEffects(engine: GameEngine) {
         val width = engine.tileMap.width
         val height = engine.tileMap.height
