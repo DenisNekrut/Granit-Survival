@@ -449,7 +449,14 @@ class MainActivity : Activity() {
         if (story.hasEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)) {
             panel.addView(label("СЛЕДУЮЩАЯ ЦЕЛЬ · РАЗБИТЫЙ ПОСТ В РУИНАХ", 14f, Color.rgb(207, 194, 155), true))
             if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED)) {
-                panel.addView(label("Отметка на посту найдена. Андрей подтвердил вторую точку маршрута.", 12f, Color.rgb(151, 190, 151)))
+                if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)) {
+                    panel.addView(label("Отметка изучена. Дополнительное направление сохранено в журнале.", 12f, Color.rgb(151, 190, 151)))
+                } else {
+                    panel.addView(label("Разбитый пост найден. Осмотри табличку и сверь её маркировку с картой.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ИЗУЧИТЬ ОТМЕТКУ НА ПОСТУ") {
+                        showRuinsMarkerInspection()
+                    })
+                }
             } else {
                 panel.addView(label("Отправляйся в зону «Руины» и найди разбитый пост. Его отметка совпадает с условным знаком на карте.", 13f, Color.LTGRAY))
             }
@@ -464,6 +471,23 @@ class MainActivity : Activity() {
             }
         }
         panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        showOverlay(panel)
+    }
+
+    private fun showRuinsMarkerInspection() {
+        val story = session.engine.storyProgress
+        val panel = createPanel("РАЗБИТЫЙ ПОСТ", "Руины · сюжетная отметка")
+        panel.addView(label("Андрей подходит к табличке и сверяет её знак с отметкой на найденной карте.", 14f, Color.WHITE))
+        panel.addView(label("Под основным символом заметна дополнительная маркировка. Она указывает на следующий участок маршрута, но сама по себе не объясняет, кто и когда оставил эти обозначения.", 13f, Color.LTGRAY))
+        if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)) {
+            panel.addView(label("РЕЗУЛЬТАТ ОСМОТРА СОХРАНЁН", 13f, Color.rgb(151, 190, 151), true))
+        } else {
+            panel.addView(menuButton("ЗАПИСАТЬ МАРКИРОВКУ В ЖУРНАЛ") {
+                session.engine.inspectRuinsSignalMarker()
+                showRuinsMarkerInspection()
+            })
+        }
+        panel.addView(menuButton("НАЗАД К ЖУРНАЛУ") { showJournal() })
         showOverlay(panel)
     }
 
