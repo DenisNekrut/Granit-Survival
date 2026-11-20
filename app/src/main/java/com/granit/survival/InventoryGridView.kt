@@ -12,13 +12,11 @@ import android.widget.TextView
  */
 internal class InventoryGridView(
     context: Context,
-    columns: Int,
-    rows: Int,
+    private val container: ItemContainer,
     private val cellHeightDp: Int,
     private val iconSizeDp: Int,
     private val dp: (Int) -> Int,
-    slotAt: (Int) -> ItemStack?,
-    onSlotClick: (Int, ItemStack) -> Unit
+onSlotClick: (Int, ItemStack) -> Unit
 ) : LinearLayout(context) {
 
     init {
@@ -30,8 +28,8 @@ internal class InventoryGridView(
                 orientation = HORIZONTAL
             }
             for (column in 0 until container.columns) {
-                val index = rowIndex * columns + column
-                val stack = slotAt(index)
+                val index = rowIndex * container.columns + column
+                val stack = container.slot(index)
                 val cell = LinearLayout(context).apply {
                     orientation = VERTICAL
                     gravity = Gravity.CENTER
