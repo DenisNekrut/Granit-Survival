@@ -564,8 +564,17 @@ class MainActivity : Activity() {
                 panel.addView(label("КОНТРОЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ СОХРАНЕНА", 13f, Color.rgb(151, 190, 151), true))
                 panel.addView(label("21:40 → 21:47 → 21:52. Интервалы между отметками составляют семь и пять минут.", 13f, Color.LTGRAY))
                 when {
-                    story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED) ->
+                    story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED) -> {
                         panel.addView(label("СВЕРКА С ЛЕСНОЙ ВЫШКОЙ ВЫПОЛНЕНА", 13f, Color.rgb(151, 190, 151), true))
+                        if (story.hasEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)) {
+                            panel.addView(label("МАРШРУТНЫЙ ЛИСТ ЛИНИИ 08 ИЗУЧЕН", 13f, Color.rgb(151, 190, 151), true))
+                        } else {
+                            panel.addView(menuButton("НАЙТИ АРХИВНЫЙ МАРШРУТНЫЙ ЛИСТ") {
+                                engine.inspectCommunicationNodeRouteRecord()
+                                showCommunicationNodeShiftLog()
+                            })
+                        }
+                    }
                     story.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED) ->
                         panel.addView(menuButton("СОПОСТАВИТЬ С ПОКАЗАНИЯМИ ЛЕСНОЙ ВЫШКИ") {
                             engine.crossCheckCommunicationNodeSignal()
