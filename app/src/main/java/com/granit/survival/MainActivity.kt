@@ -549,6 +549,22 @@ class MainActivity : Activity() {
                     panel.addView(label("Вернись к метке линии 08 на старой дороге и проследуй по указанному ответвлению. Ищи старую дорожную отметку у просёлочного проезда.", 13f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED)) {
+            panel.addView(label("ЦЕЛЬ · ДОРОЖНЫЙ ПОСТ КОНТРОЛЬНОГО ПУНКТА Б", 14f, Color.rgb(207, 194, 155), true))
+            when {
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED) ->
+                    panel.addView(label("Схема служебного подъезда изучена. На карте отмечена полоса вдоль внешнего ограждения; сам узел Б пока недоступен.", 12f, Color.rgb(151, 190, 151)))
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND) -> {
+                    panel.addView(label("Дорожный пост найден. Изучи табличку и сохранившуюся схему подъезда.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ИЗУЧИТЬ ТАБЛИЧКУ ПОСТА Б") {
+                        session.engine.inspectRoadLine08Checkpoint()
+                        showJournal()
+                    })
+                }
+                else ->
+                    panel.addView(label("Проследуй по ответвлению линии 08 до старого дорожного поста у съезда. Ищи обозначение контрольного пункта Б.", 13f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
