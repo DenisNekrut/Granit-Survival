@@ -104,4 +104,49 @@ class WorldContainerTest {
         assertTrue(provisions.count(ItemType.CANNED_FOOD) >= 3)
         assertTrue(provisions.count(ItemType.WATER) >= 3)
     }
+
+    @Test
+    fun authoredLandmarksExposeSpecializedLootCaches() {
+        val cases = listOf(
+            Triple(WorldZone.FOREST, "forest_camp", WorldLootTier.PROVISIONS),
+            Triple(WorldZone.FOREST, "forest_radio_cache", WorldLootTier.MATERIALS),
+            Triple(WorldZone.RUINS, "ruins_shelter", WorldLootTier.MEDICAL),
+            Triple(WorldZone.RUINS, "ruins_generator_room", WorldLootTier.MATERIALS),
+            Triple(WorldZone.ROAD, "road_vehicle", WorldLootTier.RARE)
+        )
+
+        cases.forEach { (zone, poiId, expectedTier) ->
+            val poi = requireNotNull(PointOfInterestCatalog.byId(poiId))
+            val engine = GameEngine()
+            engine.changeZone(zone)
+            engine.player.x = poi.x
+            engine.player.y = poi.y
+
+            val cache = requireNotNull(engine.nearestWorldContainer())
+            assertEquals("poi_$poiId", cache.id)
+            assertEquals(expectedTier, cache.lootTier)
+            assertTrue(cache.snapshot().any { it != null })
+        }
+    }
+
+    @Test
+    fun landmarkCacheContentsSurviveSaveRestore() {
+        val poi = requireNotNull(PointOfInterestCatalog.byId("ruins_shelter"))
+        val original = GameEngine()
+        original.changeZone(WorldZone.RUINS)
+        original.player.x = poi.x
+        original.player.y = poi.y
+        val expected = requireNotNull(original.nearestWorldContainer()).snapshot()
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(original.createSaveSnapshot())
+        restored.changeZone(WorldZone.RUINS, regenerate = false)
+        restored.player.x = poi.x
+        restored.player.y = poi.y
+
+        val actual = requireNotNull(restored.nearestWorldContainer())
+        assertEquals("poi_ruins_shelter", actual.id)
+        assertEquals(WorldLootTier.MEDICAL, actual.lootTier)
+        assertEquals(expected, actual.snapshot())
+    }
 }
