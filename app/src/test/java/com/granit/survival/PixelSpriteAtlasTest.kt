@@ -44,6 +44,11 @@ class PixelSpriteAtlasTest {
             assertTrue("$id wall width must fit one map cell", footprint.width <= 1.001f)
             assertTrue("$id wall height must fit one map cell", footprint.height <= 1.001f)
         }
+        listOf("exit_hatch", "ladder_hatch", "wood", "metal", "fabric", "food", "water").forEach { id ->
+            val footprint = SpriteWorldMetrics.footprint(id, 0.052f)
+            assertTrue("$id tile sprite width must fit one map cell", footprint.width <= 1.001f)
+            assertTrue("$id tile sprite height must fit one map cell", footprint.height <= 1.001f)
+        }
     }
 
     @Test
