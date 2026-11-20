@@ -160,7 +160,7 @@ internal class BunkerStationPanels(
         val engine = session.engine
         val container = engine.nearestWorldContainer() ?: run { showMessage("ТАЙНИК", "Подойди ближе к ящику, чтобы осмотреть его."); return }
         fun dp(value: Int) = (value * activity.resources.displayMetrics.density).toInt()
-        val panel = createPanel(container.title, "Содержимое сохраняется в этой локации. Перенос предметов выполняется вручную.")
+        val panel = createPanel(container.displayTitle, "Тип тайника определяет набор припасов. Содержимое сохраняется в этой локации; перенос выполняется вручную.")
         fun grid(title: String, source: ItemContainer, move: (Int, Int) -> Boolean, verb: String) {
             panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
             panel.addView(InventoryGridView(context = activity, container = source, cellHeightDp = 82, iconSizeDp = 34, dp = ::dp) { index, stack ->
