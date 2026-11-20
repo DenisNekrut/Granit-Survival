@@ -520,7 +520,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
         when (tileMap.nearestInteractable(player.x, player.y, 1.35f)) {
             TileType.STORAGE -> {
-                if (inventorySystem.depositAll()) advanceGameMinutes(1)
+                // Opening a storage station is a UI action only. Item movement is
+                // performed exclusively by the player's explicit transfer controls.
                 interactionCount++
             }
             TileType.EXIT_TO_BUNKER -> { travelToZone(WorldZone.BUNKER); interactionCount++ }
