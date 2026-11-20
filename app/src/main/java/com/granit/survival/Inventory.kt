@@ -45,11 +45,11 @@ class Inventory(
 
     fun slot(index: Int): ItemStack? = slots.getOrNull(index)?.copy()
 
-    fun count(type: ItemType): Int = slots.filterNotNull()
+    override fun count(type: ItemType): Int = slots.filterNotNull()
         .filter { it.type == type }
         .sumOf { it.quantity }
 
-    fun add(type: ItemType, amount: Int = 1): Int {
+    override fun add(type: ItemType, amount: Int = 1): Int {
         if (amount <= 0) return amount
         var remaining = amount
 
@@ -73,7 +73,7 @@ class Inventory(
         return remaining
     }
 
-    fun canAdd(type: ItemType, amount: Int = 1): Boolean {
+    override fun canAdd(type: ItemType, amount: Int = 1): Boolean {
         if (amount <= 0) return false
         var remaining = amount
         slots.forEach { stack ->
@@ -85,7 +85,7 @@ class Inventory(
     }
 
     /** Removes a quantity from one exact slot; returns false without mutation on invalid input. */
-    fun removeAt(index: Int, amount: Int = 1): Boolean {
+    override fun removeAt(index: Int, amount: Int = 1): Boolean {
         if (amount <= 0) return false
         val stack = slots.getOrNull(index) ?: return false
         if (stack.quantity < amount) return false
@@ -109,9 +109,9 @@ class Inventory(
         return true
     }
 
-    fun snapshot(): List<ItemStack?> = slots.map { it?.copy() }
+    override fun snapshot(): List<ItemStack?> = slots.map { it?.copy() }
 
-    fun restore(snapshot: List<ItemStack?>) {
+    override fun restore(snapshot: List<ItemStack?>) {
         require(snapshot.size == slots.size) { "Inventory snapshot has an unexpected slot count" }
         snapshot.forEach { stack ->
             require(stack == null || stack.quantity in 1..stackLimit) {
