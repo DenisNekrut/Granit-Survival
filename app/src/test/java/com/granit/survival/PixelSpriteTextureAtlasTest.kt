@@ -29,7 +29,7 @@ class PixelSpriteTextureAtlasTest {
             "Atlas cell ${plan.cellSize} must fit the tallest frame $tallest",
             plan.cellSize >= tallest
         )
-        assertTrue("Character frames must stay covered", plan.cellSize >= 24)
+        assertTrue("2x character frames must stay covered", plan.cellSize >= 48)
     }
 
     @Test
@@ -107,12 +107,12 @@ class PixelSpriteTextureAtlasTest {
     @Test
     fun characterAndEnvironmentFramesShareOneAtlas() {
         val playerEntry = requireNotNull(plan.entry("player"))
-        assertEquals(listOf(24, 24, 24, 24), playerEntry.frames.map { it.height })
-        assertEquals(listOf(16, 16, 16, 16), playerEntry.frames.map { it.width })
+        assertEquals(listOf(48, 48, 48, 48), playerEntry.frames.map { it.height })
+        assertEquals(listOf(32, 32, 32, 32), playerEntry.frames.map { it.width })
 
         val treeEntry = requireNotNull(plan.entry("tree"))
-        assertEquals(16, treeEntry.frameHeight)
-        assertEquals(16, treeEntry.frameWidth)
+        assertEquals(32, treeEntry.frameHeight)
+        assertEquals(32, treeEntry.frameWidth)
 
         // Both frame shapes must be addressable through the same manifest.
         assertTrue(plan.entry("exit_hatch") != null)
