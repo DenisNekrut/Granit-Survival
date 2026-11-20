@@ -86,6 +86,27 @@ class WorldZoneTest {
     }
 
     @Test
+    fun tallPropsAllowWalkingBehindTheirUpperCanopyButBlockAtTheBase() {
+        val map = TileMap(zone = WorldZone.FOREST)
+        var selected: Triple<Int, Int, String>? = null
+        map.forEachTile { x, y, type ->
+            if (selected == null && type == TileType.FLOOR) {
+                val sprite = map.environmentPropAt(x, y)
+                if (sprite != null && ZonePropSelector.blocksMovement(sprite)) {
+                    val height = SpriteWorldMetrics.footprint(sprite).height
+                    if (height >= 0.70f) selected = Triple(x, y, sprite)
+                }
+            }
+        }
+        val (x, y, sprite) = requireNotNull(selected) { "Expected a tall blocking forest prop" }
+        val height = SpriteWorldMetrics.footprint(sprite).height
+        assertTrue("Player can pass behind the upper part of $sprite",
+            map.isWalkable(x + 0.5f, y + height * 0.35f))
+        assertTrue("Player is still blocked by the base of $sprite",
+            !map.isWalkable(x + 0.5f, y + height - 0.05f))
+    }
+
+    @Test
     fun everyZoneTransitionPlacesPlayerBesideTheMatchingDestinationHatch() {
         val engine = GameEngine()
 
