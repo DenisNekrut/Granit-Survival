@@ -560,6 +560,15 @@ class MainActivity : Activity() {
         panel.addView(label("Дальше строка обрывается. Подписи дежурного нет. Андрей отмечает расхождение времени, но пока не делает выводов о его причине.", 13f, Color.LTGRAY))
         if (story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ)) {
             panel.addView(label("ЗАПИСИ ЖУРНАЛА СОХРАНЕНЫ", 13f, Color.rgb(151, 190, 151), true))
+            if (story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED)) {
+                panel.addView(label("КОНТРОЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ СОХРАНЕНА", 13f, Color.rgb(151, 190, 151), true))
+                panel.addView(label("21:40 → 21:47 → 21:52. Интервалы между отметками не совпадают с системным временем экрана.", 13f, Color.LTGRAY))
+            } else {
+                panel.addView(menuButton("ИЗВЛЕЧЬ КОНТРОЛЬНУЮ ПОСЛЕДОВАТЕЛЬНОСТЬ") {
+                    engine.extractCommunicationNodeSignalSequence()
+                    showCommunicationNodeShiftLog()
+                })
+            }
         } else {
             panel.addView(menuButton("СОХРАНИТЬ ЗАПИСЬ В ЖУРНАЛЕ АНДРЕЯ") {
                 engine.readCommunicationNodeShiftLog()
