@@ -18,7 +18,14 @@ internal object GeneratedPixelSprites {
         'I' to floatArrayOf(0.22f, 0.18f, 0.15f),
         'J' to floatArrayOf(0.13f, 0.11f, 0.085f),
         'K' to floatArrayOf(0.085f, 0.065f, 0.045f),
-        'L' to floatArrayOf(0.028f, 0.016f, 0.009f)
+        'L' to floatArrayOf(0.028f, 0.016f, 0.009f),
+        'M' to floatArrayOf(0.36f, 0.43f, 0.32f),
+        'N' to floatArrayOf(0.16f, 0.21f, 0.17f),
+        'O' to floatArrayOf(0.28f, 0.34f, 0.29f),
+        'P' to floatArrayOf(0.45f, 0.37f, 0.27f),
+        'Q' to floatArrayOf(0.78f, 0.48f, 0.19f),
+        'R' to floatArrayOf(0.61f, 0.63f, 0.52f),
+        'S' to floatArrayOf(0.10f, 0.13f, 0.12f)
     )
 
     private fun sprite(vararg frames: String) = PixelSprite(
@@ -67,7 +74,19 @@ internal object GeneratedPixelSprites {
         "bush" to sprite("........LFDCD.../......JFG...KFI./....LEI....ECACI/.....CJ.....IEH./.....CJ........./.....CJ........./.....CJ........./.....DI........./.....CI........./.....CI........./....KEH........./....LDFH......../...ELEGFE......./..EKLDJJDD....../.DJEFFBBFEDE..../...EDEEECE......"),
         "rubble" to sprite("................/.....BL........./....BBF........./...HBBF........./..KLBBFH.K.L..../...BBBFJFCLL..../...BCBFKCBBC..../.IGCCCKBBBBFL.G./..CHCBLEABFFFE../.FBBDHBCEFFFFHK./.EBELBBFKEBBBCE./.DBFLFEFICBBBFDE/ECFBBALBDIABFEJ./EDEEEFFEDBEEDBC./...EEFCEHCDED.../....E.D.ED......"),
         "streetlamp" to sprite(".......L.L....../.....L.FDLL...../.....IFKDEJD..../..HKKDBCIKCEL.../..KCHIJFCEIJ..../..LIECHHKKFCJIK./.ECFCDJJCJDEECJ./.KHIDFCJCJFDFEHL/.CDHJECJJHCCJFJ./JFDJICICHIEHIHI./KKIFCCIGJIIJHFJ./..FKEJIHICCKEIF./..JKIHJDHHHHJJEE/.FEEFJHJKJIHEDE./...EEFEIFEEDDE../......E..DD....."),
-        "ceiling_lamp" to sprite("................/................/................/.......JJ......./......JAAJ....../.....JABBAJ...../....JABBBBAJ..../....JABBBBAJ..../.....JABBAJ...../......JAAJ....../.......JJ......./................/................/................/................/................")
+        "ceiling_lamp" to sprite("................/................/................/.......JJ......./......JAAJ....../.....JABBAJ...../....JABBBBAJ..../....JABBBBAJ..../.....JABBAJ...../......JAAJ....../.......JJ......./................/................/................/................/................"),
+        "infected_shambler" to sprite(
+            "....NNNN..../...NMMMMN.../...NMQMMN.../...NMMMMN.../....MMMM..../...NOOON..../..NOOOOON.../.NOOPPOOON../NOOOPPPOOON./NOOOPPOOOON./.NOOOOON..../..NOOON...../...OOON...../...OOON...../..NOOON...../..NOOON...../..NN.NN...../..NN.NN...../..NN.NN...../..NN.NN...../..NN..NN..../..NN..NN..../..NN..NN..../..NN..NN....",
+            "....NNNN..../...NMMMMN.../...NMQMMN.../...NMMMMN.../....MMMM..../...NOOON..../..NOOOOON.../.NOOPPOOON../NOOOPPPOOON./NOOOPPOOOON./.NOOOOON..../..NOOON...../...OOON...../...OOON...../...OOON...../..NOOON...../..NN..NN..../..NN..NN..../..NN..NN..../..NN..NN..../..NN..NN..../..NN..NN..../..NN..NN..../..NN..NN...."
+        ),
+        "infected_runner" to sprite(
+            "....NNNN..../...NMMMMN.../...NMQMMN.../...NMMMMN.../....MMMM..../..MMOOOO..../.MMOOOOOO.../MMOOPPOOOON./..OOPPOOOON./...OOOON..../...OOON...../..OOON....../..OOON....../..OOON....../..OOON....../..OOON....../...NN.NN..../...NN.NN..../...NN.NN..../..NN...NN.../..NN...NN.../..NN...NN.../.NN.....NN../.NN.....NN..",
+            "....NNNN..../...NMMMMN.../...NMQMMN.../...NMMMMN.../....MMMM..../....OOOO..../..OOOOOO..../.NOOOOPPOON./NOOOOPPOOON./...OOOON..../....OOON..../....OOON..../...OOON...../...OOON...../...OOON...../...OOON...../..NN...NN.../..NN...NN.../..NN...NN.../..NN...NN.../...NN..NN.../...NN..NN.../....NN.NN.../....NN.NN..."
+        ),
+        "infected_brute" to sprite(
+            "...NNNNNN.../..NMMMMMMN../..NMQMMMMN../..NMMMMMMN../...MMMMMM.../.NOOOOOOON./NOOOOOOOOOON/NOOPPPPOOOON/NOOPPPPOOOON/NOOOOOOOOOON/.NOOOOOOOON./..NOOOOOON../...OOOOOO.../...OOOOOO.../...OOOOOO.../...OOOOOO.../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NN...NN.../..NN...NN.../..NN...NN...",
+            "...NNNNNN.../..NMMMMMMN../..NMQMMMMN../..NMMMMMMN../...MMMMMM.../.NOOOOOOON./NOOOOOOOOOON/NOOPPPPOOOON/NOOPPPPOOOON/NOOOOOOOOOON/.NOOOOOOOON./..NOOOOOON../...OOOOOO.../...OOOOOO.../...OOOOOO.../...OOOOOO.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN...NN.../..NN...NN.../..NN...NN..."
+        )
     )
 
     val all: Map<String, PixelSprite> = base + mapOf(
