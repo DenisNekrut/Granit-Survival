@@ -211,6 +211,22 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun watchPostSignalLeadsToRoadMapClueAndPersistsOnce() {
+        val engine = GameEngine()
+        assertFalse(engine.inspectRoadSignalMap())
+
+        engine.storyProgress.recordEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)
+        assertFalse(engine.inspectRoadSignalMap())
+        engine.restoreDiscoveredPointsOfInterest(setOf("road_vehicle"))
+        assertTrue(engine.inspectRoadSignalMap())
+        assertFalse(engine.inspectRoadSignalMap())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND))
+    }
+
+    @Test
     fun discoveriesSurviveSaveSnapshotRestore() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first()
