@@ -28,15 +28,22 @@ internal object GranitSpritePalette {
 
     /** Material routing is explicit so one hue cannot accidentally turn every object into foliage or rust. */
     internal fun materialForSprite(spriteId: String): String? = when {
-        spriteId in setOf("tree", "bush", "grass_patch") -> "pine"
-        spriteId in setOf("fallen_log", "wood", "item_wood", "crate", "bed", "bookshelf", "dining_table") -> "wood"
-        spriteId in setOf("metal", "metal_scrap", "floor_grate", "radio", "generator", "storage",
-            "bunker_panel", "streetlamp", "road_sign", "road_barrier", "wreck", "workbench") -> "steel"
-        spriteId in setOf("rubble", "debris", "brick_wall", "ruined_wall") -> "brick"
-        spriteId in setOf("water", "item_water", "puddle") -> "water"
+        spriteId.startsWith("tree") || spriteId.startsWith("bush") ||
+            spriteId.startsWith("grass_patch") -> "pine"
+        spriteId.startsWith("fallen_log") || spriteId.startsWith("crate") ||
+            spriteId in setOf("wood", "item_wood", "bed", "bookshelf", "dining_table") -> "wood"
+        spriteId.startsWith("metal_scrap") || spriteId.startsWith("floor_grate") ||
+            spriteId.startsWith("road_barrier") || spriteId.startsWith("streetlamp") ||
+            spriteId.startsWith("road_sign") || spriteId.startsWith("wreck") ||
+            spriteId.startsWith("bunker_panel") ||
+            spriteId in setOf("metal", "item_metal", "radio", "generator", "storage", "locker",
+                "workbench", "control_console", "vault_door", "ceiling_lamp") -> "steel"
+        spriteId.startsWith("rubble") || spriteId.startsWith("debris") ||
+            spriteId.startsWith("barrel") -> "brick"
+        spriteId.startsWith("puddle") || spriteId in setOf("water", "item_water") -> "water"
         spriteId in setOf("fabric", "item_fabric", "bandage", "item_bandage") -> "fabric"
-        spriteId in setOf("medical_station", "item_medical_kit") -> "medical"
-        spriteId in setOf("infected_shambler", "infected_runner", "infected_brute") -> "skin"
+        spriteId == "medical_station" || spriteId == "item_medical_kit" -> "medical"
+        spriteId.startsWith("infected_") -> "skin"
         spriteId in setOf("food", "item_food") -> "hazard"
         else -> null
     }
