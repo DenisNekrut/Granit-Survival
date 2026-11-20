@@ -71,3 +71,9 @@ The external atlas is currently an optional override. If absent, the game genera
 - Added seven original 16x16 pixel-art icons: wood, metal, fabric, canned food, water, medical kit and bandage.
 - The backpack list now renders the matching icon beside each item; the compact HUD inventory uses the same sprite IDs and generated atlas.
 - HUD icons are drawn in screen space and retain crisp nearest-neighbour pixels; a Canvas pixel fallback is used when the texture atlas is unavailable.
+
+## 2026-11-20 — world footprint correction for 2x sprites
+- Authored source resolution and world-space footprint are independent. Any world sprite with a 32px-wide or 48px-tall authored frame uses a 0.5 world-density multiplier; 16px/24px source assets remain at 1.0.
+- The rule applies to base sprites and generated variants, including the 32x48 player, 32x32 bunker fixtures and enlarged outdoor props. Atlas rasterization remains 2x and nearest-neighbour.
+- Furniture anchoring now derives its occupied width from the actual authored frame width and density multiplier, preventing visual overhang from shifting the wall anchor.
+- Inventory HUD icons remain independently sized in screen space and are not affected by world-density compensation.
