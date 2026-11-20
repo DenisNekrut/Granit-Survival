@@ -296,11 +296,15 @@ class PointOfInterestTest {
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED))
 
         val serviceAccess = PointOfInterestCatalog.byId("ruins_service_access")!!
+        assertFalse(engine.inspectRuinsServiceAccess())
         assertFalse(engine.scanNearbyPointsOfInterest().contains(serviceAccess))
         engine.player.x = serviceAccess.x
         engine.player.y = serviceAccess.y
         assertTrue(engine.scanNearbyPointsOfInterest().contains(serviceAccess))
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND))
+        assertTrue(engine.inspectRuinsServiceAccess())
+        assertFalse(engine.inspectRuinsServiceAccess())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED))
 
         val restored = GameEngine()
         restored.restoreSaveSnapshot(engine.createSaveSnapshot())
@@ -308,6 +312,7 @@ class PointOfInterestTest {
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED))
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED))
     }
 
     @Test
