@@ -209,19 +209,29 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return true
     }
 
-    fun canUseRadio(): Boolean = zone == WorldZone.BUNKER && bunkerPower.hasPower &&
+    fun canUseRadio(): Boolean = zone == WorldZone.BUNKER &&
+        (bunkerPower.hasPower || inventory.count(ItemType.BATTERY) > 0) &&
         tileMap.isNearTile(TileType.RADIO, player.x, player.y, 1.5f) && radioSystem.canListen(worldClock.day)
 
+    /**
+     * The bunker radio can fall back to one disposable battery during a generator outage.
+     * Main power is preferred; a battery is consumed only after the broadcast time succeeds.
+     */
     fun listenToRadio(): RadioEvent? {
         if (!canUseRadio()) return null
         val listeningDay = worldClock.day
         val event = radioSystem.eventForDay(listeningDay) ?: return null
+        val batteryPowered = !bunkerPower.hasPower
         if (!advanceGameMinutes(event.broadcastMinutes)) return null
+        if (batteryPowered && !inventory.remove(ItemType.BATTERY, 1)) return null
         radioSystem.markListened(listeningDay)
         psychology.applyReading(event.moraleGain, event.stressRelief)
-        return if (event.id == "weather") {
-            event.copy(description = "Прогноз на завтра: " + WeatherSystem.forDay(listeningDay + 1).forecastText)
-        } else event
+        val description = if (event.id == "weather") {
+            "Прогноз на завтра: " + WeatherSystem.forDay(listeningDay + 1).forecastText
+        } else event.description
+        return event.copy(description = description + if (batteryPowered) {
+            "\\n\\nИспользована одна батарейка для аварийного питания радиоприёмника."
+        } else "")
     }
 
     fun readBook(bookId: String): Boolean {
