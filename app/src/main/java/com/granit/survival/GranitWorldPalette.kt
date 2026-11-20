@@ -71,6 +71,7 @@ internal object GranitWorldPalette {
         WorldZone.FOREST -> channels(0x355B38)
         WorldZone.RUINS -> channels(0x79513D)
         WorldZone.ROAD -> channels(0x405D70)
+        WorldZone.COMMUNICATION_NODE -> channels(0x293B43)
     }
 
     /** Accent colours used by zone props, landmarks and lighting cues. */
@@ -79,6 +80,7 @@ internal object GranitWorldPalette {
         WorldZone.FOREST -> channels(LEAF_GREEN)
         WorldZone.RUINS -> channels(BRICK)
         WorldZone.ROAD -> channels(MIST_BLUE)
+        WorldZone.COMMUNICATION_NODE -> channels(OXIDIZED_TEAL)
     }
 
     /**
