@@ -192,7 +192,7 @@ class TileMap(
         if (x <= 1 || x >= width - 2 || y <= 1 || y >= height - 2) return null
         for (offsetY in -1..1) for (offsetX in -1..1) {
             if (offsetX == 0 && offsetY == 0) continue
-            if (get(x + offsetX, y + offsetY) == TileType.WALL) return null
+            if (get(x + offsetX, y + offsetY) != TileType.FLOOR) return null
         }
         if (zone == WorldZone.BUNKER) {
             // Keep the upper service corridor and the bunker hatch approach clear.
