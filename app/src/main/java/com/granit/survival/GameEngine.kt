@@ -369,6 +369,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.FOREST_RELAY_INSPECTED)
     }
 
+    /** The road clue is available only after the watch-post measurement and vehicle discovery. */
+    fun inspectRoadSignalMap(): Boolean {
+        if (!storyProgress.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)) return false
+        if (!isPoiDiscovered("road_vehicle")) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)
+    }
+
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
     fun inspectForestWatchPostSignal(): Boolean {
         if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
