@@ -1,7 +1,7 @@
 name: Android Debug Build
 on:
   push:
-    branches: [main, "architecture/**"]
+    branches: [main, "architecture/**", "fix/**"]
   pull_request:
     branches: [main]
   workflow_dispatch:
