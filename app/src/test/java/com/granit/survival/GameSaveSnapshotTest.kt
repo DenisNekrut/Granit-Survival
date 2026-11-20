@@ -88,6 +88,7 @@ class GameSaveSnapshotTest {
         assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[1, 8])
         assertTrue(engine.checkpointSystem.hasCheckpoint())
         assertTrue(engine.respawnAtWakeCheckpoint())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.GENERATOR_PANEL_OPENED))
         assertEquals(4, engine.inventory.count(ItemType.WOOD))
     }
 
