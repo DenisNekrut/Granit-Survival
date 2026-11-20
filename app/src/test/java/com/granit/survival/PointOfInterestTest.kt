@@ -385,4 +385,22 @@ class PointOfInterestTest {
         })
     }
 
+    @Test
+    fun communicationNodeSignalCrossCheckRequiresBothRecordsAndPersistsOnce() {
+        val engine = GameEngine()
+        assertFalse(engine.crossCheckCommunicationNodeSignal())
+        engine.storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED)
+        assertFalse(engine.crossCheckCommunicationNodeSignal())
+        engine.storyProgress.recordEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)
+        assertTrue(engine.crossCheckCommunicationNodeSignal())
+        assertFalse(engine.crossCheckCommunicationNodeSignal())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED
+        })
+    }
+
 }
