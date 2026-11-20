@@ -124,6 +124,23 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun theoryChosenAfterRelayDiscoveryStillProducesBranchObservation() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.FOREST)
+        val relay = PointOfInterestCatalog.byId("forest_radio_cache")!!
+        engine.player.x = relay.x
+        engine.player.y = relay.y
+        engine.scanNearbyPointsOfInterest()
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND))
+
+        engine.storyProgress.recordEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED)
+        assertTrue(engine.storyProgress.chooseFirstTheory(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE))
+        engine.scanNearbyPointsOfInterest()
+
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND))
+    }
+
+    @Test
     fun relayDiscoveryDoesNotCreateBranchObservationWithoutChosenTheory() {
         val engine = GameEngine()
         engine.changeZone(WorldZone.FOREST)
