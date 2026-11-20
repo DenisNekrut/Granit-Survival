@@ -61,6 +61,8 @@ class SaveMigrationTest {
     fun preservesValidWorldContainerContentsDuringMigration() {
         val contents = JSONArray()
             .put(JSONObject().put("type", ItemType.WOOD.name).put("quantity", 4))
+            .put(JSONObject().put("type", ItemType.ELECTRONICS.name).put("quantity", 2))
+            .put(JSONObject().put("type", ItemType.BATTERY.name).put("quantity", 3))
         val validContainer = JSONObject()
             .put("id", "forest_30_5")
             .put("x", 30)
@@ -93,7 +95,11 @@ class SaveMigrationTest {
         assertEquals(12, savedContainers.getJSONObject(0).getJSONArray("contents").length())
         assertEquals(ItemType.WOOD.name,
             savedContainers.getJSONObject(0).getJSONArray("contents").getJSONObject(0).getString("type"))
-        assertTrue(savedContainers.getJSONObject(0).getJSONArray("contents").isNull(1))
+        assertEquals(ItemType.ELECTRONICS.name,
+            savedContainers.getJSONObject(0).getJSONArray("contents").getJSONObject(1).getString("type"))
+        assertEquals(ItemType.BATTERY.name,
+            savedContainers.getJSONObject(0).getJSONArray("contents").getJSONObject(2).getString("type"))
+        assertTrue(savedContainers.getJSONObject(0).getJSONArray("contents").isNull(3))
     }
 
     @Test
