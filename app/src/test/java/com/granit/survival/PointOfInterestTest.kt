@@ -306,6 +306,33 @@ class PointOfInterestTest {
         assertFalse(engine.inspectRuinsServiceAccess())
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED))
 
+        val junction = PointOfInterestCatalog.byId("ruins_power_junction")!!
+        assertFalse(engine.scanNearbyPointsOfInterest().contains(junction))
+        engine.player.x = junction.x
+        engine.player.y = junction.y
+        assertTrue(engine.scanNearbyPointsOfInterest().contains(junction))
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND))
+        assertFalse(engine.inspectRuinsPowerJunction())
+        assertTrue(engine.inspectRuinsPowerJunction())
+        assertFalse(engine.inspectRuinsPowerJunction())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED))
+
+        assertFalse(engine.canRestoreRuinsServicePower())
+        assertFalse(engine.restoreRuinsServicePower())
+        engine.inventory.add(ItemType.METAL, GameEngine.RUINS_SERVICE_POWER_REPAIR_METAL)
+        engine.inventory.add(ItemType.FABRIC, GameEngine.RUINS_SERVICE_POWER_REPAIR_FABRIC)
+        assertTrue(engine.canRestoreRuinsServicePower())
+        assertTrue(engine.restoreRuinsServicePower())
+        assertFalse(engine.canRestoreRuinsServicePower())
+        assertEquals(0, engine.inventory.count(ItemType.METAL))
+        assertEquals(0, engine.inventory.count(ItemType.FABRIC))
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED))
+
+        assertFalse(engine.openRuinsServiceAccess())
+        assertTrue(engine.openRuinsServiceAccess())
+        assertFalse(engine.openRuinsServiceAccess())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED))
+
         val restored = GameEngine()
         restored.restoreSaveSnapshot(engine.createSaveSnapshot())
         assertTrue(restored.isPoiDiscovered(outerRoute.id))
@@ -313,6 +340,11 @@ class PointOfInterestTest {
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED))
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND))
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED))
+        assertTrue(restored.isPoiDiscovered(junction.id))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED))
     }
 
     @Test
