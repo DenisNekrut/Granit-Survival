@@ -290,11 +290,16 @@ class PointOfInterestTest {
         engine.player.y = outerRoute.y
         assertTrue(engine.scanNearbyPointsOfInterest().contains(outerRoute))
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
+        assertFalse(engine.inspectRuinsOuterRoute())
+        assertTrue(engine.inspectRuinsOuterRoute())
+        assertFalse(engine.inspectRuinsOuterRoute())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED))
 
         val restored = GameEngine()
         restored.restoreSaveSnapshot(engine.createSaveSnapshot())
         assertTrue(restored.isPoiDiscovered(outerRoute.id))
         assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED))
     }
 
     @Test
