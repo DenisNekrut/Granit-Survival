@@ -715,6 +715,12 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             TileType.EXIT_TO_FOREST -> { travelToZone(WorldZone.FOREST); interactionCount++ }
             TileType.EXIT_TO_RUINS -> { travelToZone(WorldZone.RUINS); interactionCount++ }
             TileType.EXIT_TO_ROAD -> { travelToZone(WorldZone.ROAD); interactionCount++ }
+            TileType.EXIT_TO_COMMUNICATION_NODE -> {
+                if (zone == WorldZone.RUINS && storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED)) {
+                    travelToZone(WorldZone.COMMUNICATION_NODE)
+                    interactionCount++
+                }
+            }
             TileType.EXIT -> {
                 travelToZone(if (zone == WorldZone.BUNKER) WorldZone.FOREST else WorldZone.BUNKER)
                 interactionCount++
