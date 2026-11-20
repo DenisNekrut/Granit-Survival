@@ -533,6 +533,22 @@ class MainActivity : Activity() {
                     panel.addView(label("Пульт и журнал дежурной смены изучены. Отметки о линии GRANIT сохранены.", 12f, Color.rgb(151, 190, 151)))
             }
         }
+        if (story.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED)) {
+            panel.addView(label("СЛЕДУЮЩИЙ ОРИЕНТИР · ОТВЕТВЛЕНИЕ ЛИНИИ 08", 14f, Color.rgb(207, 194, 155), true))
+            when {
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED) ->
+                    panel.addView(label("Табличка контрольного пункта Б изучена. Ориентир сохранён на карте; точное положение узла ещё предстоит установить.", 12f, Color.rgb(151, 190, 151)))
+                story.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND) -> {
+                    panel.addView(label("Ответвление найдено. Осмотри основание дорожного знака и проверь, куда ведёт старая трасса.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ИЗУЧИТЬ ОТВЕТВЛЕНИЕ ЛИНИИ 08") {
+                        session.engine.inspectRoadLine08Branch()
+                        showJournal()
+                    })
+                }
+                else ->
+                    panel.addView(label("Вернись к метке линии 08 на старой дороге и проследуй по указанному ответвлению. Ищи старую дорожную отметку у просёлочного проезда.", 13f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
