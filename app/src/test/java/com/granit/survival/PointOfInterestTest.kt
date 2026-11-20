@@ -280,10 +280,11 @@ class PointOfInterestTest {
         engine.player.x = marker.x
         engine.player.y = marker.y
 
-        assertFalse(engine.scanNearbyPointsOfInterest().contains(outerRoute))
+        val firstDiscovery = engine.scanNearbyPointsOfInterest()
+        assertTrue(firstDiscovery.contains(marker))
+        assertFalse(firstDiscovery.contains(outerRoute))
         assertFalse(engine.storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND))
 
-        assertTrue(engine.scanNearbyPointsOfInterest().contains(marker))
         assertTrue(engine.inspectRuinsSignalMarker())
         engine.player.x = outerRoute.x
         engine.player.y = outerRoute.y
