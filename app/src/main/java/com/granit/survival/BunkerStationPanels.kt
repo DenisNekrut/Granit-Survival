@@ -24,8 +24,8 @@ internal class BunkerStationPanels(
 ) {
     fun showRadio() {
         val engine = session.engine
-        if (!engine.bunkerPower.hasPower) {
-            showMessage("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
+        if (!engine.bunkerPower.hasPower && engine.inventory.count(ItemType.BATTERY) == 0) {
+            showMessage("РАДИОПРИЁМНИК", "Нет питания. Запусти генератор или принеси батарейку для аварийного приёма.")
             return
         }
         val event = engine.listenToRadio()

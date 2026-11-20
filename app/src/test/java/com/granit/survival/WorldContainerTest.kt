@@ -106,6 +106,23 @@ class WorldContainerTest {
     }
 
     @Test
+    fun newTechnicalItemsAppearInTheirSpecializedCaches() {
+        val materials = (0 until 100).map { index ->
+            WorldContainer("materials_$index", WorldZone.RUINS, index, 4, "ТАЙНИК").also {
+                it.seedInitialContents()
+            }
+        }.first { it.lootTier == WorldLootTier.MATERIALS }
+        val rare = (0 until 100).map { index ->
+            WorldContainer("rare_$index", WorldZone.ROAD, index, 4, "ТАЙНИК").also {
+                it.seedInitialContents()
+            }
+        }.first { it.lootTier == WorldLootTier.RARE }
+
+        assertTrue("Technical caches should contain electronics", materials.count(ItemType.ELECTRONICS) >= 2)
+        assertTrue("Rare caches should contain batteries", rare.count(ItemType.BATTERY) >= 2)
+    }
+
+    @Test
     fun authoredLandmarksExposeSpecializedLootCaches() {
         val cases = listOf(
             Triple(WorldZone.FOREST, "forest_camp", WorldLootTier.PROVISIONS),

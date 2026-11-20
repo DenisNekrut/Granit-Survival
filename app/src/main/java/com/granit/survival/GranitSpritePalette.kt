@@ -40,6 +40,8 @@ internal object GranitSpritePalette {
             spriteId.startsWith("barrel") -> "brick"
         spriteId.startsWith("puddle") || spriteId in setOf("water", "item_water") -> "water"
         spriteId in setOf("fabric", "item_fabric", "bandage", "item_bandage") -> "fabric"
+        spriteId == "item_electronics" -> "steel"
+        spriteId == "item_battery" -> "rust"
         spriteId == "medical_station" || spriteId == "item_medical_kit" -> "medical"
         spriteId.startsWith("infected_") -> "skin"
         spriteId in setOf("food", "item_food") -> "hazard"

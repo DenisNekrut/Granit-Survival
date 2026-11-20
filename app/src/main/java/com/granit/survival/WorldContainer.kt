@@ -42,6 +42,7 @@ class WorldContainer(
                 contents.add(ItemType.WOOD, 3)
                 contents.add(ItemType.WATER, 1)
                 contents.add(ItemType.CANNED_FOOD, 1)
+                contents.add(ItemType.ELECTRONICS, 1)
             }
             WorldZone.RUINS -> {
                 contents.add(ItemType.METAL, 4)
@@ -65,6 +66,7 @@ class WorldContainer(
             WorldLootTier.MATERIALS -> {
                 contents.add(ItemType.METAL, if (zone == WorldZone.RUINS) 5 else 3)
                 contents.add(ItemType.FABRIC, 2)
+                contents.add(ItemType.ELECTRONICS, 2)
             }
             WorldLootTier.MEDICAL -> {
                 contents.add(ItemType.BANDAGE, 2)
@@ -79,6 +81,7 @@ class WorldContainer(
                 contents.add(ItemType.BANDAGE, 1)
                 contents.add(ItemType.METAL, 3)
                 contents.add(ItemType.CANNED_FOOD, 1)
+                contents.add(ItemType.BATTERY, 2)
             }
         }
     }

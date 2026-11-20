@@ -7,7 +7,9 @@ enum class ItemType(val displayName: String, val color: Int, val iconSpriteId: S
     CANNED_FOOD("Консервы", 0xFFB28A43.toInt(), "item_food"),
     WATER("Вода", 0xFF4E91B5.toInt(), "item_water"),
     MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt(), "item_medical_kit"),
-    BANDAGE("Бинт", 0xFFD8D0B5.toInt(), "item_bandage")
+    BANDAGE("Бинт", 0xFFD8D0B5.toInt(), "item_bandage"),
+    ELECTRONICS("Электронные детали", 0xFF67A7A0.toInt(), "item_electronics"),
+    BATTERY("Батарейка", 0xFFB9A34C.toInt(), "item_battery")
 }
 
 data class ItemStack(
