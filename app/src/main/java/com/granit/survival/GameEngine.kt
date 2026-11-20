@@ -391,6 +391,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)
     }
 
+    /** The outer route sign can be inspected only after its landmark has been discovered. */
+    fun inspectRuinsOuterRoute(): Boolean {
+        if (!isPoiDiscovered("ruins_outer_route")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED)
+    }
+
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
     fun inspectForestWatchPostSignal(): Boolean {
         if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
