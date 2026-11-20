@@ -96,6 +96,11 @@ class ExtractedEngineSystemsTest {
             ZoneTransitionSystem.arrivalExitFor(WorldZone.RUINS, WorldZone.FOREST))
         assertEquals(TileType.EXIT_TO_FOREST,
             ZoneTransitionSystem.arrivalExitFor(WorldZone.FOREST, WorldZone.RUINS))
+        assertEquals(TileType.EXIT_TO_RUINS,
+            ZoneTransitionSystem.arrivalExitFor(WorldZone.RUINS, WorldZone.COMMUNICATION_NODE))
+        assertEquals(TileType.EXIT_TO_COMMUNICATION_NODE,
+            ZoneTransitionSystem.arrivalExitFor(WorldZone.COMMUNICATION_NODE, WorldZone.RUINS))
+        assertFalse(ZoneTransitionSystem.shouldGenerateFreshMap(WorldZone.COMMUNICATION_NODE, true))
         assertEquals(null, ZoneTransitionSystem.arrivalExitFor(WorldZone.FOREST, WorldZone.FOREST))
     }
 
