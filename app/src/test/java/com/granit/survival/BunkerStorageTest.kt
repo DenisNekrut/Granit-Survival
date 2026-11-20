@@ -68,7 +68,6 @@ class BunkerStorageTest {
         val backpack = Inventory()
         val storage = BunkerStorage(columns = 1, rows = 1, stackLimit = 2)
         backpack.add(ItemType.METAL, 5)
-        storage.deposit(backpack, ItemType.WOOD, 0)
 
         assertFalse(storage.depositAt(backpack, 0, 5))
         assertEquals(5, backpack.count(ItemType.METAL))
