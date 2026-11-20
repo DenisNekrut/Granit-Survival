@@ -83,3 +83,10 @@ The external atlas is currently an optional override. If absent, the game genera
 - Seven additional world props now use 32x32 authored pixel frames: bunker panels, debris, floor grates, grass patches, fallen logs, metal scrap and puddles.
 - Added per-material seam, bolt, grass blade, metal glint and water ripple accents while preserving source silhouettes and tile placement.
 - The shared world-density compensation keeps their logical footprint unchanged; inventory icons and UI-space sprites remain on their independent sizing path.
+
+
+## 2026-11-20 — sprite footprint and replacement palette
+- World footprint is computed from authored frame dimensions, logical density, draw pixel size and shared world scale. Never infer collision size from texture-atlas texels.
+- Large world props require a one-cell clearance from walls and each other, plus protected areas around landmarks, exits, spawn points and the main route.
+- Large props that physically occupy space are checked by movement collision using the same footprint as rendering.
+- The active sprite palette is remapped to cold steel, oxidized teal, moss/olive, muted rust and amber. The same palette is used by the texture atlas, CPU fallback renderer and HUD icon renderer.
