@@ -77,3 +77,9 @@ The external atlas is currently an optional override. If absent, the game genera
 - The rule applies to base sprites and generated variants, including the 32x48 player, 32x32 bunker fixtures and enlarged outdoor props. Atlas rasterization remains 2x and nearest-neighbour.
 - Furniture anchoring now derives its occupied width from the actual authored frame width and density multiplier, preventing visual overhang from shifting the wall anchor.
 - Inventory HUD icons remain independently sized in screen space and are not affected by world-density compensation.
+
+
+## 2026-11-20 — secondary terrain and utility prop detail pass
+- Seven additional world props now use 32x32 authored pixel frames: bunker panels, debris, floor grates, grass patches, fallen logs, metal scrap and puddles.
+- Added per-material seam, bolt, grass blade, metal glint and water ripple accents while preserving source silhouettes and tile placement.
+- The shared world-density compensation keeps their logical footprint unchanged; inventory icons and UI-space sprites remain on their independent sizing path.
