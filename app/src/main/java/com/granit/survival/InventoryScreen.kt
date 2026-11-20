@@ -1,6 +1,7 @@
 package com.granit.survival
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -14,7 +15,7 @@ import kotlin.math.roundToInt
 
 
 /** Pixel-perfect Canvas icon; each source texel is drawn without filtering. */
-private class InventoryPixelIconView(context: Context, private val spriteId: String) : View(context) {
+internal class InventoryPixelIconView(context: Context, private val spriteId: String) : View(context) {
     private val pixelPaint = Paint().apply {
         style = Paint.Style.FILL
         isAntiAlias = false
@@ -71,36 +72,53 @@ internal class InventoryScreen(
     private val dp: (Int) -> Int
 ) {
     fun show(engine: GameEngine) {
-        val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · 4 × 4 ячейки")
-        for (index in 0 until engine.inventory.columns * engine.inventory.rows) {
-            val stack = engine.inventory.slot(index)
-            if (stack == null) {
-                panel.addView(label("Ячейка ${index + 1} · пусто", 12f, GranitPalette.textSecondary, false))
-                continue
-            }
+        val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · ${engine.inventory.columns} × ${engine.inventory.rows}")
+        for (rowIndex in 0 until engine.inventory.rows) {
             val row = LinearLayout(activity).apply {
                 orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(6), dp(3), dp(6), dp(3))
             }
-            row.addView(InventoryPixelIconView(activity, stack.type.iconSpriteId), LinearLayout.LayoutParams(dp(42), dp(42)))
-            row.addView(label(stack.type.displayName + " × " + stack.quantity, 13f, GranitPalette.textPrimary, false).apply {
-                gravity = Gravity.CENTER_VERTICAL
-            }, LinearLayout.LayoutParams(0, -2, 1f))
-            val useAction: (() -> Unit)? = when (stack.type) {
-                ItemType.CANNED_FOOD -> ({ if (consumeFood()) refresh() })
-                ItemType.WATER -> ({ if (drinkWater()) refresh() })
-                ItemType.BANDAGE -> ({ if (useBandage()) refresh() })
-                ItemType.MEDICAL_KIT -> ({ if (useMedicalKit()) refresh() })
-                else -> null
-            }
-            if (useAction != null) {
-                row.addView(menuButton("ИСПОЛЬЗОВАТЬ", when (stack.type) {
-                    ItemType.BANDAGE, ItemType.MEDICAL_KIT -> engine.needs.health < 100f
-                    else -> true
-                }) { useAction.invoke() }, LinearLayout.LayoutParams(dp(142), -2))
-            } else {
-                row.addView(label("ПАССИВНЫЙ ПРЕДМЕТ", 10f, GranitPalette.subtitle, false))
+            for (column in 0 until engine.inventory.columns) {
+                val index = rowIndex * engine.inventory.columns + column
+                val stack = engine.inventory.slot(index)
+                val cell = LinearLayout(activity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                    setPadding(dp(4), dp(5), dp(4), dp(5))
+                    setBackgroundColor(Color.argb(175, 28, 43, 39))
+                }
+                if (stack == null) {
+                    cell.addView(label("ПУСТО", 10f, GranitPalette.subtitle, false))
+                } else {
+                    cell.addView(
+                        InventoryPixelIconView(activity, stack.type.iconSpriteId),
+                        LinearLayout.LayoutParams(dp(42), dp(42))
+                    )
+                    cell.addView(label(
+                        stack.type.displayName + "\n×" + stack.quantity,
+                        10f, GranitPalette.textPrimary, true
+                    ))
+                    val useAction: (() -> Unit)? = when (stack.type) {
+                        ItemType.CANNED_FOOD -> ({ if (consumeFood()) refresh() })
+                        ItemType.WATER -> ({ if (drinkWater()) refresh() })
+                        ItemType.BANDAGE -> ({ if (useBandage()) refresh() })
+                        ItemType.MEDICAL_KIT -> ({ if (useMedicalKit()) refresh() })
+                        else -> null
+                    }
+                    if (useAction != null) {
+                        cell.isClickable = true
+                        cell.setOnClickListener {
+                            AlertDialog.Builder(activity)
+                                .setTitle(stack.type.displayName)
+                                .setItems(arrayOf("ИСПОЛЬЗОВАТЬ")) { _, _ -> useAction.invoke() }
+                                .setNegativeButton("ОТМЕНА", null)
+                                .show()
+                        }
+                    }
+                }
+                val params = LinearLayout.LayoutParams(0, dp(104), 1f).apply {
+                    setMargins(dp(2), dp(2), dp(2), dp(2))
+                }
+                row.addView(cell, params)
             }
             panel.addView(row)
         }
