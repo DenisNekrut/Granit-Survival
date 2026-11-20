@@ -105,6 +105,20 @@ class PixelSpriteTextureAtlasTest {
     }
 
     @Test
+    fun everyInventoryIconKeepsTransparentPixelsAroundItsSilhouette() {
+        val itemIds = PixelSpriteAtlas.allIds().filter { it.startsWith("item_") }
+        assertTrue("Inventory item icons must be registered", itemIds.isNotEmpty())
+        itemIds.forEach { id ->
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
+            val frame = sprite.frames.first()
+            val transparentPixels = frame.sumOf { row -> row.count { it == '.' } }
+            val totalPixels = frame.sumOf { it.length }
+            assertTrue("$id must retain transparent background pixels", transparentPixels > totalPixels / 3)
+            assertTrue("$id must not be a full rectangular tile", frame.first().contains('.') && frame.last().contains('.'))
+        }
+    }
+
+    @Test
     fun characterAndEnvironmentFramesShareOneAtlas() {
         val playerEntry = requireNotNull(plan.entry("player"))
         assertEquals(listOf(96, 96, 96, 96), playerEntry.frames.map { it.height })
