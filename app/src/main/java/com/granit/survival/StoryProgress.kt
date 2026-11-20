@@ -12,6 +12,8 @@ object StoryEventIds {
     const val LIBRARY_INSPECTED = "chapter_01.library_inspected"
     const val LIBRARY_NOTES_READ = "chapter_01.library_notes_read"
     const val RADIO_NOTES_CROSS_CHECKED = "chapter_01.radio_notes_cross_checked"
+    const val THEORY_CHECK_RADIO_ELSEWHERE = "chapter_01.theory_check_radio_elsewhere"
+    const val THEORY_CHECK_EQUIPMENT_FIRST = "chapter_01.theory_check_equipment_first"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -25,6 +27,8 @@ object StoryEventIds {
         LIBRARY_INSPECTED,
         LIBRARY_NOTES_READ,
         RADIO_NOTES_CROSS_CHECKED,
+        THEORY_CHECK_RADIO_ELSEWHERE,
+        THEORY_CHECK_EQUIPMENT_FIRST,
         WORKSHOP_INSPECTED
     )
 }
@@ -117,9 +121,25 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.LIBRARY_INSPECTED, "Библиотека", "На полях нескольких справочников есть карандашные пометки."),
             StoryObservation(StoryEventIds.LIBRARY_NOTES_READ, "Пометки в справочнике", "В пометках повторяются короткие указания: сверять показания приборов перед выходом и не полагаться на один источник связи. Рядом несколько раз написано слово «контур»."),
             StoryObservation(StoryEventIds.WORKSHOP_INSPECTED, "Мастерская", "На верстаке оставлены измерительный инструмент и список мелких ремонтных работ."),
-            StoryObservation(StoryEventIds.RADIO_NOTES_CROSS_CHECKED, "Сверка записей и эфира", "Андрей сопоставляет пометки с поведением радиостанции. Записи не объясняют помехи, но дают понять: перед выходом нельзя полагаться только на радиосвязь.")
+            StoryObservation(StoryEventIds.RADIO_NOTES_CROSS_CHECKED, "Сверка записей и эфира", "Андрей сопоставляет пометки с поведением радиостанции. Записи не объясняют помехи, но дают понять: перед выходом нельзя полагаться только на радиосвязь."),
+            StoryObservation(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE, "Гипотеза: проверить связь в другом месте", "Андрей решает, что помехи могут быть связаны с местом, где находится убежище. Это лишь рабочая версия — её ещё предстоит проверить."),
+            StoryObservation(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST, "Гипотеза: проверить оборудование", "Андрей решает сначала проверить само оборудование и питание радиостанции. Пока нельзя исключить ни неисправность, ни внешнюю причину помех.")
         )
         return notes.filter { hasEvent(it.eventId) }
+    }
+
+    /** Records one mutually exclusive, player-authored working theory after the clues are cross-checked. */
+    fun chooseFirstTheory(eventId: String): Boolean {
+        if (!hasEvent(StoryEventIds.RADIO_NOTES_CROSS_CHECKED)) return false
+        if (eventId != StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE &&
+            eventId != StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST) return false
+        val other = if (eventId == StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) {
+            StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST
+        } else {
+            StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE
+        }
+        if (hasEvent(other)) return false
+        return recordEvent(eventId)
     }
 
     fun snapshot(): StoryProgressSnapshot = StoryProgressSnapshot(
