@@ -66,3 +66,8 @@ The external atlas is currently an optional override. If absent, the game genera
 - Trees, bushes, rubble piles, streetlamps, road signs, wrecks, crates, barrels and road barriers now use 32x32 authored pixel frames with individually placed material highlights and seam/shadow accents.
 - Runtime atlas rasterizes these frames at 2x (64x64 texels) with nearest-neighbour filtering; world-space footprints, collision cells and interaction coordinates are unchanged.
 - Smaller environmental tiles remain on their compact source dimensions until their own dedicated redraw pass.
+
+## 2026-11-20 — inventory icon pass
+- Added seven original 16x16 pixel-art icons: wood, metal, fabric, canned food, water, medical kit and bandage.
+- The backpack list now renders the matching icon beside each item; the compact HUD inventory uses the same sprite IDs and generated atlas.
+- HUD icons are drawn in screen space and retain crisp nearest-neighbour pixels; a Canvas pixel fallback is used when the texture atlas is unavailable.
