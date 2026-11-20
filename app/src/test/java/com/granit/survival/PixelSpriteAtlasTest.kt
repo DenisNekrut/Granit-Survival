@@ -40,7 +40,7 @@ class PixelSpriteAtlasTest {
             })
         }
     }
-}
+
 
     @Test
     fun infectedArchetypesHaveDistinctTwoFramePixelSilhouettes() {
@@ -55,3 +55,4 @@ class PixelSpriteAtlasTest {
         assertTrue("infected silhouettes should not all be identical",
             ids.map { PixelSpriteAtlas.sprite(it)?.frames?.first() }.distinct().size == ids.size)
     }
+}
