@@ -63,6 +63,11 @@ class PixelSpriteAtlasTest {
     @Test
     fun spritesAreRoutedToTheirAuthoredMaterialFamilies() {
         assertTrue(GranitSpritePalette.materialForSprite("tree") == "pine")
+        assertTrue(GranitSpritePalette.materialForSprite("tree_dead") == "pine")
+        assertTrue(GranitSpritePalette.materialForSprite("bush_dry") == "pine")
+        assertTrue(GranitSpritePalette.materialForSprite("road_barrier_faded") == "steel")
+        assertTrue(GranitSpritePalette.materialForSprite("puddle_ice") == "water")
+        assertTrue(GranitSpritePalette.materialForSprite("bunker_panel_rusted") == "steel")
         assertTrue(GranitSpritePalette.materialForSprite("puddle") == "water")
         assertTrue(GranitSpritePalette.materialForSprite("metal_scrap") == "steel")
         assertTrue(GranitSpritePalette.materialForSprite("medical_station") == "medical")
