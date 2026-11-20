@@ -22,6 +22,27 @@ class BunkerStorage(
     fun withdraw(to: Inventory, type: ItemType, amount: Int): Boolean =
         transfer(contents, to, type, amount)
 
+    /** Moves items from one explicitly selected backpack cell. */
+    fun depositAt(from: Inventory, slotIndex: Int, amount: Int): Boolean =
+        transferAt(from, contents, slotIndex, amount)
+
+    /** Moves items from one explicitly selected storage cell. */
+    fun withdrawAt(to: Inventory, slotIndex: Int, amount: Int): Boolean =
+        transferAt(contents, to, slotIndex, amount)
+
+    private fun transferAt(from: Inventory, to: Inventory, slotIndex: Int, amount: Int): Boolean {
+        val stack = from.slot(slotIndex) ?: return false
+        if (amount <= 0 || stack.quantity < amount || !to.canAdd(stack.type, amount)) return false
+        if (!from.removeAt(slotIndex, amount)) return false
+        val unaccepted = to.add(stack.type, amount)
+        if (unaccepted == 0) return true
+
+        // Defensive rollback; capacity is checked before the source is mutated.
+        check(to.remove(stack.type, amount - unaccepted))
+        check(from.add(stack.type, amount) == 0)
+        return false
+    }
+
     private fun transfer(from: Inventory, to: Inventory, type: ItemType, amount: Int): Boolean {
         if (amount <= 0 || from.count(type) < amount) return false
         if (!from.remove(type, amount)) return false
