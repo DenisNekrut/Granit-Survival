@@ -535,4 +535,32 @@ class PointOfInterestTest {
         })
     }
 
+    @Test
+    fun line08DrainAccessRequiresServiceLaneInspectionAndPersistsOnce() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.ROAD, regenerate = false)
+        val hatch = PointOfInterestCatalog.byId("road_drain_hatch")!!
+        engine.player.x = hatch.x
+        engine.player.y = hatch.y
+
+        engine.storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+        assertTrue(engine.scanNearbyPointsOfInterest().none { it.id == hatch.id })
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND))
+        assertFalse(engine.inspectRoadLine08DrainAccess())
+
+        engine.storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED)
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == hatch.id })
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND))
+        assertTrue(engine.inspectRoadLine08DrainAccess())
+        assertFalse(engine.inspectRoadLine08DrainAccess())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED
+        })
+    }
+
 }
