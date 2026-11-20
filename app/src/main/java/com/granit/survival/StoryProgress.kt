@@ -17,6 +17,7 @@ object StoryEventIds {
     const val RADIO_ELSEWHERE_RELAY_FOUND = "chapter_01.radio_elsewhere_relay_found"
     const val EQUIPMENT_FIRST_RELAY_INSPECTED = "chapter_01.equipment_first_relay_inspected"
     const val FOREST_RELAY_INSPECTED = "chapter_01.forest_relay_inspected"
+    const val FOREST_RELAY_REPAIRED = "chapter_01.forest_relay_repaired"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -35,6 +36,7 @@ object StoryEventIds {
         RADIO_ELSEWHERE_RELAY_FOUND,
         EQUIPMENT_FIRST_RELAY_INSPECTED,
         FOREST_RELAY_INSPECTED,
+        FOREST_RELAY_REPAIRED,
         WORKSHOP_INSPECTED
     )
 }
@@ -132,7 +134,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST, "Гипотеза: проверить оборудование", "Андрей решает сначала проверить само оборудование и питание радиостанции. Пока нельзя исключить ни неисправность, ни внешнюю причину помех."),
             StoryObservation(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND, "Сигнал за пределами убежища", "У старого ретранслятора Андрей замечает, что характер помех отличается от того, что он слышал в убежище. Это поддерживает мысль проверить связь в других местах, но пока ничего не доказывает."),
             StoryObservation(StoryEventIds.EQUIPMENT_FIRST_RELAY_INSPECTED, "Проверка старого ретранслятора", "Андрей осматривает корпус ретранслятора и замечает следы прежнего ремонта. Само устройство давно не обслуживали; по одному внешнему осмотру нельзя понять, связано ли это с помехами."),
-            StoryObservation(StoryEventIds.FOREST_RELAY_INSPECTED, "Осмотр ретранслятора", "Андрей внимательно изучил старый ретранслятор и записал состояние устройства. Причина помех пока остаётся неизвестной.")
+            StoryObservation(StoryEventIds.FOREST_RELAY_INSPECTED, "Осмотр ретранслятора", "Андрей внимательно изучил старый ретранслятор и записал состояние устройства. Причина помех пока остаётся неизвестной."),
+            StoryObservation(StoryEventIds.FOREST_RELAY_REPAIRED, "Ретранслятор восстановлен", "Андрей восстановил питание и заменил повреждённые соединения. Устройство подало короткий сигнал, но устойчивой связи пока нет. Теперь ретранслятор может стать ориентиром для дальнейшей проверки сигнала.")
         )
         return notes.filter { hasEvent(it.eventId) }
     }
