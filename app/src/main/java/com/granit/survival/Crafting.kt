@@ -39,6 +39,14 @@ data class CraftingRecipe(
                 craftMinutes = 3
             ),
             CraftingRecipe(
+                id = "battery_pack",
+                title = "Комплект батареек",
+                ingredients = mapOf(ItemType.METAL to 2, ItemType.ELECTRONICS to 1),
+                output = ItemType.BATTERY,
+                outputAmount = 2,
+                craftMinutes = 5
+            ),
+            CraftingRecipe(
                 id = "medical_kit",
                 title = "Полевая аптечка",
                 ingredients = mapOf(ItemType.FABRIC to 2, ItemType.METAL to 1),
