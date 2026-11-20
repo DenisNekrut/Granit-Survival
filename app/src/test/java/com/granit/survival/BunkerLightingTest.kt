@@ -1,6 +1,5 @@
 package com.granit.survival
 
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -26,6 +25,6 @@ class BunkerLightingTest {
     fun poweredAndEmergencyLightingHaveDifferentReach() {
         assertTrue(BunkerLighting.poweredLayers.first().size >
             BunkerLighting.emergencyLayers.first().size)
-        assertEquals(0.42f, 0.42f, 0f)
+        assertTrue(BunkerLighting.poweredLayers.last().alpha > BunkerLighting.emergencyLayers.first().alpha)
     }
 }
