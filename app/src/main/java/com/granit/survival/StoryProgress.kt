@@ -11,6 +11,7 @@ object StoryEventIds {
     const val BED_INSPECTED = "chapter_01.bed_inspected"
     const val LIBRARY_INSPECTED = "chapter_01.library_inspected"
     const val LIBRARY_NOTES_READ = "chapter_01.library_notes_read"
+    const val RADIO_NOTES_CROSS_CHECKED = "chapter_01.radio_notes_cross_checked"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -23,6 +24,7 @@ object StoryEventIds {
         BED_INSPECTED,
         LIBRARY_INSPECTED,
         LIBRARY_NOTES_READ,
+        RADIO_NOTES_CROSS_CHECKED,
         WORKSHOP_INSPECTED
     )
 }
@@ -114,7 +116,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.BED_INSPECTED, "Спальня", "На тумбе лежит блокнот с короткой пометкой: «Не забыть проверить связь»."),
             StoryObservation(StoryEventIds.LIBRARY_INSPECTED, "Библиотека", "На полях нескольких справочников есть карандашные пометки."),
             StoryObservation(StoryEventIds.LIBRARY_NOTES_READ, "Пометки в справочнике", "В пометках повторяются короткие указания: сверять показания приборов перед выходом и не полагаться на один источник связи. Рядом несколько раз написано слово «контур»."),
-            StoryObservation(StoryEventIds.WORKSHOP_INSPECTED, "Мастерская", "На верстаке оставлены измерительный инструмент и список мелких ремонтных работ.")
+            StoryObservation(StoryEventIds.WORKSHOP_INSPECTED, "Мастерская", "На верстаке оставлены измерительный инструмент и список мелких ремонтных работ."),
+            StoryObservation(StoryEventIds.RADIO_NOTES_CROSS_CHECKED, "Сверка записей и эфира", "Андрей сопоставляет пометки с поведением радиостанции. Записи не объясняют помехи, но дают понять: перед выходом нельзя полагаться только на радиосвязь.")
         )
         return notes.filter { hasEvent(it.eventId) }
     }
