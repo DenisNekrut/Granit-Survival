@@ -29,3 +29,10 @@ The external atlas is currently an optional override. If absent, the game genera
 - Every variant remains a pixel sprite with nearest-neighbour rendering. No SVG or vector runtime assets are introduced.
 - Variant families currently cover crates, floor grates, trees, bushes, grass, fallen logs, barrels, rubble, debris, metal scraps, puddles, streetlamps, road signs and wrecks.
 - Further hand-authored redraws of the player, bunker furniture and large landmark sprites remain part of the visual pass; the present change establishes consistent scaling, grading and repeatable prop variation.
+
+
+## Android launcher icon
+- Original pixel art built around the Granit Survival bunker hatch, with the cold slate palette and restrained warm lamp highlight.
+- The 48x48 authored pixel master is stored as compact indexed-color data in `app/src/main/assets/launcher-icon.txt`.
+- The Android Gradle build generates density-specific PNG resources (mdpi through xxxhdpi) using nearest-neighbour scaling, plus adaptive and round launcher resource definitions.
+- The icon is registered through `android:icon` and `android:roundIcon` in the application manifest. No external image/vector runtime dependency is required.
