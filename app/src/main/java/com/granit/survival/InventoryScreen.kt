@@ -1,11 +1,56 @@
 package com.granit.survival
 
 import android.app.Activity
+import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.view.Gravity
+import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import kotlin.math.roundToInt
+
+
+/** Pixel-perfect Canvas icon; each source texel is drawn without filtering. */
+private class InventoryPixelIconView(context: Context, private val spriteId: String) : View(context) {
+    private val pixelPaint = Paint().apply {
+        style = Paint.Style.FILL
+        isAntiAlias = false
+        isFilterBitmap = false
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val sprite = PixelSpriteAtlas.sprite(spriteId) ?: return
+        val frame = sprite.frames.firstOrNull() ?: return
+        val frameWidth = frame.maxOfOrNull { it.length } ?: return
+        if (frameWidth == 0 || frame.isEmpty()) return
+        val pixelSize = minOf(width / frameWidth, height / frame.size).toFloat()
+        if (pixelSize <= 0f) return
+        val left = (width - frameWidth * pixelSize) * 0.5f
+        val top = (height - frame.size * pixelSize) * 0.5f
+        frame.forEachIndexed { rowIndex, row ->
+            row.forEachIndexed { column, symbol ->
+                if (symbol == '.') return@forEachIndexed
+                val color = sprite.palette[symbol] ?: return@forEachIndexed
+                pixelPaint.color = Color.rgb(
+                    (color[0] * 255f).roundToInt().coerceIn(0,255),
+                    (color[1] * 255f).roundToInt().coerceIn(0,255),
+                    (color[2] * 255f).roundToInt().coerceIn(0,255)
+                )
+                canvas.drawRect(
+                    left + column * pixelSize,
+                    top + rowIndex * pixelSize,
+                    left + (column + 1) * pixelSize,
+                    top + (rowIndex + 1) * pixelSize,
+                    pixelPaint
+                )
+            }
+        }
+    }
+}
 
 /**
  * Backpack UI separated from Activity navigation and game lifecycle.
@@ -38,6 +83,7 @@ internal class InventoryScreen(
                 gravity = Gravity.CENTER_VERTICAL
                 setPadding(dp(6), dp(3), dp(6), dp(3))
             }
+            row.addView(InventoryPixelIconView(activity, stack.type.iconSpriteId), LinearLayout.LayoutParams(dp(42), dp(42)))
             row.addView(label(stack.type.displayName + " × " + stack.quantity, 13f, GranitPalette.textPrimary, false).apply {
                 gravity = Gravity.CENTER_VERTICAL
             }, LinearLayout.LayoutParams(0, -2, 1f))
