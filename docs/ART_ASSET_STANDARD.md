@@ -61,3 +61,8 @@ The external atlas is currently an optional override. If absent, the game genera
 - Seven core bunker fixtures (bed, workbench, storage, bookshelf, radio, generator and medical station) now use 32x32 authored pixel frames.
 - Added fine panel seams, shelf/book edge accents, fabric folds, control lights, vent details and small hardware highlights while preserving silhouettes and interaction anchors.
 - The runtime atlas rasterizes these frames at 2x with nearest-neighbour filtering; world-space footprint and interaction distances are unchanged.
+
+## 2026-11-20 — large environment prop detail pass
+- Trees, bushes, rubble piles, streetlamps, road signs, wrecks, crates, barrels and road barriers now use 32x32 authored pixel frames with individually placed material highlights and seam/shadow accents.
+- Runtime atlas rasterizes these frames at 2x (64x64 texels) with nearest-neighbour filtering; world-space footprints, collision cells and interaction coordinates are unchanged.
+- Smaller environmental tiles remain on their compact source dimensions until their own dedicated redraw pass.
