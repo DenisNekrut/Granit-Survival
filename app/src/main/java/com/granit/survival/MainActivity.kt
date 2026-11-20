@@ -562,7 +562,18 @@ class MainActivity : Activity() {
             panel.addView(label("ЗАПИСИ ЖУРНАЛА СОХРАНЕНЫ", 13f, Color.rgb(151, 190, 151), true))
             if (story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED)) {
                 panel.addView(label("КОНТРОЛЬНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ СОХРАНЕНА", 13f, Color.rgb(151, 190, 151), true))
-                panel.addView(label("21:40 → 21:47 → 21:52. Интервалы между отметками не совпадают с системным временем экрана.", 13f, Color.LTGRAY))
+                panel.addView(label("21:40 → 21:47 → 21:52. Интервалы между отметками составляют семь и пять минут.", 13f, Color.LTGRAY))
+                when {
+                    story.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED) ->
+                        panel.addView(label("СВЕРКА С ЛЕСНОЙ ВЫШКОЙ ВЫПОЛНЕНА", 13f, Color.rgb(151, 190, 151), true))
+                    story.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED) ->
+                        panel.addView(menuButton("СОПОСТАВИТЬ С ПОКАЗАНИЯМИ ЛЕСНОЙ ВЫШКИ") {
+                            engine.crossCheckCommunicationNodeSignal()
+                            showCommunicationNodeShiftLog()
+                        })
+                    else ->
+                        panel.addView(label("Для сравнения нужны показания старой лесной вышки. Вернись к записям ретранслятора и проверь сигнал.", 12f, Color.LTGRAY))
+                }
             } else {
                 panel.addView(menuButton("ИЗВЛЕЧЬ КОНТРОЛЬНУЮ ПОСЛЕДОВАТЕЛЬНОСТЬ") {
                     engine.extractCommunicationNodeSignalSequence()
