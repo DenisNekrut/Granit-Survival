@@ -136,6 +136,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (found.any { it.id == "road_checkpoint" }) {
             storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND)
         }
+        if (found.any { it.id == "road_service_lane" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND)
+        }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
                 storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) ->
@@ -519,6 +522,14 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (!isPoiDiscovered("road_checkpoint")) return false
         if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND)) return false
         return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED)
+    }
+
+    /** Inspects the service lane after the checkpoint B route board has been read. */
+    fun inspectRoadLine08ServiceLane(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_service_lane")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED)
     }
 
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
