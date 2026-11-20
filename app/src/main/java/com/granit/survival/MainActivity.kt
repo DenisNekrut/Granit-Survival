@@ -128,6 +128,11 @@ class MainActivity : Activity() {
     private fun handleContextAction() {
         if (!activeGame || isFinishing) return
         val engine = session.engine
+        // Authored landmark caches are not map-blocking tiles; resolve them by proximity first.
+        if (engine.nearestWorldContainer(1.35f) != null) {
+            showWorldContainerPanel()
+            return
+        }
         val hasNearbyResource = engine.tileMap.nearestResource(
             engine.player.x, engine.player.y, 1.35f
         ) != null
