@@ -425,6 +425,11 @@ class MainActivity : Activity() {
                 }
             }
         }
+        if (session.engine.isPoiDiscovered("forest_radio_cache")) {
+            panel.addView(menuButton("ИЗУЧИТЬ СТАРЫЙ РЕТРАНСЛЯТОР") {
+                showForestRelayInspection()
+            })
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
@@ -435,6 +440,35 @@ class MainActivity : Activity() {
             }
         }
         panel.addView(menuButton("НАЗАД") { showPauseMenu() })
+        showOverlay(panel)
+    }
+
+    private fun showForestRelayInspection() {
+        val story = session.engine.storyProgress
+        val panel = createPanel("СТАРЫЙ РЕТРАНСЛЯТОР", "Лес · обнаруженная точка интереса")
+        panel.addView(label("Андрей возвращается к записям об обнаруженном устройстве.", 14f, Color.WHITE))
+        when {
+            story.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) -> {
+                panel.addView(label("Выбранная версия: проверить связь в другом месте.", 13f, Color.rgb(207, 194, 155), true))
+                panel.addView(label("В памяти всплывает характер помех из убежища. У ретранслятора шум звучал иначе, словно приём менялся вместе с местом. Андрей не может пока определить, почему это происходит.", 13f, Color.LTGRAY))
+            }
+            story.hasEvent(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST) -> {
+                panel.addView(label("Выбранная версия: сначала проверить оборудование.", 13f, Color.rgb(207, 194, 155), true))
+                panel.addView(label("Андрей сосредотачивается на корпусе и старых соединениях. На устройстве заметны следы прежнего ремонта, но внешний осмотр не позволяет установить, исправен ли ретранслятор.", 13f, Color.LTGRAY))
+            }
+            else -> {
+                panel.addView(label("Андрей пока не выбрал, с какой версии начинать. Он отмечает только то, что устройство давно не обслуживали.", 13f, Color.LTGRAY))
+            }
+        }
+        if (story.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED)) {
+            panel.addView(label("Результат осмотра уже записан в журнал.", 13f, Color.rgb(151, 190, 151)))
+        } else {
+            panel.addView(menuButton("ЗАПИСАТЬ РЕЗУЛЬТАТ ОСМОТРА") {
+                session.engine.inspectDiscoveredForestRelay()
+                showForestRelayInspection()
+            })
+        }
+        panel.addView(menuButton("НАЗАД К ЖУРНАЛУ") { showJournal() })
         showOverlay(panel)
     }
 
