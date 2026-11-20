@@ -68,6 +68,16 @@ class Inventory(
         return remaining <= 0
     }
 
+    /** Removes a quantity from one exact slot; returns false without mutation on invalid input. */
+    fun removeAt(index: Int, amount: Int = 1): Boolean {
+        if (amount <= 0) return false
+        val stack = slots.getOrNull(index) ?: return false
+        if (stack.quantity < amount) return false
+        stack.quantity -= amount
+        if (stack.quantity == 0) slots[index] = null
+        return true
+    }
+
     fun remove(type: ItemType, amount: Int = 1): Boolean {
         if (amount <= 0 || count(type) < amount) return false
         var remaining = amount
