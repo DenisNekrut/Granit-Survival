@@ -101,11 +101,10 @@ class BunkerPowerSystemTest {
         val startTime = engine.worldClock.totalMinutes
 
         assertTrue(engine.canUseRadio())
-        val event = engine.listenToRadio()
+        val event = engine.listenToRadio() ?: error("Expected a radio event")
 
-        assertTrue(event != null)
         assertEquals(1, engine.inventory.count(ItemType.BATTERY))
-        assertEquals(startTime + event!!.broadcastMinutes, engine.worldClock.totalMinutes)
+        assertEquals(startTime + event.broadcastMinutes, engine.worldClock.totalMinutes)
         assertTrue(event.description.contains("аварийного питания"))
     }
 
