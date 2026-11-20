@@ -8,13 +8,19 @@ class BunkerStorage(
 ) {
     private val contents = Inventory(columns, rows, stackLimit)
 
-    fun count(type: ItemType): Int = contents.count(type)
+    override fun count(type: ItemType): Int = contents.count(type)
 
-    fun slot(index: Int): ItemStack? = contents.slot(index)
+    override fun slot(index: Int): ItemStack? = contents.slot(index)
 
-    fun snapshot(): List<ItemStack?> = contents.snapshot()
+    override fun snapshot(): List<ItemStack?> = contents.snapshot()
 
-    fun restore(snapshot: List<ItemStack?>) = contents.restore(snapshot)
+    override fun restore(snapshot: List<ItemStack?>) = contents.restore(snapshot)
+    override fun canAdd(type: ItemType, amount: Int): Boolean = contents.canAdd(type, amount)
+
+    override fun add(type: ItemType, amount: Int): Int = contents.add(type, amount)
+
+    override fun removeAt(index: Int, amount: Int): Boolean = contents.removeAt(index, amount)
+
 
     fun deposit(from: Inventory, type: ItemType, amount: Int): Boolean =
         transfer(from, contents, type, amount)
@@ -34,13 +40,12 @@ class BunkerStorage(
         val stack = from.slot(slotIndex) ?: return false
         if (amount <= 0 || stack.quantity < amount || !to.canAdd(stack.type, amount)) return false
         if (!from.removeAt(slotIndex, amount)) return false
-        val unaccepted = to.add(stack.type, amount)
-        if (unaccepted == 0) return true
-
-        // Defensive rollback; capacity is checked before the source is mutated.
-        check(to.remove(stack.type, amount - unaccepted))
-        check(from.add(stack.type, amount) == 0)
-        return false
+        // Capacity is preflighted before source mutation; on the single game thread
+        // the destination cannot change between this check and the add.
+        check(to.add(stack.type, amount) == 0) {
+            "Destination capacity changed during a slot transfer"
+        }
+        return true
     }
 
     private fun transfer(from: Inventory, to: Inventory, type: ItemType, amount: Int): Boolean {
