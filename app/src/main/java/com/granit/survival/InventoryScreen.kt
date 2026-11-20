@@ -1,11 +1,58 @@
 package com.granit.survival
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.view.Gravity
+import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import kotlin.math.roundToInt
+
+
+/** Pixel-perfect Canvas icon; each source texel is drawn without filtering. */
+internal class InventoryPixelIconView(context: Context, private val spriteId: String) : View(context) {
+    private val pixelPaint = Paint().apply {
+        style = Paint.Style.FILL
+        isAntiAlias = false
+        isFilterBitmap = false
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val sprite = PixelSpriteAtlas.sprite(spriteId) ?: return
+        val frame = sprite.frames.firstOrNull() ?: return
+        val frameWidth = frame.maxOfOrNull { it.length } ?: return
+        if (frameWidth == 0 || frame.isEmpty()) return
+        val pixelSize = minOf(width / frameWidth, height / frame.size).toFloat()
+        if (pixelSize <= 0f) return
+        val left = (width - frameWidth * pixelSize) * 0.5f
+        val top = (height - frame.size * pixelSize) * 0.5f
+        frame.forEachIndexed { rowIndex, row ->
+            row.forEachIndexed { column, symbol ->
+                if (symbol == '.') return@forEachIndexed
+                val color = sprite.palette[symbol] ?: return@forEachIndexed
+                pixelPaint.color = Color.rgb(
+                    (color[0] * 255f).roundToInt().coerceIn(0,255),
+                    (color[1] * 255f).roundToInt().coerceIn(0,255),
+                    (color[2] * 255f).roundToInt().coerceIn(0,255)
+                )
+                canvas.drawRect(
+                    left + column * pixelSize,
+                    top + rowIndex * pixelSize,
+                    left + (column + 1) * pixelSize,
+                    top + (rowIndex + 1) * pixelSize,
+                    pixelPaint
+                )
+            }
+        }
+    }
+}
 
 /**
  * Backpack UI separated from Activity navigation and game lifecycle.
@@ -25,39 +72,46 @@ internal class InventoryScreen(
     private val useMedicalKit: () -> Boolean,
     private val dp: (Int) -> Int
 ) {
+    private fun showCannotUseMessage() {
+        Toast.makeText(
+            activity,
+            "Сейчас предмет нельзя использовать: проверь состояние персонажа",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
     fun show(engine: GameEngine) {
-        val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · 4 × 4 ячейки")
-        for (index in 0 until engine.inventory.columns * engine.inventory.rows) {
-            val stack = engine.inventory.slot(index)
-            if (stack == null) {
-                panel.addView(label("Ячейка ${index + 1} · пусто", 12f, Color.rgb(126, 139, 132), false))
-                continue
-            }
-            val row = LinearLayout(activity).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(6), dp(3), dp(6), dp(3))
-            }
-            row.addView(label(stack.type.displayName + " × " + stack.quantity, 13f, Color.WHITE, false).apply {
-                gravity = Gravity.CENTER_VERTICAL
-            }, LinearLayout.LayoutParams(0, -2, 1f))
+        val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · ${engine.inventory.columns} × ${engine.inventory.rows}")
+        panel.addView(InventoryGridView(
+            context = activity,
+            container = engine.inventory,
+            cellHeightDp = 104,
+            iconSizeDp = 42,
+            dp = dp
+        ) { _, stack ->
             val useAction: (() -> Unit)? = when (stack.type) {
-                ItemType.CANNED_FOOD -> ({ if (consumeFood()) refresh() })
-                ItemType.WATER -> ({ if (drinkWater()) refresh() })
-                ItemType.BANDAGE -> ({ if (useBandage()) refresh() })
-                ItemType.MEDICAL_KIT -> ({ if (useMedicalKit()) refresh() })
+                ItemType.CANNED_FOOD -> ({
+                    if (consumeFood()) refresh() else showCannotUseMessage()
+                })
+                ItemType.WATER -> ({
+                    if (drinkWater()) refresh() else showCannotUseMessage()
+                })
+                ItemType.BANDAGE -> ({
+                    if (useBandage()) refresh() else showCannotUseMessage()
+                })
+                ItemType.MEDICAL_KIT -> ({
+                    if (useMedicalKit()) refresh() else showCannotUseMessage()
+                })
                 else -> null
             }
             if (useAction != null) {
-                row.addView(menuButton("ИСПОЛЬЗОВАТЬ", when (stack.type) {
-                    ItemType.BANDAGE, ItemType.MEDICAL_KIT -> engine.needs.health < 100f
-                    else -> true
-                }) { useAction.invoke() }, LinearLayout.LayoutParams(dp(142), -2))
-            } else {
-                row.addView(label("ПАССИВНЫЙ ПРЕДМЕТ", 10f, Color.rgb(145, 160, 149), false))
+                AlertDialog.Builder(activity)
+                    .setTitle(stack.type.displayName)
+                    .setItems(arrayOf("ИСПОЛЬЗОВАТЬ")) { _, _ -> useAction.invoke() }
+                    .setNegativeButton("ОТМЕНА", null)
+                    .show()
             }
-            panel.addView(row)
-        }
+        })
         panel.addView(menuButton("ЗАКРЫТЬ РЮКЗАК", true) { close() })
         showOverlay(panel)
     }

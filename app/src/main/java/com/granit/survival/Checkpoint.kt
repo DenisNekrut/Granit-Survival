@@ -110,7 +110,7 @@ class CheckpointSystem {
         inventory = inventory.map { it?.copy() },
         bunkerStorage = bunkerStorage.map { it?.copy() },
         remainingResources = remainingResources.toList(),
-        zoneResources = zoneResources.map { it.copy(resources = it.resources.toList()) },
+        zoneResources = zoneResources.map { s -> s.copy(resources = s.resources.toList(), containers = s.containers.map { it.copy(contents = it.contents.map { stack -> stack?.copy() }) }) },
         bookLibrary = bookLibrary.copy(readBookIds = bookLibrary.readBookIds.toSet()),
         discoveredPoiIds = discoveredPoiIds.toSet()
     )

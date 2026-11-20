@@ -35,6 +35,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val equipment = PlayerEquipment()
     val statistics = CharacterStatistics()
     private val zoneMaps = mutableMapOf<WorldZone, TileMap>()
+    private val zoneContainers = mutableMapOf<WorldZone, MutableMap<String, WorldContainer>>()
     var tileMap = createZoneMap(WorldZone.BUNKER).also { zoneMaps[WorldZone.BUNKER] = it }
         private set
     val zone: WorldZone get() = tileMap.zone
@@ -122,6 +123,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         isMoving = false
     }
 
+    /** Apply a render viewport change and reframe immediately around the player. */
+    fun setCameraViewport(width: Float, height: Float) {
+        val changed = camera.viewportWidth != width || camera.viewportHeight != height
+        camera.setViewport(width, height)
+        if (changed) camera.snapTo(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat())
+    }
+
     fun updateFrame(frameDeltaSeconds: Float, input: EngineInput): Int {
         accumulator += frameDeltaSeconds.coerceIn(0f, MAX_FRAME_SECONDS)
         var steps = 0
@@ -130,6 +138,11 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             accumulator -= FIXED_STEP_SECONDS
             steps++
         }
+        // Camera tracking belongs to the render-frame cadence, not the fixed simulation
+        // cadence. This also applies a freshly resized bunker viewport before the next
+        // simulation step and prevents the camera from appearing frozen between steps.
+        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat(),
+            frameDeltaSeconds.coerceIn(0f, MAX_FRAME_SECONDS))
         return steps
     }
 
@@ -265,11 +278,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val previousZone = zone
         if (target != previousZone) psychology.onZoneChange(previousZone, target)
         val targetMap = if (ZoneTransitionSystem.shouldGenerateFreshMap(target, regenerate)) {
+            zoneContainers.remove(target)
             createZoneMap(target, mapSeedGenerator()).also { zoneMaps[target] = it }
         } else {
             zoneMaps.getOrPut(target) { createZoneMap(target) }
         }
         tileMap = targetMap
+        ensureZoneContainers(target, targetMap)
         equipment.onZoneChanged(previousZone, target)
         if (target != previousZone) statistics.visitZone(target)
         lastDiscoveryTitle = null
@@ -291,21 +306,68 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
     /** Snapshot only maps that actually exist; an unvisited expedition remains ungenerated. */
     fun zoneResourceSnapshot(): List<ZoneResourceSnapshot> = zoneMaps.map { (target, map) ->
-        ZoneResourceSnapshot(target, map.resourceSnapshot(), map.layoutSeed)
+        ensureZoneContainers(target, map)
+        ZoneResourceSnapshot(target, map.resourceSnapshot(), map.layoutSeed,
+            zoneContainers[target].orEmpty().values.map { it.toSnapshot() })
     }
 
     fun restoreZoneResources(snapshots: List<ZoneResourceSnapshot>) {
-        zoneMaps.clear()
+        zoneMaps.clear(); zoneContainers.clear()
         if (snapshots.isEmpty()) {
-            zoneMaps[WorldZone.BUNKER] = createZoneMap(WorldZone.BUNKER)
-            return
+            val bunker = createZoneMap(WorldZone.BUNKER); zoneMaps[WorldZone.BUNKER] = bunker
+            ensureZoneContainers(WorldZone.BUNKER, bunker); return
         }
         snapshots.forEach { snapshot ->
-            val map = createZoneMap(snapshot.zone, snapshot.seed)
-            map.restoreResources(snapshot.resources)
-            zoneMaps[snapshot.zone] = map
+            val map = createZoneMap(snapshot.zone, snapshot.seed); map.restoreResources(snapshot.resources)
+            zoneMaps[snapshot.zone] = map; ensureZoneContainers(snapshot.zone, map)
+            snapshot.containers.forEach { saved ->
+                val container = zoneContainers[snapshot.zone]?.get(saved.id)
+                    ?: WorldContainer(saved.id, snapshot.zone, saved.x, saved.y, saved.title).also {
+                        zoneContainers.getOrPut(snapshot.zone) { linkedMapOf() }[saved.id] = it
+                    }
+                container.restore(saved.contents)
+            }
         }
-        zoneMaps.putIfAbsent(WorldZone.BUNKER, createZoneMap(WorldZone.BUNKER))
+        val bunker = zoneMaps.getOrPut(WorldZone.BUNKER) { createZoneMap(WorldZone.BUNKER) }
+        ensureZoneContainers(WorldZone.BUNKER, bunker)
+    }
+
+    private fun ensureZoneContainers(target: WorldZone, map: TileMap) {
+        val containers = zoneContainers.getOrPut(target) { linkedMapOf() }
+        map.forEachTile { x, y, type -> if (type == TileType.LOOT_CACHE) {
+            val id = "${target.name.lowercase()}_${x}_$y"
+            containers.getOrPut(id) {
+                WorldContainer(id, target, x, y, "ТАЙНИК С ПРИПАСАМИ").apply { seedInitialContents() }
+            }
+        } }
+        PointOfInterestCatalog.inZone(target).filter { it.cacheTier != null }.forEach { poi ->
+            val x = kotlin.math.floor(poi.x).toInt()
+            val y = kotlin.math.floor(poi.y).toInt()
+            val id = "poi_${poi.id}"
+            containers.getOrPut(id) {
+                WorldContainer(id, target, x, y, "ТАЙНИК: ${poi.title}", lootTierOverride = poi.cacheTier)
+                    .apply { seedInitialContents() }
+            }
+        }
+    }
+
+    fun nearestWorldContainer(maxDistance: Float = 1.35f): WorldContainer? {
+        val limit = maxDistance * maxDistance
+        return zoneContainers[zone].orEmpty().values.minByOrNull { c ->
+            val dx = c.x + 0.5f - player.x; val dy = c.y + 0.5f - player.y; dx * dx + dy * dy
+        }?.takeIf { c -> val dx = c.x + 0.5f - player.x; val dy = c.y + 0.5f - player.y; dx * dx + dy * dy <= limit }
+    }
+
+    fun transferFromWorldContainerAt(id: String, slot: Int, amount: Int): Boolean {
+        val c = nearestWorldContainer()?.takeIf { it.id == id } ?: return false
+        if (!ItemContainerTransfer.moveAt(c, inventory, slot, amount)) return false
+        return advanceGameMinutes(1)
+    }
+
+    fun transferToWorldContainerAt(id: String, slot: Int, amount: Int): Boolean {
+        val c = nearestWorldContainer()?.takeIf { it.id == id } ?: return false
+        if (!ItemContainerTransfer.moveAt(inventory, c, slot, amount)) return false
+        return advanceGameMinutes(1)
     }
 
     fun transferToStorage(type: ItemType, amount: Int = inventory.count(type)): Boolean {
@@ -315,6 +377,16 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
     fun transferFromStorage(type: ItemType, amount: Int = bunkerStorage.count(type)): Boolean {
         if (!canAccessStorage() || !inventorySystem.transferFromStorage(type, amount)) return false
+        return advanceGameMinutes(1)
+    }
+
+    fun transferToStorageAt(slotIndex: Int, amount: Int): Boolean {
+        if (!canAccessStorage() || !inventorySystem.transferToStorageAt(slotIndex, amount)) return false
+        return advanceGameMinutes(1)
+    }
+
+    fun transferFromStorageAt(slotIndex: Int, amount: Int): Boolean {
+        if (!canAccessStorage() || !inventorySystem.transferFromStorageAt(slotIndex, amount)) return false
         return advanceGameMinutes(1)
     }
 
@@ -489,7 +561,6 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
                 break
             }
         }
-        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat(), delta)
         simulationTimeSeconds += delta.toDouble()
     }
 
@@ -509,7 +580,8 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
 
         when (tileMap.nearestInteractable(player.x, player.y, 1.35f)) {
             TileType.STORAGE -> {
-                if (inventorySystem.depositAll()) advanceGameMinutes(1)
+                // Opening a storage station is a UI action only. Item movement is
+                // performed exclusively by the player's explicit transfer controls.
                 interactionCount++
             }
             TileType.EXIT_TO_BUNKER -> { travelToZone(WorldZone.BUNKER); interactionCount++ }

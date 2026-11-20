@@ -8,7 +8,7 @@ class Camera2D(
     viewportHeight: Float = 12f
 ) {
     companion object {
-        private const val FOLLOW_SPEED = 10f
+        private const val FOLLOW_SPEED = 18f
         /** Visible neutral margin beyond the solid map boundary, in world tiles. */
         const val WORLD_EDGE_PADDING = 1.5f
     }

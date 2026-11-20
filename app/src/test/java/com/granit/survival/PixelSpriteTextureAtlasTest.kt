@@ -29,7 +29,7 @@ class PixelSpriteTextureAtlasTest {
             "Atlas cell ${plan.cellSize} must fit the tallest frame $tallest",
             plan.cellSize >= tallest
         )
-        assertTrue("Character frames must stay covered", plan.cellSize >= 24)
+        assertTrue("2x character frames must stay covered", plan.cellSize >= 48)
     }
 
     @Test
@@ -105,14 +105,28 @@ class PixelSpriteTextureAtlasTest {
     }
 
     @Test
+    fun everyInventoryIconKeepsTransparentPixelsAroundItsSilhouette() {
+        val itemIds = PixelSpriteAtlas.allIds().filter { it.startsWith("item_") }
+        assertTrue("Inventory item icons must be registered", itemIds.isNotEmpty())
+        itemIds.forEach { id ->
+            val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
+            val frame = sprite.frames.first()
+            val transparentPixels = frame.sumOf { row -> row.count { it == '.' } }
+            val totalPixels = frame.sumOf { it.length }
+            assertTrue("$id must retain transparent background pixels", transparentPixels > totalPixels / 3)
+            assertTrue("$id must keep transparent corners", frame.first().first() == '.' && frame.first().last() == '.' && frame.last().first() == '.' && frame.last().last() == '.')
+        }
+    }
+
+    @Test
     fun characterAndEnvironmentFramesShareOneAtlas() {
         val playerEntry = requireNotNull(plan.entry("player"))
-        assertEquals(listOf(24, 24, 24, 24), playerEntry.frames.map { it.height })
-        assertEquals(listOf(16, 16, 16, 16), playerEntry.frames.map { it.width })
+        assertEquals(listOf(96, 96, 96, 96), playerEntry.frames.map { it.height })
+        assertEquals(listOf(64, 64, 64, 64), playerEntry.frames.map { it.width })
 
         val treeEntry = requireNotNull(plan.entry("tree"))
-        assertEquals(16, treeEntry.frameHeight)
-        assertEquals(16, treeEntry.frameWidth)
+        assertEquals(64, treeEntry.frameHeight)
+        assertEquals(64, treeEntry.frameWidth)
 
         // Both frame shapes must be addressable through the same manifest.
         assertTrue(plan.entry("exit_hatch") != null)

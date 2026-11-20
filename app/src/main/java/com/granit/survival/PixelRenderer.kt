@@ -12,7 +12,7 @@ private data class WorldSpriteCommand(
     val spriteId: String,
     val centerX: Float,
     val topY: Float,
-    val pixelSize: Float,
+    val tileExtent: Float = 1f,
     val frame: Int = 0,
     val flipX: Boolean = false,
     val contactShadow: Boolean = false
@@ -43,6 +43,10 @@ class PixelRenderer {
     private val textureUvBuffer: FloatBuffer = allocateFloatBuffer(INITIAL_TEXTURE_VERTEX_CAPACITY * 2)
     private var queuedTextureVertexCount = 0
     private var frameDrawCalls = 0
+    // Environment props are static per TileMap instance; cache light sources to avoid
+    // scanning every tile and resolving neighbour footprints on every rendered frame.
+    private var cachedLampMap: TileMap? = null
+    private var cachedLampPositions: List<Pair<Float, Float>> = emptyList()
 
     fun create(assets: AssetManager? = null) {
         val atlasErrors = PixelSpriteAtlas.validate()
@@ -129,6 +133,8 @@ class PixelRenderer {
     fun destroy() {
         spriteTexture?.release()
         spriteTexture = null
+        cachedLampMap = null
+        cachedLampPositions = emptyList()
         if (program != 0) GLES20.glDeleteProgram(program)
         if (textureProgram != 0) GLES20.glDeleteProgram(textureProgram)
         program = 0
@@ -142,7 +148,6 @@ class PixelRenderer {
         worldScale = (screenHeight / 12f) * this.displayScale
         worldOffsetX = 0f
         worldOffsetY = 0f
-        currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
         GLES20.glViewport(0, 0, screenWidth, screenHeight)
     }
 
@@ -169,7 +174,7 @@ class PixelRenderer {
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA)
         currentCamera = engine.camera
-        currentCamera?.setViewport(screenWidth / worldScale, screenHeight / worldScale)
+        engine.setCameraViewport(screenWidth / worldScale, screenHeight / worldScale)
         queuedVertexCount = 0
         queuedTextureVertexCount = 0
         frameDrawCalls = 0
@@ -179,12 +184,7 @@ class PixelRenderer {
         GLES20.glEnableVertexAttribArray(vertexColorLocation)
 
         // Each zone has its own floor tone to make transitions immediately readable.
-        val floorTone = when (engine.zone) {
-            WorldZone.BUNKER -> floatArrayOf(0.19f, 0.21f, 0.20f)
-            WorldZone.FOREST -> floatArrayOf(0.20f, 0.27f, 0.18f)
-            WorldZone.RUINS -> floatArrayOf(0.25f, 0.22f, 0.19f)
-            WorldZone.ROAD -> floatArrayOf(0.20f, 0.23f, 0.26f)
-        }
+        val floorTone = GranitWorldPalette.zoneFloor(engine.zone)
         // Extend the ground beyond the solid map perimeter. The camera can reveal this
         // neutral margin near map edges instead of cutting the location flush against the screen.
         val edgePadding = Camera2D.WORLD_EDGE_PADDING
@@ -195,7 +195,7 @@ class PixelRenderer {
         rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
             floorTone[0], floorTone[1], floorTone[2])
         for (x in 1 until engine.tileMap.width) {
-            rect(x.toFloat(), 0f, 0.025f, engine.tileMap.height.toFloat(), 0.22f, 0.24f, 0.22f)
+            rect(x.toFloat(), 0f, 0.025f, engine.tileMap.height.toFloat(), 0.25f, 0.28f, 0.25f)
         }
         for (y in 1 until engine.tileMap.height) {
             rect(0f, y.toFloat(), engine.tileMap.width.toFloat(), 0.025f, 0.22f, 0.24f, 0.22f)
@@ -208,7 +208,7 @@ class PixelRenderer {
                 TileType.FLOOR -> if (engine.zone != WorldZone.BUNKER) drawFloorDetail(tileX, tileY, engine.zone) else Unit
                 TileType.WALL -> Unit
                 TileType.BED, TileType.WORKBENCH, TileType.RADIO, TileType.BOOKSHELF, TileType.STORAGE,
-                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> Unit
+                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.LOOT_CACHE -> Unit
                 TileType.EXIT, TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST,
                 TileType.EXIT_TO_RUINS, TileType.EXIT_TO_ROAD -> drawExitTile(tileX, tileY, type)
                 TileType.RESOURCE_WOOD -> drawResource(tileX, tileY, "wood")
@@ -223,23 +223,22 @@ class PixelRenderer {
         // This keeps the player behind objects to the south and in front of objects to the north.
         val worldSprites = mutableListOf<WorldSpriteCommand>()
         engine.tileMap.forEachTile { tileX, tileY, type ->
-            val wallSprite = if (type == TileType.WALL) when (engine.zone) {
-                WorldZone.BUNKER -> "bunker_panel"
-                WorldZone.FOREST -> "tree"
-                WorldZone.RUINS -> "rubble"
-                WorldZone.ROAD -> "road_barrier"
+            val wallSprite = if (type == TileType.WALL) {
+                ZonePropSelector.wallSpriteFor(engine.zone, tileX, tileY)
             } else null
             if (wallSprite != null) {
                 worldSprites += WorldSpriteCommand(
                     sortY = tileY + 1f, sortOrder = 0, spriteId = wallSprite,
                     centerX = tileX + 0.5f, topY = tileY.toFloat(),
-                    pixelSize = 0.0625f, contactShadow = true
+                    // Wall sprites must fit exactly inside their occupied 1x1 map cell.
+                    tileExtent = 1f, contactShadow = true
                 )
             }
             val furnitureSprite = when (type) {
                 TileType.BED -> "bed"
                 TileType.WORKBENCH -> "workbench"
                 TileType.STORAGE -> "storage"
+                TileType.LOOT_CACHE -> "crate"
                 TileType.BOOKSHELF -> "bookshelf"
                 TileType.RADIO -> "radio"
                 TileType.DINING_TABLE -> "dining_table"
@@ -249,8 +248,8 @@ class PixelRenderer {
             }
             if (furnitureSprite != null) {
                 // Snap the sprite's visible edge to the nearest adjacent wall, not just its tile center.
-                val furniturePixelSize = 0.052f
-                val furnitureExtent = 16f * furniturePixelSize
+                val furnitureTileExtent = 1f
+                val furnitureExtent = SpriteWorldMetrics.footprint(furnitureSprite, furnitureTileExtent).width
                 val anchoredX = when {
                     engine.tileMap[tileX - 1, tileY] == TileType.WALL -> tileX + furnitureExtent * 0.5f
                     engine.tileMap[tileX + 1, tileY] == TileType.WALL -> tileX + 1f - furnitureExtent * 0.5f
@@ -264,20 +263,32 @@ class PixelRenderer {
                 worldSprites += WorldSpriteCommand(
                     sortY = tileY + 1.07f, sortOrder = 0, spriteId = furnitureSprite,
                     centerX = anchoredX, topY = anchoredTopY,
-                    pixelSize = furniturePixelSize
+                    tileExtent = furnitureTileExtent
                 )
             }
 
             if (type == TileType.FLOOR) {
-                val propSprite = ZonePropSelector.spriteFor(engine.zone, tileX, tileY)
+                val propSprite = engine.tileMap.environmentPropAt(tileX, tileY)
                 if (propSprite != null) {
                     worldSprites += WorldSpriteCommand(
                         sortY = tileY + 0.96f, sortOrder = 0, spriteId = propSprite,
                         centerX = tileX + 0.5f, topY = tileY.toFloat(),
-                        pixelSize = 0.0625f, contactShadow = true
+                        tileExtent = 1f, contactShadow = true
                     )
                 }
             }
+        }
+
+        // Authored points of interest use original pixel-art props.
+        // Procedural generation reserves these cells, keeping landmarks visible and reachable.
+        PointOfInterestCatalog.inZone(engine.zone)
+            .filterNot { it.id == "forest_supply_crate" && engine.tileMap[30, 5] == TileType.LOOT_CACHE }
+            .forEach { poi ->
+            worldSprites += WorldSpriteCommand(
+                sortY = poi.y + 0.92f, sortOrder = 0, spriteId = poi.spriteId,
+                centerX = poi.x, topY = poi.y - 0.12f,
+                tileExtent = 1f, contactShadow = true
+            )
         }
 
         val px = engine.player.x
@@ -289,9 +300,11 @@ class PixelRenderer {
             PlayerFacing.RIGHT -> "player_side_right" to false
             PlayerFacing.LEFT -> "player_side_left" to false
         }
+        val playerTileExtent = 0.82f
+        val playerHeight = SpriteWorldMetrics.footprint(playerSprite, playerTileExtent).height
         worldSprites += WorldSpriteCommand(
-            sortY = py + 0.48f, sortOrder = 1, spriteId = playerSprite,
-            centerX = px, topY = py - 0.48f, pixelSize = 0.04f,
+            sortY = py + 0.01f, sortOrder = 1, spriteId = playerSprite,
+            centerX = px, topY = py - playerHeight, tileExtent = playerTileExtent,
             frame = playerFrame, flipX = playerFlipX
         )
         // Add fixed ceiling fixtures to the bunker room layout.
@@ -303,44 +316,50 @@ class PixelRenderer {
         worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
         worldSprites.forEach { command ->
             if (command.contactShadow) {
-                rect(command.centerX - 0.38f, command.topY + 0.82f, 0.76f, 0.08f,
-                    0.035f, 0.045f, 0.04f, 0.65f)
+                // Outdoor shadows shift and lengthen with the sun; bunker contact shadows stay fixed.
+                val shadow = if (engine.zone == WorldZone.BUNKER) {
+                    OutdoorLighting.ShadowProfile(0f, 1f, 1f)
+                } else {
+                    OutdoorLighting.shadowProfile(engine.worldClock.minuteOfDay)
+                }
+                val shadowCenterX = command.centerX + shadow.offsetX
+                val shadowLength = shadow.lengthScale
+                val shadowOpacity = shadow.opacityScale
+                // Crisp stepped bands change only their decorative footprint, never the sprite anchor.
+                rect(shadowCenterX - 0.34f * shadowLength, command.topY + 0.82f,
+                    0.68f * shadowLength, 0.10f, 0.025f, 0.035f, 0.032f, 0.42f * shadowOpacity)
+                rect(shadowCenterX - 0.25f * shadowLength, command.topY + 0.90f,
+                    0.50f * shadowLength, 0.07f, 0.025f, 0.035f, 0.032f, 0.27f * shadowOpacity)
+                rect(shadowCenterX - 0.16f * shadowLength, command.topY + 0.95f,
+                    0.32f * shadowLength, 0.04f, 0.025f, 0.035f, 0.032f, 0.15f * shadowOpacity)
             }
             drawAtlasSprite(
-                command.spriteId, command.centerX, command.topY, command.pixelSize,
+                command.spriteId, command.centerX, command.topY, command.tileExtent,
                 command.frame, command.flipX
             )
         }
 
-        // Stylized infected silhouettes are simple original shapes, sorted near ground level.
+        // Distinct original pixel silhouettes for each infected archetype.
         engine.zombies.forEach { zombie ->
-            val z = zombie.x
-            val y = zombie.y
-            val flash = zombie.hitFlash > 0f
-            val palette = when (zombie.variant) {
-                InfectedVariant.SHAMBLER -> floatArrayOf(0.24f, 0.34f, 0.27f)
-                InfectedVariant.RUNNER -> floatArrayOf(0.36f, 0.39f, 0.25f)
-                InfectedVariant.BRUTE -> floatArrayOf(0.30f, 0.27f, 0.25f)
+            val spriteId = when (zombie.variant) {
+                InfectedVariant.SHAMBLER -> "infected_shambler"
+                InfectedVariant.RUNNER -> "infected_runner"
+                InfectedVariant.BRUTE -> "infected_brute"
             }
-            val bodyR = if (flash) 0.62f else palette[0]
-            val bodyG = if (flash) 0.86f else palette[1]
-            val bodyB = if (flash) 0.78f else palette[2]
-            val width = if (zombie.variant == InfectedVariant.BRUTE) 0.48f else 0.40f
-            val left = z - width * 0.5f
-            rect(z - 0.34f, y + 0.27f, 0.68f, 0.12f, 0.035f, 0.045f, 0.04f, 0.58f)
-            rect(left, y - 0.27f, width, 0.53f, bodyR, bodyG, bodyB)
-            rect(z - 0.17f, y - 0.48f, 0.34f, 0.27f, 0.39f, 0.48f, 0.39f)
-            rect(z - 0.31f, y - 0.13f, 0.13f, 0.43f, bodyR, bodyG, bodyB)
-            rect(z + 0.18f, y - 0.12f, 0.13f, 0.42f, bodyR, bodyG, bodyB)
-            rect(z - 0.17f, y + 0.21f, 0.13f, 0.29f, 0.19f, 0.24f, 0.21f)
-            rect(z + 0.04f, y + 0.21f, 0.13f, 0.29f, 0.19f, 0.24f, 0.21f)
-            rect(z - 0.11f, y - 0.39f, 0.055f, 0.045f, 0.86f, 0.34f, 0.25f)
-            rect(z + 0.055f, y - 0.39f, 0.055f, 0.045f, 0.86f, 0.34f, 0.25f)
+            val walkFrame = if ((zombie.attackCooldown * 8f).toInt() and 1 == 0) 0 else 1
+            drawAtlasSprite(spriteId, zombie.x, zombie.y - SpriteWorldMetrics.footprint(spriteId, 0.72f).height, 0.72f, walkFrame)
+            if (zombie.hitFlash > 0f) {
+                rect(zombie.x - 0.11f, zombie.y - 0.40f, 0.22f, 0.08f, 0.62f, 0.86f, 0.78f, 0.38f)
+            }
         }
 
         // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
         drawWorldLighting(engine, bunkerLamps)
-        if (engine.zone != WorldZone.BUNKER) drawCorridorFog(engine)
+        if (engine.zone != WorldZone.BUNKER) {
+            drawOutdoorLocalLights(engine)
+            drawWeatherEffects(engine)
+            drawCorridorFog(engine)
+        }
 
         // The reticle exists only while a living infected is visible within seven tiles.
         engine.autoAimTarget?.let { target ->
@@ -474,37 +493,110 @@ class PixelRenderer {
                 rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
                     0.34f, 0.19f, 0.10f, twilight)
             }
+            val weather = GranitWorldPalette.weatherOverlay(engine.weather)
+            if (weather[3] > 0f) {
+                rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
+                    weather[0], weather[1], weather[2], weather[3])
+            }
             return
         }
 
-        // Powered pools or dim emergency strips; ceiling fixtures remain invisible.
+        // Powered and emergency pools are concentric squares around each hidden
+        // ceiling fixture. Equal width/height and a shared center remove the old
+        // one-directional horizontal light bands while keeping crisp pixel edges.
         rect(0f, 0f, engine.tileMap.width.toFloat(), engine.tileMap.height.toFloat(),
-            0.012f, 0.018f, 0.020f, if (engine.bunkerPower.hasPower) 0.48f else 0.72f)
-        if (engine.bunkerPower.hasPower) {
-            bunkerLamps.forEach { (x, y) ->
-                val layers = listOf(
-                    floatArrayOf(6.0f, 3.8f, 0.035f, 0.72f, 0.48f, 0.25f),
-                    floatArrayOf(5.3f, 3.4f, 0.045f, 0.76f, 0.51f, 0.27f),
-                    floatArrayOf(4.7f, 3.0f, 0.055f, 0.80f, 0.55f, 0.29f),
-                    floatArrayOf(4.1f, 2.6f, 0.065f, 0.84f, 0.59f, 0.31f),
-                    floatArrayOf(3.5f, 2.2f, 0.078f, 0.88f, 0.63f, 0.33f),
-                    floatArrayOf(2.9f, 1.8f, 0.090f, 0.92f, 0.67f, 0.35f),
-                    floatArrayOf(2.3f, 1.4f, 0.105f, 0.96f, 0.71f, 0.37f),
-                    floatArrayOf(1.7f, 1.0f, 0.120f, 1.00f, 0.76f, 0.40f)
-                )
-                layers.forEach { layer ->
-                    val width = layer[0]
-                    val height = layer[1]
-                    rect(x - width * 0.5f, y + 0.12f, width, height,
-                        layer[3], layer[4], layer[5], layer[2])
-                }
-                rect(x - 0.62f, y + 0.28f, 1.24f, 0.16f, 1.0f, 0.78f, 0.47f, 0.10f)
-            }
+            0.012f, 0.018f, 0.020f, if (engine.bunkerPower.hasPower) 0.42f else 0.64f)
+        val layers = if (engine.bunkerPower.hasPower) {
+            BunkerLighting.poweredLayers
         } else {
-            // Emergency strips give minimal navigation light without full room illumination.
-            bunkerLamps.forEach { (x, y) ->
-                rect(x - 0.75f, y + 0.10f, 1.5f, 0.55f, 0.58f, 0.20f, 0.10f, 0.075f)
-                rect(x - 0.24f, y + 0.20f, 0.48f, 0.08f, 0.92f, 0.35f, 0.16f, 0.13f)
+            BunkerLighting.emergencyLayers
+        }
+        bunkerLamps.forEach { (x, y) ->
+            val centerY = y + 0.5f
+            layers.forEach { layer ->
+                rect(x - layer.size * 0.5f, centerY - layer.size * 0.5f,
+                    layer.size, layer.size, layer.red, layer.green, layer.blue, layer.alpha)
+            }
+        }
+    }
+
+    /**
+     * Outdoor weather is rendered as a restrained pixel layer above world sprites.
+     * Particle coordinates are deterministic and derived from simulation time;
+     * no random allocations or changes to map geometry/collision are involved.
+     */
+    /** Warm pools are emitted only by intact road lamps and only after dusk. */
+    private fun drawOutdoorLocalLights(engine: GameEngine) {
+        val profile = OutdoorLighting.streetlampProfile(
+            engine.worldClock.minuteOfDay,
+            engine.weather
+        )
+        if (profile.intensity <= 0.001f) return
+
+        val map = engine.tileMap
+        if (cachedLampMap !== map) {
+            cachedLampPositions = OutdoorLighting.streetlampPositions(map)
+            cachedLampMap = map
+        }
+        cachedLampPositions.forEach { (centerX, centerY) ->
+            val radius = profile.radius
+            val intensity = profile.intensity
+            // Nested rectangular pools intentionally retain hard pixel-art edges.
+            rect(centerX - radius, centerY - radius * 0.58f, radius * 2f, radius * 1.16f,
+                0.86f, 0.52f, 0.22f, 0.035f * intensity)
+            rect(centerX - radius * 0.72f, centerY - radius * 0.42f,
+                radius * 1.44f, radius * 0.84f,
+                0.96f, 0.64f, 0.31f, 0.045f * intensity)
+            rect(centerX - radius * 0.46f, centerY - radius * 0.28f,
+                radius * 0.92f, radius * 0.56f,
+                1.0f, 0.74f, 0.42f, 0.055f * intensity)
+            rect(centerX - 0.34f, centerY - 0.08f, 0.68f, 0.16f,
+                1.0f, 0.82f, 0.56f, 0.075f * intensity)
+        }
+    }
+
+    private fun drawWeatherEffects(engine: GameEngine) {
+        val width = engine.tileMap.width
+        val height = engine.tileMap.height
+        val time = engine.simulationTimeSeconds
+        when (engine.weather) {
+            WeatherType.CLEAR -> Unit
+            WeatherType.RAIN -> {
+                for (index in 0 until 96) {
+                    val (x, y) = WeatherParticleField.position(
+                        index, time, width, height, fallSpeed = 4.8f, horizontalDrift = -0.42f
+                    )
+                    // Short, crisp streaks preserve the pixel-art silhouette of the scene.
+                    rect(x, y, 0.035f, 0.17f, 0.58f, 0.76f, 0.84f, 0.48f)
+                }
+            }
+            WeatherType.COLD -> {
+                for (index in 0 until 58) {
+                    val (x, y) = WeatherParticleField.position(
+                        index, time, width, height, fallSpeed = 0.72f, horizontalDrift = 0.16f
+                    )
+                    val size = if (index % 4 == 0) 0.075f else 0.045f
+                    rect(x, y, size, size, 0.82f, 0.90f, 0.92f, 0.76f)
+                }
+            }
+            WeatherType.FOG -> {
+                val elapsed = time.coerceAtLeast(0.0).toFloat()
+                val bandWidth = width * 0.72f
+                for (index in 0 until 5) {
+                    val x = ((elapsed * 0.10f + index * width * 0.27f) %
+                        (width + bandWidth)) - bandWidth
+                    val y = (index * height / 5f) + 0.35f
+                    rect(x, y, bandWidth, 0.62f, 0.72f, 0.82f, 0.82f, 0.075f)
+                }
+            }
+            WeatherType.OVERCAST -> {
+                // Sparse pale flecks add depth to the muted sky grade without obscuring props.
+                for (index in 0 until 22) {
+                    val (x, y) = WeatherParticleField.position(
+                        index, time, width, height, fallSpeed = 0.12f, horizontalDrift = 0.24f
+                    )
+                    rect(x, y, 0.035f, 0.035f, 0.72f, 0.78f, 0.78f, 0.20f)
+                }
             }
         }
     }
@@ -514,13 +606,13 @@ class PixelRenderer {
         val corridor = (y == 4 && x in setOf(2, 8, 14)) ||
             (x == 5 && y in setOf(2, 7)) || (x == 11 && y in setOf(2, 7))
         val (r, g, b) = when {
-            corridor -> Triple(0.12f, 0.15f, 0.15f)
-            y < 4 && x < 5 -> Triple(0.20f, 0.24f, 0.27f)
-            y < 4 && x < 11 -> Triple(0.29f, 0.25f, 0.18f)
-            y < 4 -> Triple(0.22f, 0.25f, 0.19f)
-            x < 5 -> Triple(0.17f, 0.28f, 0.27f)
-            x < 11 -> Triple(0.25f, 0.25f, 0.23f)
-            else -> Triple(0.28f, 0.22f, 0.16f)
+            corridor -> Triple(0.10f, 0.16f, 0.19f)
+            y < 4 && x < 5 -> Triple(0.16f, 0.29f, 0.34f)
+            y < 4 && x < 11 -> Triple(0.34f, 0.27f, 0.17f)
+            y < 4 -> Triple(0.25f, 0.31f, 0.19f)
+            x < 5 -> Triple(0.13f, 0.31f, 0.29f)
+            x < 11 -> Triple(0.30f, 0.28f, 0.24f)
+            else -> Triple(0.36f, 0.20f, 0.13f)
         }
         rect(x + 0.02f, y + 0.02f, 0.96f, 0.96f, r, g, b)
         val seam = if (corridor) 0.08f else 0.12f
@@ -530,12 +622,13 @@ class PixelRenderer {
 
     private fun drawFloorDetail(x: Int, y: Int, zone: WorldZone) {
         val pattern = Math.floorMod(x * 7 + y * 11, 13)
+        val accent = GranitWorldPalette.zoneAccent(zone)
         when (zone) {
             WorldZone.BUNKER -> {
                 if ((x + y) % 4 == 0) rect(x + 0.08f, y + 0.92f, 0.84f, 0.025f, 0.17f, 0.19f, 0.18f)
                 if (pattern == 0) {
                     rect(x + 0.20f, y + 0.24f, 0.08f, 0.05f, 0.20f, 0.22f, 0.21f)
-                    drawAtlasSprite("floor_grate", x + 0.5f, y + 0.12f, 0.045f)
+                    drawAtlasSprite("floor_grate", x + 0.5f, y + 0.12f, 0.42f)
                 }
             }
             WorldZone.FOREST -> {
@@ -555,34 +648,45 @@ class PixelRenderer {
                 }
             }
         }
+        // Sparse zone-coloured flecks make the floor identity readable without
+        // changing collision tiles, object anchors or the 128x128 cell footprint.
+        if (pattern == 2 || pattern == 9) {
+            val size = if (zone == WorldZone.ROAD) 0.045f else 0.065f
+            rect(x + 0.28f, y + 0.36f, size, size, accent[0], accent[1], accent[2], 0.72f)
+            rect(x + 0.68f, y + 0.72f, size * 0.72f, size * 0.72f,
+                accent[0], accent[1], accent[2], 0.52f)
+        }
     }
 
     private fun drawExitTile(x: Int, y: Int, type: TileType) {
         val sprite = if (type == TileType.EXIT_TO_BUNKER) "ladder_hatch" else "exit_hatch"
-        drawAtlasSprite(sprite, x + 0.5f, y.toFloat(), 0.0625f)
+        drawAtlasSprite(sprite, x + 0.5f, y.toFloat(), 1f)
     }
 
     private fun drawAtlasSprite(
         id: String,
         centerX: Float,
         topY: Float,
-        pixelSize: Float,
+        tileExtent: Float = 1f,
         frame: Int = 0,
         flipX: Boolean = false
     ) {
+        // Normalize every source frame against the same 128x128 map-cell standard.
+        val logicalPixelSize = SpriteWorldMetrics.pixelWorldSize(id, tileExtent)
         val manifest = spriteManifest
         val texture = spriteTexture
         val entry = manifest?.sprites?.firstOrNull { it.id == id }
         if (manifest != null && texture != null && entry != null) {
             val frameRect = entry.frames[Math.floorMod(frame, entry.frames.size)]
             drawTexturedSprite(manifest, texture, frameRect, centerX, topY,
-                entry.frameWidth * pixelSize, entry.frameHeight * pixelSize, flipX)
+                entry.frameWidth * (logicalPixelSize / PixelSpriteTextureAtlas.RASTER_SCALE),
+                entry.frameHeight * (logicalPixelSize / PixelSpriteTextureAtlas.RASTER_SCALE), flipX)
             return
         }
         val sprite = PixelSpriteAtlas.sprite(id) ?: return
         val sourceRows = sprite.frames[Math.floorMod(frame, sprite.frames.size)]
         val rows = if (flipX) sourceRows.map { it.reversed() } else sourceRows
-        drawPixelSprite(rows, centerX, topY, pixelSize, sprite.palette)
+        drawPixelSprite(rows, centerX, topY, logicalPixelSize, sprite.palette)
     }
 
     private fun drawTexturedSprite(
@@ -764,7 +868,66 @@ class PixelRenderer {
 
     private fun drawResource(x: Int, y: Int, spriteId: String) {
         rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.16f, 0.18f, 0.17f)
-        drawAtlasSprite(spriteId, x + 0.5f, y + 0.12f, 0.075f)
+        drawAtlasSprite(spriteId, x + 0.5f, y + 0.12f, 0.78f)
+    }
+
+
+    /** Draws an inventory icon in HUD coordinates, using the shared atlas when available. */
+    private fun drawHudAtlasSprite(id: String, centerX: Float, topY: Float, pixelSize: Float) {
+        val sprite = PixelSpriteAtlas.sprite(id) ?: return
+        val manifest = spriteManifest
+        val texture = spriteTexture
+        val entry = manifest?.sprites?.firstOrNull { it.id == id }
+        if (manifest != null && texture != null && entry != null) {
+            val frame = entry.frames.first()
+            flushBatch()
+            if (queuedTextureVertexCount + 6 > textureVertexBuffer.capacity() / 2) flushTextureBatch()
+            val scaledPixel = pixelSize * GranitArtPalette.WORLD_SPRITE_SCALE / PixelSpriteTextureAtlas.RASTER_SCALE
+            val width = entry.frameWidth * scaledPixel
+            val height = entry.frameHeight * scaledPixel
+            val left = worldOffsetX + (centerX - width * 0.5f) * worldScale
+            val top = worldOffsetY + topY * worldScale
+            val right = left + width * worldScale
+            val bottom = top + height * worldScale
+            SpriteQuadGeometry.append(
+                textureVertexBuffer, textureUvBuffer,
+                toNdcX(left), toNdcY(top), toNdcX(right), toNdcY(bottom),
+                manifest.uvRect(frame), false
+            )
+            queuedTextureVertexCount += 6
+        } else {
+            drawHudPixelSprite(
+                sprite.frames.first(),
+                centerX,
+                topY,
+                pixelSize * GranitArtPalette.WORLD_SPRITE_SCALE,
+                sprite.palette
+            )
+        }
+    }
+
+    private fun drawHudPixelSprite(
+        rows: List<String>,
+        centerX: Float,
+        topY: Float,
+        pixelSize: Float,
+        palette: Map<Char, FloatArray>
+    ) {
+        val spriteWidth = rows.maxOfOrNull { it.length } ?: return
+        val left = centerX - spriteWidth * pixelSize * 0.5f
+        rows.forEachIndexed { rowIndex, row ->
+            var column = 0
+            while (column < row.length) {
+                val symbol = row[column]
+                if (symbol == '.') { column++; continue }
+                var runEnd = column + 1
+                while (runEnd < row.length && row[runEnd] == symbol) runEnd++
+                val color = palette[symbol] ?: floatArrayOf(0.4f,0.4f,0.4f)
+                screenRect(left + column * pixelSize, topY + rowIndex * pixelSize,
+                    (runEnd - column) * pixelSize, pixelSize, color[0],color[1],color[2])
+                column = runEnd
+            }
+        }
     }
 
     private fun drawInventory(inventory: Inventory) {
@@ -784,21 +947,7 @@ class PixelRenderer {
             val y = panelY + row * (slotSize + gap)
             screenRect(x, y, slotSize, slotSize, 0.15f, 0.17f, 0.17f)
             val stack = inventory.slot(index) ?: continue
-            val color = when (stack.type) {
-                ItemType.WOOD -> floatArrayOf(0.60f, 0.39f, 0.22f)
-                ItemType.METAL -> floatArrayOf(0.56f, 0.62f, 0.64f)
-                ItemType.FABRIC -> floatArrayOf(0.38f, 0.55f, 0.50f)
-                ItemType.CANNED_FOOD -> floatArrayOf(0.73f, 0.53f, 0.24f)
-                ItemType.WATER -> floatArrayOf(0.26f, 0.55f, 0.74f)
-                ItemType.MEDICAL_KIT -> floatArrayOf(0.72f, 0.30f, 0.28f)
-                ItemType.BANDAGE -> floatArrayOf(0.82f, 0.78f, 0.66f)
-            }
-            if (stack.type == ItemType.MEDICAL_KIT || stack.type == ItemType.BANDAGE) {
-                screenRect(x + 0.30f, y + 0.16f, 0.12f, 0.40f, color[0], color[1], color[2])
-                screenRect(x + 0.16f, y + 0.30f, 0.40f, 0.12f, color[0], color[1], color[2])
-            } else {
-                screenRect(x + 0.14f, y + 0.14f, 0.44f, 0.44f, color[0], color[1], color[2])
-            }
+            drawHudAtlasSprite(stack.type.iconSpriteId, x + slotSize * 0.5f, y + 0.06f, 0.014f)
             val quantityWidth = 0.12f + 0.42f * (stack.quantity / 20f)
             screenRect(x + 0.14f, y + 0.62f, quantityWidth, 0.045f, 0.78f, 0.75f, 0.62f)
         }

@@ -1,13 +1,13 @@
 package com.granit.survival
 
-enum class ItemType(val displayName: String, val color: Int) {
-    WOOD("Древесина", 0xFF9A7046.toInt()),
-    METAL("Металл", 0xFF8A969A.toInt()),
-    FABRIC("Ткань", 0xFF718B86.toInt()),
-    CANNED_FOOD("Консервы", 0xFFB28A43.toInt()),
-    WATER("Вода", 0xFF4E91B5.toInt()),
-    MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt()),
-    BANDAGE("Бинт", 0xFFD8D0B5.toInt())
+enum class ItemType(val displayName: String, val color: Int, val iconSpriteId: String) {
+    WOOD("Древесина", 0xFF9A7046.toInt(), "item_wood"),
+    METAL("Металл", 0xFF8A969A.toInt(), "item_metal"),
+    FABRIC("Ткань", 0xFF718B86.toInt(), "item_fabric"),
+    CANNED_FOOD("Консервы", 0xFFB28A43.toInt(), "item_food"),
+    WATER("Вода", 0xFF4E91B5.toInt(), "item_water"),
+    MEDICAL_KIT("Аптечка", 0xFFB85B55.toInt(), "item_medical_kit"),
+    BANDAGE("Бинт", 0xFFD8D0B5.toInt(), "item_bandage")
 }
 
 data class ItemStack(
@@ -15,25 +15,42 @@ data class ItemStack(
     var quantity: Int
 )
 
+/**
+ * Common fixed-slot contract for backpacks, bunker storage and future world containers.
+ * Mutations remain explicit; opening or rendering a container never moves items.
+ */
+interface ItemContainer {
+    val columns: Int
+    val rows: Int
+    fun slot(index: Int): ItemStack?
+    fun count(type: ItemType): Int
+    fun snapshot(): List<ItemStack?>
+    fun restore(snapshot: List<ItemStack?>)
+    fun canAdd(type: ItemType, amount: Int = 1): Boolean
+    fun add(type: ItemType, amount: Int = 1): Int
+    fun removeAt(index: Int, amount: Int = 1): Boolean
+    fun remove(type: ItemType, amount: Int = 1): Boolean
+}
+
 /** Fixed-size item container. Stack size is intentionally small for the first prototype. */
 class Inventory(
-    val columns: Int = 4,
-    val rows: Int = 4,
+    override val columns: Int = 4,
+    override val rows: Int = 4,
     private val stackLimit: Int = 20
-) {
+) : ItemContainer {
     private val slots = MutableList<ItemStack?>(columns * rows) { null }
 
     init {
         require(columns > 0 && rows > 0 && stackLimit > 0)
     }
 
-    fun slot(index: Int): ItemStack? = slots.getOrNull(index)?.copy()
+    override fun slot(index: Int): ItemStack? = slots.getOrNull(index)?.copy()
 
-    fun count(type: ItemType): Int = slots.filterNotNull()
+    override fun count(type: ItemType): Int = slots.filterNotNull()
         .filter { it.type == type }
         .sumOf { it.quantity }
 
-    fun add(type: ItemType, amount: Int = 1): Int {
+    override fun add(type: ItemType, amount: Int): Int {
         if (amount <= 0) return amount
         var remaining = amount
 
@@ -57,7 +74,7 @@ class Inventory(
         return remaining
     }
 
-    fun canAdd(type: ItemType, amount: Int = 1): Boolean {
+    override fun canAdd(type: ItemType, amount: Int): Boolean {
         if (amount <= 0) return false
         var remaining = amount
         slots.forEach { stack ->
@@ -68,7 +85,17 @@ class Inventory(
         return remaining <= 0
     }
 
-    fun remove(type: ItemType, amount: Int = 1): Boolean {
+    /** Removes a quantity from one exact slot; returns false without mutation on invalid input. */
+    override fun removeAt(index: Int, amount: Int): Boolean {
+        if (amount <= 0) return false
+        val stack = slots.getOrNull(index) ?: return false
+        if (stack.quantity < amount) return false
+        stack.quantity -= amount
+        if (stack.quantity == 0) slots[index] = null
+        return true
+    }
+
+    override fun remove(type: ItemType, amount: Int): Boolean {
         if (amount <= 0 || count(type) < amount) return false
         var remaining = amount
         for (index in slots.indices) {
@@ -83,9 +110,9 @@ class Inventory(
         return true
     }
 
-    fun snapshot(): List<ItemStack?> = slots.map { it?.copy() }
+    override fun snapshot(): List<ItemStack?> = slots.map { it?.copy() }
 
-    fun restore(snapshot: List<ItemStack?>) {
+    override fun restore(snapshot: List<ItemStack?>) {
         require(snapshot.size == slots.size) { "Inventory snapshot has an unexpected slot count" }
         snapshot.forEach { stack ->
             require(stack == null || stack.quantity in 1..stackLimit) {

@@ -6,7 +6,7 @@ import kotlin.random.Random
 enum class TileType {
     FLOOR, WALL, BED, WORKBENCH, STORAGE, BOOKSHELF, RADIO, EXIT,
     EXIT_TO_BUNKER, EXIT_TO_FOREST, EXIT_TO_RUINS, EXIT_TO_ROAD,
-    DINING_TABLE, GENERATOR, MEDICAL_STATION,
+    DINING_TABLE, GENERATOR, MEDICAL_STATION, LOOT_CACHE,
     RESOURCE_WOOD, RESOURCE_METAL, RESOURCE_FABRIC, RESOURCE_FOOD, RESOURCE_WATER
 }
 
@@ -20,6 +20,13 @@ class TileMap(
 ) {
     val layoutSeed: Long? = if (zone.isProcedurallyGenerated) seed else null
     private val tiles = Array(height) { Array(width) { TileType.FLOOR } }
+    private val zoneLandmarks = PointOfInterestCatalog.inZone(zone)
+    private val protectedExitCoordinates: List<Pair<Int, Int>> = when (zone) {
+        WorldZone.BUNKER -> listOf(width / 2 to 1)
+        WorldZone.FOREST -> listOf(width / 2 to height - 2, 1 to height / 2, width - 2 to height / 2)
+        WorldZone.RUINS -> listOf(width - 2 to height / 2)
+        WorldZone.ROAD -> listOf(1 to height / 2)
+    }
 
     init {
         for (x in 0 until width) { set(x, 0, TileType.WALL); set(x, height - 1, TileType.WALL) }
@@ -82,6 +89,7 @@ class TileMap(
         set(19, 6, TileType.RESOURCE_WOOD); set(23, 15, TileType.RESOURCE_WOOD)
         set(29, 10, TileType.RESOURCE_FABRIC); set(14, 17, TileType.RESOURCE_WATER)
         set(34, 6, TileType.RESOURCE_FOOD); set(6, 17, TileType.RESOURCE_METAL)
+        set(30, 5, TileType.LOOT_CACHE)
     }
 
     private fun buildRuins() {
@@ -132,21 +140,40 @@ class TileMap(
         val random = Random(seed)
         val spawnX = zone.spawnX.toInt()
         val spawnY = zone.spawnY.toInt()
-        val reserved = (height / 2 - 1)..(height / 2 + 1)
+        val reserved = (height / 2 - 2)..(height / 2 + 2)
+
+        val reservedLandmarks = PointOfInterestCatalog.inZone(zone)
+            .map { kotlin.math.floor(it.x).toInt() to kotlin.math.floor(it.y).toInt() }
+            .toSet()
 
         fun validPlacement(x: Int, y: Int): Boolean {
             if (x <= 1 || x >= width - 2 || y <= 1 || y >= height - 2) return false
+            if (reservedLandmarks.any { (lx, ly) -> abs(x - lx) <= 2 && abs(y - ly) <= 2 }) return false
             if (y in reserved) return false
             if (abs(x - spawnX) <= 3 && abs(y - spawnY) <= 3) return false
             if (x == exitX && abs(y - height / 2) <= 2) return false
-            return get(x, y) == TileType.FLOOR
+            if (get(x, y) != TileType.FLOOR) return false
+            // A sprite is wider than one logical cell; leave a complete empty cell around it.
+            for (dy in -1..1) for (dx in -1..1) {
+                if (dx == 0 && dy == 0) continue
+                if (get(x + dx, y + dy) != TileType.FLOOR) return false
+            }
+            return true
         }
 
-        // Scattered cover and debris, deliberately kept away from the guaranteed route.
-        repeat(18) {
+        // Fewer, separated cover pieces replace the old tightly packed scatter.
+        repeat(12) {
             val x = random.nextInt(2, width - 2)
             val y = random.nextInt(2, height - 2)
             if (validPlacement(x, y)) set(x, y, TileType.WALL)
+        }
+
+        var cachesPlaced = 0
+        var cacheAttempts = 0
+        while (cachesPlaced < 2 && cacheAttempts < 360) {
+            cacheAttempts++
+            val x = random.nextInt(2, width - 2); val y = random.nextInt(2, height - 2)
+            if (validPlacement(x, y)) { set(x, y, TileType.LOOT_CACHE); cachesPlaced++ }
         }
 
         val resourceTiles = listOf(
@@ -158,7 +185,7 @@ class TileMap(
         )
         var placed = 0
         var attempts = 0
-        while (placed < 18 && attempts < 240) {
+        while (placed < 14 && attempts < 360) {
             attempts++
             val x = random.nextInt(2, width - 2)
             val y = random.nextInt(2, height - 2)
@@ -172,16 +199,107 @@ class TileMap(
     operator fun get(x: Int, y: Int): TileType =
         if (x !in 0 until width || y !in 0 until height) TileType.WALL else tiles[y][x]
 
-    fun isWalkable(worldX: Float, worldY: Float, radius: Float = 0.22f): Boolean {
-        val points = arrayOf(worldX - radius to worldY - radius, worldX + radius to worldY - radius,
-            worldX - radius to worldY + radius, worldX + radius to worldY + radius)
-        return points.all { (x, y) ->
-            when (get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())) {
-                TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF,
-                TileType.RADIO, TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION -> false
-                else -> true
-            }
+    /**
+     * Resolve the visible environment prop from the map itself. Rendering and collision
+     * use this same placement result, so a large sprite cannot be drawn over a walkway.
+     */
+    fun environmentPropAt(x: Int, y: Int): String? {
+        if (get(x, y) != TileType.FLOOR) return null
+        if (x <= 1 || x >= width - 2 || y <= 1 || y >= height - 2) return null
+        for (offsetY in -1..1) for (offsetX in -1..1) {
+            if (offsetX == 0 && offsetY == 0) continue
+            if (get(x + offsetX, y + offsetY) != TileType.FLOOR) return null
         }
+        if (zone == WorldZone.BUNKER) {
+            // Keep the upper service corridor and the bunker hatch approach clear.
+            if (y <= 2) return null
+        } else {
+            if (kotlin.math.abs(y - height / 2) <= 2) return null
+            if (zone == WorldZone.FOREST && kotlin.math.abs(x - width / 2) <= 2) return null
+            if (kotlin.math.abs(x + 0.5f - zone.spawnX) < 2.0f &&
+                kotlin.math.abs(y + 0.5f - zone.spawnY) < 2.0f) return null
+            if (protectedExitCoordinates.any { (exitX, exitY) ->
+                kotlin.math.abs(x - exitX) < 2 && kotlin.math.abs(y - exitY) < 2
+            }) return null
+            if (zoneLandmarks.any { poi ->
+                val dx = x + 0.5f - poi.x
+                val dy = y + 0.5f - poi.y
+                dx * dx + dy * dy < 2.25f * 2.25f
+            }) return null
+        }
+        return ZonePropSelector.spriteFor(zone, x, y)
+    }
+
+    private fun overlapsBlockingProp(worldX: Float, worldY: Float, radius: Float): Boolean {
+        val playerLeft = worldX - radius
+        val playerRight = worldX + radius
+        val playerTop = worldY - radius
+        val playerBottom = worldY + radius
+        val cellX = kotlin.math.floor(worldX).toInt()
+        val cellY = kotlin.math.floor(worldY).toInt()
+        for (propY in cellY - 1..cellY + 1) for (propX in cellX - 1..cellX + 1) {
+            val type = get(propX, propY)
+            val furnitureSprite = when (type) {
+                TileType.BED -> "bed"
+                TileType.WORKBENCH -> "workbench"
+                TileType.STORAGE -> "storage"
+                TileType.LOOT_CACHE -> "crate"
+                TileType.BOOKSHELF -> "bookshelf"
+                TileType.RADIO -> "radio"
+                TileType.DINING_TABLE -> "dining_table"
+                TileType.GENERATOR -> "generator"
+                TileType.MEDICAL_STATION -> "medical_station"
+                else -> null
+            }
+            if (furnitureSprite != null) {
+                val footprint = SpriteWorldMetrics.footprint(furnitureSprite, 1f)
+                val anchoredX = when {
+                    get(propX - 1, propY) == TileType.WALL -> propX + footprint.width * 0.5f
+                    get(propX + 1, propY) == TileType.WALL -> propX + 1f - footprint.width * 0.5f
+                    else -> propX + 0.5f
+                }
+                val anchoredTopY = when {
+                    get(propX, propY - 1) == TileType.WALL -> propY.toFloat()
+                    get(propX, propY + 1) == TileType.WALL -> propY + 1f - footprint.width
+                    else -> propY + (1f - footprint.width) * 0.5f
+                }
+                val bottom = anchoredTopY + footprint.height
+                val top = bottom - minOf(footprint.height, 0.28f)
+                val left = anchoredX - footprint.width * 0.5f
+                if (playerLeft < left + footprint.width && playerRight > left &&
+                    playerTop < bottom && playerBottom > top) return true
+                continue
+            }
+
+            val spriteId = environmentPropAt(propX, propY) ?: continue
+            if (!ZonePropSelector.blocksMovement(spriteId)) continue
+            val footprint = SpriteWorldMetrics.footprint(spriteId, 1f)
+            val propLeft = propX + 0.5f - footprint.width * 0.5f
+            val propRight = propLeft + footprint.width
+            // Tall props are depth-sorted by their ground contact point. Only the
+            // lower base strip blocks movement; the upper canopy/body remains passable.
+            val collisionDepth = minOf(footprint.height, 0.28f)
+            val propBottom = propY.toFloat() + footprint.height
+            val propTop = propBottom - collisionDepth
+            if (playerLeft < propRight && playerRight > propLeft &&
+                playerTop < propBottom && playerBottom > propTop) return true
+        }
+        return false
+    }
+
+    fun isWalkable(worldX: Float, worldY: Float, radius: Float = 0.22f): Boolean {
+        val points = listOf(
+            worldX - radius to worldY - radius,
+            worldX + radius to worldY - radius,
+            worldX - radius to worldY + radius,
+            worldX + radius to worldY + radius,
+            worldX to worldY
+        )
+        val tilesClear = points.all { (x, y) ->
+            val type = get(kotlin.math.floor(x).toInt(), kotlin.math.floor(y).toInt())
+            type != TileType.WALL
+        }
+        return tilesClear && !overlapsBlockingProp(worldX, worldY, radius)
     }
 
     /** Return the first walkable tile on a shortest four-way path to a destination. */
@@ -248,7 +366,7 @@ class TileMap(
     private fun blocksVision(type: TileType): Boolean = when (type) {
         TileType.WALL, TileType.BED, TileType.WORKBENCH, TileType.STORAGE,
         TileType.BOOKSHELF, TileType.RADIO, TileType.DINING_TABLE,
-        TileType.GENERATOR, TileType.MEDICAL_STATION -> true
+        TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.LOOT_CACHE -> true
         else -> false
     }
 
@@ -324,7 +442,7 @@ class TileMap(
         forEachTile { x, y, type ->
             val valid = when (type) {
                 TileType.BED, TileType.WORKBENCH, TileType.STORAGE, TileType.BOOKSHELF, TileType.RADIO,
-                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.EXIT,
+                TileType.DINING_TABLE, TileType.GENERATOR, TileType.MEDICAL_STATION, TileType.LOOT_CACHE, TileType.EXIT,
                 TileType.EXIT_TO_BUNKER, TileType.EXIT_TO_FOREST, TileType.EXIT_TO_RUINS,
                 TileType.EXIT_TO_ROAD -> true
                 else -> false

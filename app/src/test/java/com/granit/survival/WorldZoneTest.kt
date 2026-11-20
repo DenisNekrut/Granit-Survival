@@ -44,6 +44,86 @@ class WorldZoneTest {
     }
 
     @Test
+    fun environmentPropsKeepClearanceFromWallsLandmarksAndMainRoutes() {
+        listOf(WorldZone.BUNKER, WorldZone.FOREST, WorldZone.RUINS, WorldZone.ROAD).forEach { zone ->
+            val map = TileMap(zone = zone, seed = if (zone.isProcedurallyGenerated) 991L else null)
+            map.forEachTile { x, y, type ->
+                if (type != TileType.FLOOR) return@forEachTile
+                val prop = map.environmentPropAt(x, y) ?: return@forEachTile
+                for (dy in -1..1) for (dx in -1..1) {
+                    if (dx == 0 && dy == 0) continue
+                    assertTrue("$zone prop $prop at ($x,$y) must not touch a wall",
+                        map[x + dx, y + dy] == TileType.FLOOR)
+                }
+                if (zone != WorldZone.BUNKER) {
+                    assertTrue("$zone prop must stay clear of the central route",
+                        kotlin.math.abs(y - map.height / 2) > 2)
+                    PointOfInterestCatalog.inZone(zone).forEach { poi ->
+                        val dx = x + 0.5f - poi.x
+                        val dy = y + 0.5f - poi.y
+                        assertTrue("$zone prop must not overlap landmark ${poi.id}",
+                            dx * dx + dy * dy >= 2.25f * 2.25f)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun largeEnvironmentPropsAreIncludedInMovementCollision() {
+        val map = TileMap(zone = WorldZone.FOREST)
+        var blockingCell: Pair<Int, Int>? = null
+        map.forEachTile { x, y, type ->
+            if (blockingCell == null && type == TileType.FLOOR) {
+                val sprite = map.environmentPropAt(x, y)
+                if (sprite != null && ZonePropSelector.blocksMovement(sprite)) blockingCell = x to y
+            }
+        }
+        val (x, y) = requireNotNull(blockingCell) { "Expected at least one blocking forest prop" }
+        val sprite = requireNotNull(map.environmentPropAt(x, y))
+        val footprint = SpriteWorldMetrics.footprint(sprite, 1f)
+        val baseY = y + footprint.height - 0.14f
+        assertTrue("Player must be blocked at the visible base of a large prop",
+            !map.isWalkable(x + 0.5f, baseY))
+        assertTrue("Player must be able to pass around a large prop",
+            map.isWalkable(x + 1.5f, y + 0.5f) || map.isWalkable(x - 1.5f, y + 0.5f))
+    }
+
+    @Test
+    fun tallPropsAllowWalkingBehindTheirUpperCanopyButBlockAtTheBase() {
+        val map = TileMap(zone = WorldZone.FOREST)
+        var selected: Triple<Int, Int, String>? = null
+        map.forEachTile { x, y, type ->
+            if (selected == null && type == TileType.FLOOR) {
+                val sprite = map.environmentPropAt(x, y)
+                if (sprite != null && ZonePropSelector.blocksMovement(sprite)) {
+                    val height = SpriteWorldMetrics.footprint(sprite).height
+                    if (height >= 0.70f) selected = Triple(x, y, sprite)
+                }
+            }
+        }
+        val (x, y, sprite) = requireNotNull(selected) { "Expected a tall blocking forest prop" }
+        val height = SpriteWorldMetrics.footprint(sprite).height
+        assertTrue("Player can pass behind the upper part of $sprite",
+            map.isWalkable(x + 0.5f, y + height * 0.15f))
+        assertTrue("Player is still blocked by the base of $sprite",
+            !map.isWalkable(x + 0.5f, y + height - 0.05f))
+    }
+
+    @Test
+    fun bunkerFurnitureCollisionMatchesVisibleBaseInsteadOfWholeTile() {
+        val map = TileMap(zone = WorldZone.BUNKER)
+        val sprite = "workbench"
+        val footprint = SpriteWorldMetrics.footprint(sprite)
+        val tileX = 8
+        val tileY = 8
+        assertTrue("Player can pass behind the upper part of the workbench",
+            map.isWalkable(tileX + 0.5f, tileY + footprint.height * 0.15f))
+        assertTrue("The workbench base still blocks the player",
+            !map.isWalkable(tileX + 0.5f, tileY + footprint.height - 0.05f))
+    }
+
+    @Test
     fun everyZoneTransitionPlacesPlayerBesideTheMatchingDestinationHatch() {
         val engine = GameEngine()
 

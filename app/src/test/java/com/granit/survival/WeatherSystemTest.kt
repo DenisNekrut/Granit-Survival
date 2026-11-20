@@ -36,4 +36,20 @@ class WeatherSystemTest {
         assertTrue(engine.respawnAtWakeCheckpoint())
         assertEquals(WeatherType.FOG, engine.weather)
     }
+
+    @Test
+    fun weatherParticlePositionsAreDeterministicAndStayInsideMap() {
+        val first = WeatherParticleField.position(17, 12.5, 24, 18, 3.2f, -0.18f)
+        val repeated = WeatherParticleField.position(17, 12.5, 24, 18, 3.2f, -0.18f)
+        assertEquals(first, repeated)
+        assertTrue(first.first >= 0f && first.first < 24f)
+        assertTrue(first.second >= 0f && first.second < 18f)
+    }
+
+    @Test
+    fun weatherParticlesMoveWithSimulationTime() {
+        val start = WeatherParticleField.position(4, 0.0, 24, 18, 2.5f, 0.12f)
+        val later = WeatherParticleField.position(4, 3.0, 24, 18, 2.5f, 0.12f)
+        assertTrue(start != later)
+    }
 }

@@ -31,7 +31,10 @@ class GameSaveSnapshotTest {
     @Test
     fun serializedSaveSnapshotRoundTripsThroughCurrentCodec() {
         val original = GameEngine { 808L }
-        original.inventory.add(ItemType.WOOD, 3)
+        original.inventory.add(ItemType.WOOD, 23)
+        original.inventory.add(ItemType.METAL, 5)
+        assertTrue(original.bunkerStorage.deposit(original.inventory, ItemType.WOOD, 7))
+        assertTrue(original.bunkerStorage.deposit(original.inventory, ItemType.METAL, 2))
         original.changeZone(WorldZone.FOREST)
         original.player.x = 11f
         original.player.y = 12f
@@ -44,6 +47,7 @@ class GameSaveSnapshotTest {
 
         assertEquals(expected.player, restored.player)
         assertEquals(expected.inventory, restored.inventory)
+        assertEquals(expected.bunkerStorage, restored.bunkerStorage)
         assertEquals(expected.needs, restored.needs)
         assertEquals(expected.clock, restored.clock)
         assertEquals(expected.zone, restored.zone)
@@ -81,4 +85,34 @@ class GameSaveSnapshotTest {
         assertTrue(engine.respawnAtWakeCheckpoint())
         assertEquals(4, engine.inventory.count(ItemType.WOOD))
     }
+
+    @Test
+    fun explicitStorageTransfersPreserveExactSlotOrderAcrossSaveRestore() {
+        val original = GameEngine { 4242L }
+        original.inventory.add(ItemType.WOOD, 25)
+        original.inventory.add(ItemType.METAL, 5)
+
+        assertTrue(original.bunkerStorage.depositAt(original.inventory, 1, 3))
+        assertTrue(original.bunkerStorage.depositAt(original.inventory, 2, 2))
+
+        val expectedInventory = original.inventory.snapshot()
+        val expectedStorage = original.bunkerStorage.snapshot()
+        assertEquals(ItemStack(ItemType.WOOD, 20), expectedInventory[0])
+        assertEquals(ItemStack(ItemType.WOOD, 2), expectedInventory[1])
+        assertEquals(ItemStack(ItemType.METAL, 3), expectedInventory[2])
+        assertEquals(ItemStack(ItemType.WOOD, 3), expectedStorage[0])
+        assertEquals(ItemStack(ItemType.METAL, 2), expectedStorage[1])
+
+        val encoded = SaveCodec.encode(original.createSaveSnapshot().toJson(), 777L)
+        val decoded = SaveCodec.decode(encoded)
+        val snapshot = EngineSaveSnapshot.fromJson(decoded.getJSONObject("state"))
+        val restored = GameEngine { 9999L }
+        restored.restoreSaveSnapshot(snapshot)
+
+        assertEquals(expectedInventory, restored.inventory.snapshot())
+        assertEquals(expectedStorage, restored.bunkerStorage.snapshot())
+        assertEquals(expectedInventory, snapshot.inventory)
+        assertEquals(expectedStorage, snapshot.bunkerStorage)
+    }
+
 }

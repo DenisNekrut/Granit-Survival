@@ -15,6 +15,37 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun everyLandmarkRemainsWalkableAcrossProceduralSeeds() {
+        listOf(WorldZone.RUINS, WorldZone.ROAD).forEach { zone ->
+            (1L..100L).forEach { seed ->
+                val map = TileMap(zone = zone, seed = seed)
+                PointOfInterestCatalog.inZone(zone).forEach { poi ->
+                    assertTrue("${poi.id} must remain reachable for seed=$seed",
+                        map.isWalkable(poi.x, poi.y))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun catalogContainsUniqueIdsAndMultipleLandmarksPerOutdoorZone() {
+        val all = PointOfInterestCatalog.all()
+        assertEquals(all.size, all.map { it.id }.toSet().size)
+        listOf(WorldZone.FOREST, WorldZone.RUINS, WorldZone.ROAD).forEach { zone ->
+            assertTrue("${zone.name} should contain at least four landmarks",
+                PointOfInterestCatalog.inZone(zone).size >= 4)
+        }
+    }
+
+    @Test
+    fun everyLandmarkUsesAnExistingPixelArtSprite() {
+        PointOfInterestCatalog.all().forEach { poi ->
+            assertTrue("${poi.id} sprite ${poi.spriteId} must exist",
+                PixelSpriteAtlas.sprite(poi.spriteId) != null)
+        }
+    }
+
+    @Test
     fun nearbyLandmarkIsDiscoveredOnlyOnce() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.FOREST).first()

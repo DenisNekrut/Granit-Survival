@@ -36,10 +36,12 @@ internal class SaveSlotsScreen(
             val row = LinearLayout(activity).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(dp(12), dp(8), dp(12), dp(8))
-                background = GradientDrawable().apply {
-                    setColor(Color.rgb(34, 47, 43))
+                background = GradientDrawable(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    intArrayOf(GranitPalette.slotTop, GranitPalette.slotBottom)
+                ).apply {
                     cornerRadius = dp(9).toFloat()
-                    setStroke(dp(1), Color.rgb(77, 100, 84))
+                    setStroke(dp(1), GranitPalette.slotStroke)
                 }
             }
             val info = when {

@@ -4,41 +4,82 @@ package com.granit.survival
  * Sparse, deterministic environmental dressing.
  *
  * Coordinate hashing keeps every prop stable across visits and save restoration.
- * Zone-specific variants add visual identity without filling walkable space.
+ * Each family has several silhouette/material variants. Accepted large props are
+ * separated so their visible world footprints do not overlap.
  */
 object ZonePropSelector {
+    fun wallSpriteFor(zone: WorldZone, tileX: Int, tileY: Int): String {
+        val hash = Math.floorMod(
+            (tileX * 73_856_093) xor (tileY * 19_349_663) xor (zone.ordinal * 83_492_791),
+            101
+        )
+        return when (zone) {
+            WorldZone.BUNKER -> if (hash % 4 == 0) "bunker_panel_rusted" else "bunker_panel"
+            WorldZone.FOREST -> listOf("tree", "tree_dark", "tree_dead")[hash % 3]
+            WorldZone.RUINS -> listOf("rubble", "rubble_brick", "debris")[hash % 3]
+            WorldZone.ROAD -> if (hash % 3 == 0) "road_barrier_faded" else "road_barrier"
+        }
+    }
+
     fun spriteFor(zone: WorldZone, tileX: Int, tileY: Int): String? {
+        val candidate = rawSpriteFor(zone, tileX, tileY) ?: return null
+        val currentRank = placementRank(zone, tileX, tileY)
+        for (neighborY in tileY - 1..tileY + 1) {
+            for (neighborX in tileX - 1..tileX + 1) {
+                if (neighborX == tileX && neighborY == tileY) continue
+                if (rawSpriteFor(zone, neighborX, neighborY) == null) continue
+                val neighborRank = placementRank(zone, neighborX, neighborY)
+                if (neighborRank < currentRank ||
+                    (neighborRank == currentRank && (neighborY < tileY || (neighborY == tileY && neighborX < tileX)))) {
+                    return null
+                }
+            }
+        }
+        return candidate
+    }
+
+    private fun rawSpriteFor(zone: WorldZone, tileX: Int, tileY: Int): String? {
         val hash = Math.floorMod(
             (tileX * 73_856_093) xor (tileY * 19_349_663) xor (zone.ordinal * 83_492_791),
             101
         )
         return when (zone) {
             WorldZone.BUNKER -> when {
-                hash < 4 -> "crate"
-                hash in 12..14 -> "floor_grate"
+                hash < 4 -> listOf("crate", "crate_weathered", "crate_painted")[hash % 3]
+                hash in 12..14 -> if (hash % 2 == 0) "floor_grate" else "floor_grate_rust"
                 else -> null
             }
             WorldZone.FOREST -> when {
-                hash < 4 -> "bush"
-                hash in 15..17 -> "grass_patch"
-                hash in 37..39 -> "tree"
-                hash in 72..73 -> "fallen_log"
+                hash < 4 -> listOf("bush", "bush_dry", "bush_lush")[hash % 3]
+                hash in 15..17 -> if (hash % 2 == 0) "grass_patch" else "grass_patch_dry"
+                hash in 37..39 -> listOf("tree", "tree_autumn", "tree_dead")[hash % 3]
+                hash in 72..73 -> if (hash % 2 == 0) "fallen_log" else "fallen_log_mossy"
                 else -> null
             }
             WorldZone.RUINS -> when {
-                hash < 3 -> "barrel"
-                hash in 24..28 -> "debris"
-                hash in 46..48 -> "metal_scrap"
-                hash in 80..81 -> "puddle"
+                hash < 3 -> listOf("barrel", "barrel_rust", "barrel_dark")[hash % 3]
+                hash in 24..28 -> if (hash % 2 == 0) "debris" else "debris_light"
+                hash in 46..48 -> if (hash % 2 == 0) "metal_scrap" else "metal_scrap_copper"
+                hash in 80..81 -> if (hash % 2 == 0) "puddle" else "puddle_ice"
                 else -> null
             }
             WorldZone.ROAD -> when {
-                hash < 3 -> "streetlamp"
-                hash in 20..22 -> "road_sign"
-                hash in 42..44 -> "wreck"
-                hash in 70..72 -> "puddle"
+                hash < 3 -> if (hash % 2 == 0) "streetlamp" else "streetlamp_broken"
+                hash in 20..22 -> if (hash % 2 == 0) "road_sign" else "road_sign_faded"
+                hash in 42..44 -> listOf("wreck", "wreck_rust", "wreck_blue")[hash % 3]
+                hash in 70..72 -> if (hash % 2 == 0) "puddle" else "puddle_ice"
                 else -> null
             }
         }
     }
+
+    private fun placementRank(zone: WorldZone, x: Int, y: Int): Long =
+        ((x.toLong() * 73_856_093L) xor (y.toLong() * 19_349_663L) xor (zone.ordinal.toLong() * 83_492_791L)) and Long.MAX_VALUE
+
+    fun blocksMovement(spriteId: String): Boolean =
+        spriteId.startsWith("tree") || spriteId.startsWith("bush") ||
+            spriteId.startsWith("fallen_log") || spriteId.startsWith("crate") ||
+            spriteId.startsWith("barrel") || spriteId.startsWith("wreck") ||
+            spriteId.startsWith("road_barrier") || spriteId.startsWith("streetlamp") ||
+            spriteId.startsWith("road_sign")
 }

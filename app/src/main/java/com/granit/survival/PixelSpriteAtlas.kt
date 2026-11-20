@@ -17,7 +17,163 @@ object PixelSpriteAtlas {
         'D' to floatArrayOf(0.10f, 0.11f, 0.10f)
     )
 
-    private val sprites = mapOf(
+
+    /**
+     * Fine-detail pass for large outdoor props. Original silhouettes and logical
+     * footprints stay intact; 16x16 masters gain individually authored 32x32 pixels.
+     */
+    private fun detailEnvironmentSprite(source: PixelSprite, id: String): PixelSprite {
+        val palette = source.palette + mapOf(
+            'Y' to floatArrayOf(0.075f, 0.095f, 0.085f),
+            'Z' to floatArrayOf(0.78f, 0.70f, 0.48f)
+        )
+        val frames = source.frames.map { frame ->
+            val rows = buildList {
+                frame.forEach { row ->
+                    val doubled = buildString(row.length * 2) { row.forEach { append(it).append(it) } }
+                    add(doubled.toCharArray())
+                    add(doubled.toCharArray())
+                }
+            }.toMutableList()
+            fun paint(x: Int, y: Int, color: Char) {
+                if (y in rows.indices && x in rows[y].indices && rows[y][x] != '.') rows[y][x] = color
+            }
+            when (id) {
+                "tree" -> {
+                    for ((x,y) in listOf(10 to 8,14 to 10,20 to 12,8 to 16,24 to 18,16 to 20)) paint(x,y,'Z')
+                    for ((x,y) in listOf(14 to 15,18 to 17,12 to 19)) paint(x,y,'Y')
+                    for (y in 24..29 step 2) paint(16,y,'Z')
+                }
+                "bush" -> {
+                    for ((x,y) in listOf(10 to 10,16 to 8,22 to 12,8 to 16,20 to 18,14 to 22)) paint(x,y,'Z')
+                    for ((x,y) in listOf(12 to 15,18 to 16,22 to 20)) paint(x,y,'Y')
+                }
+                "rubble" -> {
+                    for ((x,y) in listOf(10 to 6,18 to 8,24 to 12,14 to 16,22 to 20,10 to 24)) paint(x,y,'Z')
+                    for ((x,y) in listOf(16 to 12,20 to 18,8 to 22)) paint(x,y,'Y')
+                }
+                "streetlamp" -> {
+                    for (x in 12..20 step 2) paint(x,4,'Z')
+                    paint(18,6,'Z'); paint(16,20,'Y'); paint(18,24,'Z')
+                }
+                "road_sign" -> {
+                    for (x in 12..20 step 2) paint(x,10,'Z')
+                    paint(12,14,'Y'); paint(20,14,'Z')
+                    for (y in 18..27 step 3) paint(16,y,'Y')
+                }
+                "wreck" -> {
+                    for ((x,y) in listOf(10 to 10,14 to 8,22 to 10,26 to 14,12 to 18,22 to 20)) paint(x,y,'Z')
+                    for (x in 10..24 step 4) paint(x,22,'Y')
+                }
+                "crate" -> {
+                    for (x in 8..24 step 4) { paint(x,8,'Z'); paint(x,20,'Y') }
+                    for (y in 10..18 step 4) { paint(10,y,'Z'); paint(22,y,'Y') }
+                }
+                "barrel" -> {
+                    for (x in 12..20 step 2) { paint(x,8,'Z'); paint(x,22,'Y') }
+                    for (y in 12..18 step 3) { paint(10,y,'Z'); paint(22,y,'Y') }
+                }
+                "road_barrier" -> {
+                    for (x in 8..24 step 4) { paint(x,8,'Z'); paint(x,14,'Y') }
+                    paint(12,20,'Z'); paint(22,20,'Y')
+                }
+                "bunker_panel" -> {
+                    for (x in 6..26 step 4) { paint(x,8,'Z'); paint(x,24,'Y') }
+                    for (y in 10..22 step 4) { paint(8,y,'Y'); paint(24,y,'Z') }
+                    paint(16,14,'Z'); paint(16,18,'Y')
+                }
+                "debris" -> {
+                    for ((x,y) in listOf(8 to 12,12 to 8,18 to 14,24 to 10,14 to 22,22 to 24)) paint(x,y,'Z')
+                    for ((x,y) in listOf(10 to 18,20 to 20,26 to 16)) paint(x,y,'Y')
+                }
+                "floor_grate" -> {
+                    for (y in 8..24 step 4) for (x in 8..24 step 4) {
+                        paint(x,y,'Z')
+                        paint(x+1,y+1,'Y')
+                    }
+                }
+                "grass_patch" -> {
+                    for ((x,y) in listOf(8 to 20,12 to 14,16 to 18,20 to 12,24 to 18,28 to 14)) paint(x,y,'Z')
+                    for ((x,y) in listOf(10 to 22,18 to 24,26 to 20)) paint(x,y,'Y')
+                }
+                "fallen_log" -> {
+                    for (x in 8..24 step 4) { paint(x,14,'Z'); paint(x+2,20,'Y') }
+                    paint(10,10,'Y'); paint(22,24,'Z')
+                }
+                "metal_scrap" -> {
+                    for ((x,y) in listOf(8 to 10,12 to 8,18 to 12,22 to 16,14 to 22,26 to 18)) paint(x,y,'Z')
+                    for ((x,y) in listOf(10 to 18,20 to 22,24 to 10)) paint(x,y,'Y')
+                }
+                "puddle" -> {
+                    for (x in 10..24 step 4) { paint(x,14,'Z'); paint(x+2,20,'Y') }
+                    paint(14,18,'Y'); paint(22,16,'Z')
+                }
+            }
+            rows.map { String(it) }
+        }
+        return PixelSprite(frames, palette)
+    }
+
+
+    private fun inventoryIcon(palette: Map<Char, FloatArray>, vararg rows: String) =
+        PixelSprite(listOf(rows.toList()), palette)
+
+    /** Original 16x16 inventory item icons, kept separate from world props. */
+    private val inventoryIcons = mapOf(
+        "item_wood" to inventoryIcon(mapOf(
+            'B' to floatArrayOf(0.20f, 0.12f, 0.075f),
+            'W' to floatArrayOf(0.58f, 0.36f, 0.19f)
+        ),
+            "................","................","....BBBBBBBB....","...BWWWWWWWWB...","..BWWWWWWWWWWB..","..BWWWWWWWWWWB..","...BWWWWWWWWB...","....BBBBBBBB....",
+            "....BBBBBBBB....","...BWWWWWWWWB...","..BWWWWWWWWWWB..","..BWWWWWWWWWWB..","...BWWWWWWWWB...","....BBBBBBBB....","................","................"
+        ),
+        "item_metal" to inventoryIcon(mapOf(
+            'M' to floatArrayOf(0.18f, 0.23f, 0.23f),
+            'S' to floatArrayOf(0.64f, 0.72f, 0.72f)
+        ),
+            "................","................","......MMMM......",".....MSSSSM.....","....MSSSSSSM....","...MSSSSSSSSM...","..MSSSSSSSSSSM..","..MSSSSSSSSSSM..",
+            "...MSSSSSSSSM...","....MSSSSSSM....",".....MSSSSM.....","......MMMM......",".......MM.......","................","................","................"
+        ),
+        "item_fabric" to inventoryIcon(mapOf(
+            'B' to floatArrayOf(0.13f, 0.25f, 0.22f),
+            'W' to floatArrayOf(0.48f, 0.66f, 0.58f)
+        ),
+            "................","..BBBBBBBBBBBB..",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",".BBBBBBBBBBBBBW.","..BWWWWWWWWWWB..","...BWWWWWWWWB...",
+            "....BWWWWWWWB...",".....BBBBBBBB...","................","................","................","................","................","................"
+        ),
+        "item_food" to inventoryIcon(mapOf(
+            'M' to floatArrayOf(0.29f, 0.20f, 0.11f),
+            'W' to floatArrayOf(0.77f, 0.55f, 0.22f),
+            'S' to floatArrayOf(0.91f, 0.82f, 0.59f)
+        ),
+            "................",".....MMMMMM.....","....MWWWWWWM....","...MWWWWWWWWM...","...MWWSSSSWWM...","...MWWSSSSWWM...","...MWWSSSSWWM...","...MWWSSSSWWM...",
+            "...MWWSSSSWWM...","...MWWSSSSWWM...","...MWWWWWWWWM...","....MWWWWWWM....",".....MMMMMM.....","................","................","................"
+        ),
+        "item_water" to inventoryIcon(mapOf(
+            'B' to floatArrayOf(0.10f, 0.22f, 0.29f),
+            'W' to floatArrayOf(0.26f, 0.62f, 0.82f)
+        ),
+            "................","......BBBB......",".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....",
+            ".....BWWWWB.....",".....BWWWWB.....",".....BWWWWB.....","......BBBB......",".......BB.......",".......BB.......","................","................"
+        ),
+        "item_medical_kit" to inventoryIcon(mapOf(
+            'M' to floatArrayOf(0.31f, 0.12f, 0.12f),
+            'W' to floatArrayOf(0.88f, 0.84f, 0.73f),
+            'R' to floatArrayOf(0.76f, 0.25f, 0.20f)
+        ),
+            "................","...MMMMMMMMMM...","..MWWWWWWWWWWM..","..MWWWWWWWWWWM..","..MWWWWRRWWWWWM.","..MWWWWRRWWWWWM.","..MWWWRRRRWWWWM.","..MWWWRRRRWWWWM.",
+            "..MWWWWRRWWWWWM.","..MWWWWRRWWWWWM.","..MWWWWWWWWWWM..","...MMMMMMMMMM...","................","................","................","................"
+        ),
+        "item_bandage" to inventoryIcon(mapOf(
+            'B' to floatArrayOf(0.30f, 0.27f, 0.20f),
+            'W' to floatArrayOf(0.85f, 0.80f, 0.66f)
+        ),
+            "................","......BBBB......","....BBWWWWBB....","...BWWWWWWWWB...","..BWWWWWWWWWWB..",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",".BWWWWWWWWWWWWB.",
+            "..BWWWWWWWWWWB..","...BWWWWWWWWB...","....BBWWWWBB....","......BBBB......","................","................","................","................"
+        )
+    )
+
+    private val sprites = (mapOf(
         "player" to PixelSprite(
             frames = listOf(
                 listOf(
@@ -559,16 +715,89 @@ object PixelSpriteAtlas {
             'M' to floatArrayOf(0.38f, 0.40f, 0.37f),
             'W' to floatArrayOf(0.63f, 0.59f, 0.43f)
         ))
-    )
+    )).mapValues { (id, sprite) ->
+        if (id in setOf("tree", "bush", "rubble", "streetlamp", "road_sign", "wreck", "crate", "barrel", "road_barrier", "bunker_panel", "debris", "floor_grate", "grass_patch", "fallen_log", "metal_scrap", "puddle")) {
+            detailEnvironmentSprite(sprite, id)
+        } else sprite
+    } + inventoryIcons
 
-    fun sprite(id: String): PixelSprite? = sprites[id]
+    /**
+     * Hand-authored style variants are derived from the original pixel silhouettes.
+     * Small contour offsets and independent material grading prevent repeated props
+     * from looking like exact copies while keeping the same collision footprint.
+     */
+    private fun createVariant(
+        baseId: String,
+        mirror: Boolean = false,
+        rowShift: Int = 0,
+        redScale: Float = 1f,
+        greenScale: Float = 1f,
+        blueScale: Float = 1f,
+        lift: Float = 0f
+    ): PixelSprite {
+        val source = requireNotNull(sprites[baseId]) { "Missing base sprite $baseId" }
+        val frames = source.frames.map { frame ->
+            frame.mapIndexed { rowIndex, row ->
+                val oriented = if (mirror) row.reversed() else row
+                val shift = if (rowIndex % 3 == 1) rowShift else 0
+                when {
+                    shift > 0 -> ".".repeat(shift) + oriented.dropLast(shift)
+                    shift < 0 -> oriented.drop(-shift) + ".".repeat(-shift)
+                    else -> oriented
+                }
+            }
+        }
+        val palette = source.palette.mapValues { (_, color) ->
+            floatArrayOf(
+                (color[0] * redScale + lift).coerceIn(0f, 1f),
+                (color[1] * greenScale + lift).coerceIn(0f, 1f),
+                (color[2] * blueScale + lift).coerceIn(0f, 1f)
+            )
+        }
+        return PixelSprite(frames, palette)
+    }
 
-    fun allIds(): Set<String> = sprites.keys
+    private val variants: Map<String, PixelSprite> by lazy {
+        mapOf(
+            "tree_autumn" to createVariant("tree", mirror = true, rowShift = 1, redScale = 1.18f, greenScale = 0.88f, blueScale = 0.72f, lift = 0.015f),
+            "tree_dead" to createVariant("tree", rowShift = -1, redScale = 0.78f, greenScale = 0.82f, blueScale = 0.86f),
+            "tree_dark" to createVariant("tree", mirror = true, redScale = 0.76f, greenScale = 0.91f, blueScale = 0.80f),
+            "bush_dry" to createVariant("bush", mirror = true, rowShift = 1, redScale = 1.15f, greenScale = 0.96f, blueScale = 0.72f, lift = 0.02f),
+            "bush_lush" to createVariant("bush", rowShift = -1, redScale = 0.82f, greenScale = 1.16f, blueScale = 0.78f),
+            "crate_weathered" to createVariant("crate", mirror = true, rowShift = 1, redScale = 0.88f, greenScale = 0.82f, blueScale = 0.72f),
+            "crate_painted" to createVariant("crate", rowShift = -1, redScale = 0.76f, greenScale = 1.08f, blueScale = 1.14f, lift = 0.015f),
+            "barrel_rust" to createVariant("barrel", mirror = true, redScale = 1.18f, greenScale = 0.82f, blueScale = 0.72f, lift = 0.015f),
+            "barrel_dark" to createVariant("barrel", rowShift = 1, redScale = 0.72f, greenScale = 0.78f, blueScale = 0.76f),
+            "debris_light" to createVariant("debris", mirror = true, rowShift = 1, redScale = 1.12f, greenScale = 1.08f, blueScale = 1.02f, lift = 0.025f),
+            "rubble_brick" to createVariant("rubble", mirror = true, rowShift = -1, redScale = 1.20f, greenScale = 0.86f, blueScale = 0.76f, lift = 0.01f),
+            "metal_scrap_copper" to createVariant("metal_scrap", mirror = true, rowShift = 1, redScale = 1.20f, greenScale = 0.91f, blueScale = 0.72f, lift = 0.01f),
+            "puddle_ice" to createVariant("puddle", mirror = true, redScale = 0.82f, greenScale = 1.05f, blueScale = 1.18f, lift = 0.025f),
+            "wreck_rust" to createVariant("wreck", mirror = true, rowShift = 1, redScale = 1.18f, greenScale = 0.84f, blueScale = 0.74f, lift = 0.012f),
+            "wreck_blue" to createVariant("wreck", rowShift = -1, redScale = 0.78f, greenScale = 0.98f, blueScale = 1.18f),
+            "road_sign_faded" to createVariant("road_sign", mirror = true, rowShift = 1, redScale = 0.88f, greenScale = 0.92f, blueScale = 0.90f, lift = 0.04f),
+            "fallen_log_mossy" to createVariant("fallen_log", mirror = true, rowShift = -1, redScale = 0.82f, greenScale = 1.12f, blueScale = 0.78f),
+            "grass_patch_dry" to createVariant("grass_patch", mirror = true, rowShift = 1, redScale = 1.14f, greenScale = 0.94f, blueScale = 0.70f, lift = 0.02f),
+            "streetlamp_broken" to createVariant("streetlamp", mirror = true, rowShift = 1, redScale = 0.82f, greenScale = 0.86f, blueScale = 0.84f),
+            "floor_grate_rust" to createVariant("floor_grate", mirror = true, redScale = 1.16f, greenScale = 0.88f, blueScale = 0.72f, lift = 0.01f),
+            "bunker_panel_rusted" to createVariant("bunker_panel", mirror = true, rowShift = 1, redScale = 1.12f, greenScale = 0.90f, blueScale = 0.82f, lift = 0.008f),
+            "road_barrier_faded" to createVariant("road_barrier", mirror = true, rowShift = -1, redScale = 0.86f, greenScale = 0.90f, blueScale = 0.88f, lift = 0.035f)
+        )
+    }
+
+    /** Cache the replacement palette once; every renderer path receives the same RGB values. */
+    private val recoloredSprites: Map<String, PixelSprite> by lazy {
+        (sprites + variants).mapValues { (id, sprite) -> GranitSpritePalette.remap(sprite, id) }
+    }
+
+    fun sprite(id: String): PixelSprite? = recoloredSprites[id]
+
+    fun allIds(): Set<String> = sprites.keys + variants.keys
 
     /** Returns atlas integrity errors; an empty list means every frame is renderable. */
     fun validate(): List<String> {
         val errors = mutableListOf<String>()
-        sprites.forEach { (id, sprite) ->
+        allIds().forEach { id ->
+            val sprite = requireNotNull(sprite(id))
             val expectedHeight = sprite.frames.firstOrNull()?.size ?: 0
             val expectedWidth = sprite.frames.firstOrNull()?.firstOrNull()?.length ?: 0
             if (expectedHeight == 0 || expectedWidth == 0) errors += "$id has an empty frame"

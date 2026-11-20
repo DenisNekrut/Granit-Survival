@@ -1,11 +1,13 @@
 package com.granit.survival
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.graphics.Color
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Button
 import android.widget.Toast
+import android.view.Gravity
 
 /** Native UI panels for the bunker utility stations. */
 internal class BunkerStationPanels(
@@ -154,25 +156,107 @@ internal class BunkerStationPanels(
         showOverlay(panel)
     }
 
+    fun showWorldContainer() {
+        val engine = session.engine
+        val container = engine.nearestWorldContainer() ?: run { showMessage("ТАЙНИК", "Подойди ближе к ящику, чтобы осмотреть его."); return }
+        fun dp(value: Int) = (value * activity.resources.displayMetrics.density).toInt()
+        val panel = createPanel(container.displayTitle, "Тип тайника определяет набор припасов. Содержимое сохраняется в этой локации; перенос выполняется вручную.")
+        fun grid(title: String, source: ItemContainer, move: (Int, Int) -> Boolean, verb: String) {
+            panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
+            panel.addView(InventoryGridView(context = activity, container = source, cellHeightDp = 82, iconSizeDp = 34, dp = ::dp) { index, stack ->
+                val options = if (stack.quantity > 1) arrayOf("$verb 1 предмет", "$verb всю стопку (${stack.quantity})") else arrayOf("$verb предмет")
+                AlertDialog.Builder(activity).setTitle(stack.type.displayName).setItems(options) { _, choice ->
+                    if (move(index, if (choice == 1) stack.quantity else 1)) showWorldContainer()
+                    else Toast.makeText(activity, "Не удалось переместить предмет: проверь свободное место", Toast.LENGTH_SHORT).show()
+                }.setNegativeButton("ОТМЕНА", null).show()
+            })
+        }
+        grid("РЮКЗАК", engine.inventory, { i, n -> engine.transferToWorldContainerAt(container.id, i, n) }, "ПОЛОЖИТЬ")
+        grid("ЯЩИК", container, { i, n -> engine.transferFromWorldContainerAt(container.id, i, n) }, "ЗАБРАТЬ")
+        panel.addView(menuButton("ЗАКРЫТЬ", true) { closeStationPanel() }); showOverlay(panel)
+    }
+
     fun showStorage() {
-        val panel = createPanel("ХРАНИЛИЩЕ УБЕЖИЩА", "Перенос ресурсов между рюкзаком и контейнером")
-        ItemType.values().forEach { type ->
-            val backpack = session.engine.inventory.count(type)
-            val stored = session.engine.bunkerStorage.count(type)
-            panel.addView(label(
-                "${type.displayName}:  рюкзак $backpack  ·  хранилище $stored",
-                14f, Color.WHITE, false
-            ))
-            val row = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
-            row.addView(menuButton("ПОЛОЖИТЬ ВСЁ", backpack > 0) {
-                if (session.transferToStorage(type)) showStorage()
-                else Toast.makeText(activity, "Не удалось переместить предметы", Toast.LENGTH_SHORT).show()
-            }, weightedParams())
-            row.addView(menuButton("ЗАБРАТЬ ВСЁ", stored > 0) {
-                if (session.transferFromStorage(type)) showStorage()
-                else Toast.makeText(activity, "В рюкзаке недостаточно места", Toast.LENGTH_SHORT).show()
-            }, weightedParams())
-            panel.addView(row)
+        val engine = session.engine
+        fun dp(value: Int): Int = (value * activity.resources.displayMetrics.density).toInt()
+        val panel = createPanel(
+            "ХРАНИЛИЩЕ УБЕЖИЩА",
+            "Выбирай отдельную ячейку. Само открытие контейнера ничего не перемещает."
+        )
+
+        fun addGrid(
+            title: String,
+            container: ItemContainer,
+            transfer: (Int, Int) -> Boolean,
+            actionVerb: String,
+            useSelected: ((ItemType) -> Boolean)? = null
+        ) {
+            panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
+            panel.addView(InventoryGridView(
+                context = activity,
+                container = container,
+                cellHeightDp = 90,
+                iconSizeDp = 38,
+                dp = ::dp
+            ) { index, selected ->
+                val canUse = useSelected != null && selected.type in setOf(
+                    ItemType.CANNED_FOOD, ItemType.WATER,
+                    ItemType.BANDAGE, ItemType.MEDICAL_KIT
+                )
+                val actions = buildList {
+                    add(if (selected.quantity > 1) "$actionVerb 1 предмет" else "$actionVerb предмет")
+                    if (selected.quantity > 1) add("$actionVerb всю стопку (${selected.quantity})")
+                    if (canUse) add("ЗАБРАТЬ И ИСПОЛЬЗОВАТЬ")
+                }.toTypedArray()
+                AlertDialog.Builder(activity)
+                    .setTitle(selected.type.displayName)
+                    .setItems(actions) { _, choice ->
+                        val useChoice = canUse && choice == actions.lastIndex
+                        val amount = if (choice == 1 && selected.quantity > 1) selected.quantity else 1
+                        if (transfer(index, amount)) {
+                            if (useChoice) {
+                                val used = useSelected?.invoke(selected.type) == true
+                                if (!used) {
+                                    Toast.makeText(
+                                        activity,
+                                        "Предмет забран в рюкзак, но сейчас его нельзя использовать",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                            showStorage()
+                        } else {
+                            Toast.makeText(
+                                activity,
+                                "Перенос невозможен: проверь свободные ячейки и доступ к хранилищу",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                    .setNegativeButton("ОТМЕНА", null)
+                    .show()
+            })
+        }
+
+        addGrid(
+            "РЮКЗАК · ${engine.inventory.columns} × ${engine.inventory.rows}",
+            engine.inventory,
+            engine::transferToStorageAt,
+            "ПОЛОЖИТЬ"
+        )
+        addGrid(
+            "ХРАНИЛИЩЕ · ${engine.bunkerStorage.columns} × ${engine.bunkerStorage.rows}",
+            engine.bunkerStorage,
+            engine::transferFromStorageAt,
+            "ЗАБРАТЬ"
+        ) { type ->
+            when (type) {
+                ItemType.CANNED_FOOD -> session.consumeFood()
+                ItemType.WATER -> session.drinkWater()
+                ItemType.BANDAGE -> engine.useBandage()
+                ItemType.MEDICAL_KIT -> engine.useMedicalKit()
+                else -> false
+            }
         }
         panel.addView(menuButton("ЗАКРЫТЬ", true) { closeStationPanel() })
         showOverlay(panel)

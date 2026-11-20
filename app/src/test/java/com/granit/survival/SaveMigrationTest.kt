@@ -58,6 +58,45 @@ class SaveMigrationTest {
     }
 
     @Test
+    fun preservesValidWorldContainerContentsDuringMigration() {
+        val contents = JSONArray()
+            .put(JSONObject().put("type", ItemType.WOOD.name).put("quantity", 4))
+        val validContainer = JSONObject()
+            .put("id", "forest_30_5")
+            .put("x", 30)
+            .put("y", 5)
+            .put("title", "ТАЙНИК")
+            .put("contents", contents)
+        val invalidContainer = JSONObject()
+            .put("id", "")
+            .put("x", 31)
+            .put("y", 5)
+            .put("contents", JSONArray())
+        val zoneSnapshot = JSONObject()
+            .put("zone", WorldZone.FOREST.name)
+            .put("seed", JSONObject.NULL)
+            .put("resources", JSONArray())
+            .put("containers", JSONArray().put(validContainer).put(invalidContainer))
+        val state = JSONObject()
+            .put("zone", WorldZone.FOREST.name)
+            .put("zoneResources", JSONArray().put(zoneSnapshot))
+            .put("clock", JSONObject())
+
+        val decoded = SaveCodec.decode(JSONObject()
+            .put("saveVersion", SaveVersion.CURRENT)
+            .put("state", state).toString())
+        val savedContainers = decoded.getJSONObject("state").getJSONArray("zoneResources")
+            .getJSONObject(0).getJSONArray("containers")
+
+        assertEquals(1, savedContainers.length())
+        assertEquals("forest_30_5", savedContainers.getJSONObject(0).getString("id"))
+        assertEquals(12, savedContainers.getJSONObject(0).getJSONArray("contents").length())
+        assertEquals(ItemType.WOOD.name,
+            savedContainers.getJSONObject(0).getJSONArray("contents").getJSONObject(0).getString("type"))
+        assertTrue(savedContainers.getJSONObject(0).getJSONArray("contents").isNull(1))
+    }
+
+    @Test
     fun rejectsSavesFromAFutureSchema() {
         val future = JSONObject()
             .put("saveVersion", SaveVersion.CURRENT + 1)

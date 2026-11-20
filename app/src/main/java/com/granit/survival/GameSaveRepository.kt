@@ -230,7 +230,10 @@ private fun List<ZoneResourceSnapshot>.toZoneResourcesJson(): JSONArray = JSONAr
         array.put(JSONObject()
             .put("zone", snapshot.zone.name)
             .put("seed", snapshot.seed ?: JSONObject.NULL)
-            .put("resources", snapshot.resources.toResourcesJson()))
+            .put("resources", snapshot.resources.toResourcesJson())
+            .put("containers", JSONArray().also { arr -> snapshot.containers.forEach { item ->
+                arr.put(JSONObject().put("id", item.id).put("x", item.x).put("y", item.y).put("title", item.title).put("contents", item.contents.toItemStacksJson()))
+            } }))
     }
 }
 
@@ -359,7 +362,10 @@ private fun JSONArray.toZoneResources(): List<ZoneResourceSnapshot> = List(lengt
         ZoneResourceSnapshot(
             zone = WorldZone.valueOf(entry.getString("zone")),
             resources = entry.getJSONArray("resources").toResources(),
-            seed = if (entry.isNull("seed")) null else entry.optLong("seed")
+            seed = if (entry.isNull("seed")) null else entry.optLong("seed"),
+            containers = entry.optJSONArray("containers")?.let { arr -> List(arr.length()) { i -> arr.getJSONObject(i).let { item ->
+                WorldContainerSnapshot(item.getString("id"), item.getInt("x"), item.getInt("y"), item.optString("title", "ТАЙНИК С ПРИПАСАМИ"), item.getJSONArray("contents").toItemStacks())
+            } } } ?: emptyList()
         )
     }
 }

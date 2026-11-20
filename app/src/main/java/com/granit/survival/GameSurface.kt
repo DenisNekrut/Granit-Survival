@@ -136,40 +136,44 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
     @Synchronized
     private fun startIfReady() {
         if (!resumed || !surfaceReady || surfaceWidth <= 1 || surfaceHeight <= 1 ||
-            !holder.surface.isValid || renderThread?.isAlive == true) return
+            !holder.surface.isValid || renderThread != null) return
         Log.i(TAG, "startIfReady: starting render thread with viewport=${surfaceWidth}x$surfaceHeight")
         val thread = EngineRenderThread(
             holder, surfaceWidth, surfaceHeight, session, context.applicationContext,
-            onInteractionProcessed = { post { onInteractionProcessed?.invoke() } }
-        ) { failure ->
-            post { onRenderFailure?.invoke(failure) }
-        }
+            onInteractionProcessed = { post { onInteractionProcessed?.invoke() } },
+            onStopped = ::handleRenderThreadStopped,
+            onRenderFailure = { failure -> post { onRenderFailure?.invoke(failure) } }
+        )
         renderThread = thread
         thread.start()
     }
 
+    /**
+     * Never join the EGL thread from the Android UI thread. Surface/lifecycle callbacks
+     * run on main; waiting here can block focus events and trigger an input-dispatch ANR.
+     * The render thread clears its own reference after EGL teardown has completed.
+     */
     @Synchronized
     private fun stopThread() {
         val thread = renderThread ?: return
-        Log.i(TAG, "stopThread: requesting stop for ${thread.name}, alive=${thread.isAlive}")
+        Log.i(TAG, "stopThread: asynchronous stop requested for ${thread.name}, alive=${thread.isAlive}")
         thread.requestStop()
-        try {
-            thread.join(1500)
-        } catch (_: InterruptedException) {
-            Thread.currentThread().interrupt()
-        }
-        Log.i(TAG, "stopThread: joined ${thread.name}, alive=${thread.isAlive}")
-        if (!thread.isAlive) {
-            renderThread = null
-            session.engine.releaseInputState()
-        } else {
-            Log.e(TAG, "render thread did not stop within timeout; keeping reference to prevent duplicate EGL threads")
-        }
         joystickPointerId = MotionEvent.INVALID_POINTER_ID
         actionPointerId = MotionEvent.INVALID_POINTER_ID
         firePointerId = MotionEvent.INVALID_POINTER_ID
         thread.setJoystick(0f, 0f, false)
         thread.setInteracting(false)
         thread.setFiring(false)
+    }
+
+    @Synchronized
+    private fun handleRenderThreadStopped(stopped: EngineRenderThread) {
+        if (renderThread !== stopped) return
+        Log.i(TAG, "render thread fully stopped; releasing input state")
+        renderThread = null
+        session.engine.releaseInputState()
+        // If Android recreated/resumed the surface while EGL was shutting down,
+        // start exactly one replacement thread now that the old context is gone.
+        startIfReady()
     }
 }

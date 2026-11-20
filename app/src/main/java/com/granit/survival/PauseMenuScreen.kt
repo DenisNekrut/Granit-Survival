@@ -31,16 +31,17 @@ internal class PauseMenuScreen(
     fun show() {
         val engine = session.engine
         val panel = createPanel("ПАУЗА", "Состояние игры сохранено в памяти")
-        panel.addView(label("Психологическое состояние", 16f, Color.WHITE, false))
+        panel.addView(label("Психологическое состояние", 16f, GranitPalette.textPrimary, false))
         panel.addView(label(
             "Стресс: ${engine.psychology.stress.toInt()}  ·  Одиночество: ${engine.psychology.loneliness.toInt()}",
-            13f, Color.LTGRAY, false
+            13f, GranitPalette.textSecondary, false
         ))
         panel.addView(label(
             "Усталость: ${engine.psychology.fatigue.toInt()}  ·  Мораль: ${engine.psychology.morale.toInt()}",
             13f, Color.LTGRAY, false
         ))
         panel.addView(menuButton("ПРОДОЛЖИТЬ", true) { enterGame() })
+        panel.addView(menuButton("КРАТКОЕ РУКОВОДСТВО", true) { showSurvivalGuide() })
         panel.addView(menuButton("СТАТИСТИКА ПЕРСОНАЖА", true) { showCharacterStatistics() })
         panel.addView(menuButton("ГЛАВНОЕ МЕНЮ", true) { confirmReturnToMainMenu() })
         panel.addView(menuButton("ЖУРНАЛ ЭКСПЕДИЦИЙ", true) { showJournal() })
@@ -112,4 +113,29 @@ internal class PauseMenuScreen(
         panel.addView(menuButton("НАСТРОЙКИ", true) { showSettings() })
         showOverlay(panel)
     }
+    private fun showSurvivalGuide() {
+        val panel = createPanel(
+            "ПАМЯТКА ВЫЖИВШЕГО",
+            "Короткие правила. Время в игре продолжает идти во время большинства действий."
+        )
+        fun section(title: String, body: String) {
+            panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
+            panel.addView(label(body, 13f, Color.rgb(214, 221, 207), false))
+        }
+        section("ОСНОВЫ ВЫЖИВАНИЯ",
+            "Следи за здоровьем, голодом, жаждой и энергией. Еда и вода восполняют потребности, отдых восстанавливает силы. Не затягивай с лечением и возвращением в убежище.")
+        section("ВЗАИМОДЕЙСТВИЕ С МИРОМ",
+            "Подойди к объекту или ресурсу и нажми контекстную кнопку действия. Если рядом несколько целей, ориентируйся на выбранную цель. Некоторые объекты требуют времени или определённых условий.")
+        section("РЮКЗАК И ХРАНИЛИЩЕ",
+            "Открой рюкзак кнопкой с изображением сумки. Предметы находятся в отдельных ячейках. В хранилище выбери ячейку и действие «ПОЛОЖИТЬ» или «ЗАБРАТЬ». Само открытие хранилища ничего не переносит.")
+        section("ПРЕДМЕТЫ И МЕДИЦИНА",
+            "Нажми на ячейку интерактивного предмета, чтобы увидеть доступное действие. Консервы и вода поддерживают потребности, бинт и аптечка помогают восстановить здоровье. Использование возможно при подходящих условиях.")
+        section("БЕЗОПАСНОСТЬ В БУНКЕРЕ",
+            "Следи за топливом генератора. Кровать позволяет завершить день и создать контрольную точку. Верстак используется для изготовления предметов, библиотека — для чтения.")
+        section("ЭКСПЕДИЦИИ",
+            "Перед выходом проверь запасы и экипировку. Исследуй лес, руины и дорогу, собирай полезные ресурсы и возвращайся до критического истощения. Используй контрольную точку перед вылазкой.")
+        panel.addView(menuButton("НАЗАД К ПАУЗЕ", true) { show() })
+        showOverlay(panel)
+    }
+
 }

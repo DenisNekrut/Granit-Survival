@@ -20,3 +20,77 @@ Leave at least one transparent pixel between independent regions and use edge ex
 Run python3 tools/validate_sprite_assets.py. It checks manifest structure, IDs, paths, dimensions, pivots, frame bounds and PNG IHDR. Example manifests are checked structurally but do not require their demonstration texture. The code-generated atlas is additionally checked by PixelSpriteAtlas.validate() and Kotlin unit tests.
 
 The external atlas is currently an optional override. If absent, the game generates a built-in atlas from PixelSpriteAtlas. This is a fallback, not a completed external art-import pipeline.
+
+
+## 2026-11-20 — expanded pixel-art direction
+- The map-cell standard is 128x128 logical pixels, equal to 1x1 world unit. Every world sprite is normalized by its longest authored frame side and fits within a configurable fraction of one tile; aspect ratio is preserved.
+- The built-in atlas and fallback renderer share one cold-weather color grade: deeper slate shadows, clearer midtones and restrained warm highlights.
+- Repeated environmental props use deterministic shape/material variants. Variant selection is coordinate-based and stable across visits and save restoration.
+- Every variant remains a pixel sprite with nearest-neighbour rendering. No SVG or vector runtime assets are introduced.
+- Variant families currently cover crates, floor grates, trees, bushes, grass, fallen logs, barrels, rubble, debris, metal scraps, puddles, streetlamps, road signs and wrecks.
+- Further hand-authored redraws of the player, bunker furniture and large landmark sprites remain part of the visual pass; the present change establishes consistent scaling, grading and repeatable prop variation.
+
+
+## Android launcher icon
+- Original pixel art built around the Granit Survival bunker hatch, with the cold slate palette and restrained warm lamp highlight.
+- The 48x48 authored pixel master is stored as compact indexed-color data in `app/src/main/assets/launcher-icon.txt`.
+- The Android Gradle build generates density-specific PNG resources (mdpi through xxxhdpi) using nearest-neighbour scaling, plus adaptive and round launcher resource definitions.
+- The icon is registered through `android:icon` and `android:roundIcon` in the application manifest. No external image/vector runtime dependency is required.
+
+## Infected character sprites
+- Three distinct 12x24 pixel-art silhouettes are authored for the shambler, runner and brute archetypes.
+- Each archetype has two frames; the renderer selects its matching sprite and alternates frames during movement/attack cooldown updates.
+- The infected remain non-graphic, stylized game characters and share the atlas palette/nearest-neighbour pipeline.
+
+
+## 2026-11-20 — 2x runtime sprite atlas density
+- Built-in pixel sprites are now rasterized into the runtime atlas at 2x source-pixel density (each authored logical pixel becomes a crisp 2×2 texel block).
+- Atlas cell bounds and manifest frame dimensions are scaled together; nearest-neighbour sampling remains mandatory.
+- World-space sprite dimensions, pivots, collision cells, animation timing and gameplay coordinates are unchanged.
+- This pass improves texture resolution/headroom and avoids fractional scaling artifacts, but does not pretend that duplicated texels add hand-painted detail. The next art pass must redraw priority characters and props with genuinely finer source pixels (not merely upscale them).
+
+
+## 2026-11-20 — player sprite detail pass
+- The four directional player walk cycles now use 32x48 authored frames instead of the 16x24 blockout.
+- Added small per-texel clothing seams, backpack/webbing accents, equipment highlights and boot details while keeping the existing silhouette, four-frame timing and bottom-centre world anchor.
+- The runtime atlas retains nearest-neighbour 2x rasterization, so player texture frames become 64x96 without changing world-space size.
+- Environment sprites remain on their existing 16x16 source cells for the next dedicated redraw pass.
+
+
+## 2026-11-20 — bunker fixture detail pass
+- Seven core bunker fixtures (bed, workbench, storage, bookshelf, radio, generator and medical station) now use 32x32 authored pixel frames.
+- Added fine panel seams, shelf/book edge accents, fabric folds, control lights, vent details and small hardware highlights while preserving silhouettes and interaction anchors.
+- The runtime atlas rasterizes these frames at 2x with nearest-neighbour filtering; world-space footprint and interaction distances are unchanged.
+
+## 2026-11-20 — large environment prop detail pass
+- Trees, bushes, rubble piles, streetlamps, road signs, wrecks, crates, barrels and road barriers now use 32x32 authored pixel frames with individually placed material highlights and seam/shadow accents.
+- Runtime atlas rasterizes these frames at 2x (64x64 texels) with nearest-neighbour filtering; world-space footprints, collision cells and interaction coordinates are unchanged.
+- Smaller environmental tiles remain on their compact source dimensions until their own dedicated redraw pass.
+
+## 2026-11-20 — inventory icon pass
+- Added seven original 16x16 pixel-art icons: wood, metal, fabric, canned food, water, medical kit and bandage.
+- The backpack list now renders the matching icon beside each item; the compact HUD inventory uses the same sprite IDs and generated atlas.
+- HUD icons are drawn in screen space and retain crisp nearest-neighbour pixels; a Canvas pixel fallback is used when the texture atlas is unavailable.
+
+## 2026-11-20 — 128x128 map-tile sizing standard
+- One map cell is defined as 128x128 logical pixels and exactly 1x1 world unit.
+- Each world sprite is normalized by its longest authored frame dimension. A square prop fills one tile; a 32x48 character keeps its aspect ratio and occupies 2/3 tile width by 1 tile height; smaller archetypes are scaled by the same rule.
+- A caller may request a fractional tile extent (for example, 0.5 tile) but may not provide an arbitrary per-pixel world multiplier.
+- The 2x runtime atlas is a texture-storage detail only. Textured rendering divides atlas texel dimensions by RASTER_SCALE before applying the logical pixel size, so atlas resolution cannot change world size.
+- Rendering, furniture anchoring and movement collision all use SpriteWorldMetrics, preventing the same sprite from having different visual and physical footprints.
+- HUD icons remain screen-space elements with their own pixel sizing and are not normalized to world tiles.
+
+
+## 2026-11-20 — secondary terrain and utility prop detail pass
+- Seven additional world props now use 32x32 authored pixel frames: bunker panels, debris, floor grates, grass patches, fallen logs, metal scrap and puddles.
+- Added per-material seam, bolt, grass blade, metal glint and water ripple accents while preserving source silhouettes and tile placement.
+- The shared 128x128 tile normalization keeps their logical footprint bounded; inventory icons and UI-space sprites remain on their independent sizing path.
+
+
+## 2026-11-20 — sprite footprint and replacement palette
+- World footprint is computed only from authored frame dimensions and the requested tile fraction via SpriteWorldMetrics. Never infer collision size from texture-atlas texels.
+- Large world props require a one-cell clearance from walls and each other, plus protected areas around landmarks, exits, spawn points and the main route.
+- Large props that physically occupy space are checked by movement collision using the same footprint as rendering.
+- The active sprite palette is remapped to cold steel, oxidized teal, moss/olive, muted rust and amber. The same palette is used by the texture atlas, CPU fallback renderer and HUD icon renderer.
+
+- Wall, furniture and environmental props use explicit tile extents rather than per-pixel coefficients. Blocking prop collision uses the same normalized footprint as rendering.

@@ -128,14 +128,22 @@ class MainActivity : Activity() {
     private fun handleContextAction() {
         if (!activeGame || isFinishing) return
         val engine = session.engine
+        // Authored landmark caches are not map-blocking tiles; resolve them by proximity first.
+        if (engine.nearestWorldContainer(1.35f) != null) {
+            showWorldContainerPanel()
+            return
+        }
         val hasNearbyResource = engine.tileMap.nearestResource(
             engine.player.x, engine.player.y, 1.35f
         ) != null
         val target = engine.tileMap.nearestInteractable(
             engine.player.x, engine.player.y, 1.35f
         )
+        if (target == TileType.LOOT_CACHE) { showWorldContainerPanel(); return }
         stationPanelRouter.route(target, hasNearbyResource)
     }
+
+    private fun showWorldContainerPanel() = bunkerStationPanels.showWorldContainer()
 
     private fun showRadioPanel() = bunkerStationPanels.showRadio()
 
@@ -400,16 +408,16 @@ class MainActivity : Activity() {
             setPadding(dp(18), dp(18), dp(18), dp(16))
             background = GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(Color.rgb(30, 43, 41), Color.rgb(17, 27, 28))
+                intArrayOf(GranitPalette.panelTop, GranitPalette.panelBottom)
             ).apply {
                 cornerRadius = dp(14).toFloat()
-                setStroke(dp(1), Color.rgb(104, 126, 105))
+                setStroke(dp(1), GranitPalette.panelStroke)
             }
         }
-        content.addView(label(title, 22f, Color.rgb(230, 205, 151), true).apply {
+        content.addView(label(title, 22f, GranitPalette.title, true).apply {
             letterSpacing = 0.045f
         })
-        content.addView(label(subtitle, 12f, Color.rgb(165, 184, 169)).apply {
+        content.addView(label(subtitle, 12f, GranitPalette.subtitle).apply {
             gravity = Gravity.CENTER
             setPadding(dp(4), dp(3), dp(4), dp(12))
         })
@@ -459,7 +467,7 @@ class MainActivity : Activity() {
             isClickable = true
             isFocusable = true
             setOnClickListener { if (activeGame) closeStationPanel() }
-            setBackgroundColor(if (activeGame) Color.argb(72, 3, 9, 10) else Color.rgb(8, 14, 15))
+            setBackgroundColor(if (activeGame) GranitPalette.overlay else Color.rgb(8, 14, 15))
         }
 
         val availableWidth = (root.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels).coerceAtLeast(1)
@@ -494,11 +502,18 @@ class MainActivity : Activity() {
             isAllCaps = false
             isEnabled = enabled
             textSize = 14f
-            setTextColor(if (enabled) Color.WHITE else Color.GRAY)
-            background = GradientDrawable().apply {
-                setColor(if (enabled) Color.rgb(57, 82, 68) else Color.rgb(39, 48, 45))
+            setTextColor(if (enabled) GranitPalette.textPrimary else Color.GRAY)
+            background = (if (enabled) {
+                GradientDrawable(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    intArrayOf(GranitPalette.buttonTop, GranitPalette.buttonBottom)
+                )
+            } else {
+                // A one-colour GradientDrawable is invalid on Android: use a solid fill.
+                GradientDrawable().apply { setColor(GranitPalette.buttonDisabled) }
+            }).apply {
                 cornerRadius = dp(8).toFloat()
-                setStroke(dp(1), if (enabled) Color.rgb(112, 143, 112) else Color.rgb(65, 75, 68))
+                setStroke(dp(1), if (enabled) GranitPalette.buttonStroke else GranitPalette.buttonDisabledStroke)
             }
             minHeight = dp(48)
             setOnClickListener { action() }

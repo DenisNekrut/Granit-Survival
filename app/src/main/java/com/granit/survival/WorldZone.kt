@@ -1,10 +1,13 @@
 package com.granit.survival
 
+data class WorldContainerSnapshot(val id: String, val x: Int, val y: Int, val title: String, val contents: List<ItemStack?>)
+
 data class ZoneResourceSnapshot(
     val zone: WorldZone,
     val resources: List<ResourceLocation>,
     /** Seed for deterministic reconstruction of a procedural map; null for fixed maps. */
-    val seed: Long? = null
+    val seed: Long? = null,
+    val containers: List<WorldContainerSnapshot> = emptyList()
 )
 
 enum class WorldZone(val displayName: String, val spawnX: Float, val spawnY: Float) {

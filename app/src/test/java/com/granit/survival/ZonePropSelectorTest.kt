@@ -18,12 +18,12 @@ class ZonePropSelectorTest {
     }
 
     @Test
-    fun eachZoneHasAVariedSparseDecorationSet() {
+    fun everyZoneUsesMultipleVariantsWithoutIncreasingDecorationDensity() {
         val expected = mapOf(
-            WorldZone.BUNKER to setOf("crate", "floor_grate"),
-            WorldZone.FOREST to setOf("bush", "tree", "grass_patch", "fallen_log"),
-            WorldZone.RUINS to setOf("barrel", "debris", "metal_scrap", "puddle"),
-            WorldZone.ROAD to setOf("streetlamp", "wreck", "road_sign", "puddle")
+            WorldZone.BUNKER to setOf("crate", "crate_weathered", "crate_painted", "floor_grate", "floor_grate_rust"),
+            WorldZone.FOREST to setOf("bush", "bush_dry", "bush_lush", "tree", "tree_autumn", "tree_dead", "grass_patch", "grass_patch_dry", "fallen_log", "fallen_log_mossy"),
+            WorldZone.RUINS to setOf("barrel", "barrel_rust", "barrel_dark", "debris", "debris_light", "metal_scrap", "metal_scrap_copper", "puddle", "puddle_ice"),
+            WorldZone.ROAD to setOf("streetlamp", "streetlamp_broken", "wreck", "wreck_rust", "wreck_blue", "road_sign", "road_sign_faded", "puddle", "puddle_ice")
         )
         WorldZone.values().forEach { zone ->
             val selected = (0 until 100).flatMap { x ->
@@ -35,6 +35,47 @@ class ZonePropSelectorTest {
             }
             assertTrue("Decoration density should stay sparse for $zone", selected.size < 1_500)
             assertEquals(expected.getValue(zone), selected.toSet())
+        }
+    }
+
+    @Test
+    fun acceptedWorldPropsNeverOverlapAdjacentSpriteFootprints() {
+        WorldZone.values().forEach { zone ->
+            val selected = (0 until 100).flatMap { x ->
+                (0 until 100).mapNotNull { y ->
+                    ZonePropSelector.spriteFor(zone, x, y)?.let { x to y }
+                }
+            }.toSet()
+            selected.forEach { (x, y) ->
+                for (dy in -1..1) for (dx in -1..1) {
+                    if (dx == 0 && dy == 0) continue
+                    assertTrue("$zone props overlap at ($x,$y) and (${x + dx},${y + dy})",
+                        (x + dx to y + dy) !in selected)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun wallTilesAlsoUseDeterministicVisualVariants() {
+        WorldZone.values().forEach { zone ->
+            val ids = (0 until 80).flatMap { x ->
+                (0 until 80).map { y -> ZonePropSelector.wallSpriteFor(zone, x, y) }
+            }.toSet()
+            assertTrue("Expected wall variants for $zone", ids.size >= 2)
+            ids.forEach { id ->
+                assertTrue("Missing wall variant $id", PixelSpriteAtlas.sprite(id) != null)
+            }
+        }
+    }
+
+    @Test
+    fun repeatedCoordinatesDoNotRandomlyChangeTheirVisualVariant() {
+        WorldZone.values().forEach { zone ->
+            val first = ZonePropSelector.spriteFor(zone, 17, 23)
+            repeat(20) {
+                assertEquals(first, ZonePropSelector.spriteFor(zone, 17, 23))
+            }
         }
     }
 }
