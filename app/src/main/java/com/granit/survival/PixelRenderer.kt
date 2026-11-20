@@ -554,7 +554,7 @@ class PixelRenderer {
 
     private fun drawExitTile(x: Int, y: Int, type: TileType) {
         val sprite = if (type == TileType.EXIT_TO_BUNKER) "ladder_hatch" else "exit_hatch"
-        drawAtlasSprite(sprite, x + 0.5f, y.toFloat(), 0.0625f)
+        drawAtlasSprite(sprite, x + 0.5f, y.toFloat(), 0.052f)
     }
 
     private fun drawAtlasSprite(
@@ -761,7 +761,7 @@ class PixelRenderer {
 
     private fun drawResource(x: Int, y: Int, spriteId: String) {
         rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.16f, 0.18f, 0.17f)
-        drawAtlasSprite(spriteId, x + 0.5f, y + 0.12f, 0.075f)
+        drawAtlasSprite(spriteId, x + 0.5f, y + 0.12f, 0.052f)
     }
 
 
