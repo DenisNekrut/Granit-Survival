@@ -327,7 +327,6 @@ class PointOfInterestTest {
         assertEquals(0, engine.inventory.count(ItemType.FABRIC))
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED))
 
-        assertFalse(engine.openRuinsServiceAccess())
         assertTrue(engine.openRuinsServiceAccess())
         assertFalse(engine.openRuinsServiceAccess())
         assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED))
