@@ -527,6 +527,7 @@ class PixelRenderer {
 
     private fun drawFloorDetail(x: Int, y: Int, zone: WorldZone) {
         val pattern = Math.floorMod(x * 7 + y * 11, 13)
+        val accent = GranitWorldPalette.zoneAccent(zone)
         when (zone) {
             WorldZone.BUNKER -> {
                 if ((x + y) % 4 == 0) rect(x + 0.08f, y + 0.92f, 0.84f, 0.025f, 0.17f, 0.19f, 0.18f)
@@ -551,6 +552,14 @@ class PixelRenderer {
                     rect(x + 0.40f, y + 0.22f, 0.06f, 0.06f, 0.27f, 0.29f, 0.30f)
                 }
             }
+        }
+        // Sparse zone-coloured flecks make the floor identity readable without
+        // changing collision tiles, object anchors or the 128x128 cell footprint.
+        if (pattern == 2 || pattern == 9) {
+            val size = if (zone == WorldZone.ROAD) 0.045f else 0.065f
+            rect(x + 0.28f, y + 0.36f, size, size, accent[0], accent[1], accent[2], 0.72f)
+            rect(x + 0.68f, y + 0.72f, size * 0.72f, size * 0.72f,
+                accent[0], accent[1], accent[2], 0.52f)
         }
     }
 
