@@ -618,7 +618,9 @@ object PixelSpriteAtlas {
             "fallen_log_mossy" to createVariant("fallen_log", mirror = true, rowShift = -1, redScale = 0.82f, greenScale = 1.12f, blueScale = 0.78f),
             "grass_patch_dry" to createVariant("grass_patch", mirror = true, rowShift = 1, redScale = 1.14f, greenScale = 0.94f, blueScale = 0.70f, lift = 0.02f),
             "streetlamp_broken" to createVariant("streetlamp", mirror = true, rowShift = 1, redScale = 0.82f, greenScale = 0.86f, blueScale = 0.84f),
-            "floor_grate_rust" to createVariant("floor_grate", mirror = true, redScale = 1.16f, greenScale = 0.88f, blueScale = 0.72f, lift = 0.01f)
+            "floor_grate_rust" to createVariant("floor_grate", mirror = true, redScale = 1.16f, greenScale = 0.88f, blueScale = 0.72f, lift = 0.01f),
+            "bunker_panel_rusted" to createVariant("bunker_panel", mirror = true, rowShift = 1, redScale = 1.12f, greenScale = 0.90f, blueScale = 0.82f, lift = 0.008f),
+            "road_barrier_faded" to createVariant("road_barrier", mirror = true, rowShift = -1, redScale = 0.86f, greenScale = 0.90f, blueScale = 0.88f, lift = 0.035f)
         )
     }
 
