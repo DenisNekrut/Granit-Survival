@@ -36,6 +36,7 @@ object StoryEventIds {
     const val COMMUNICATION_NODE_SHIFT_LOG_READ = "chapter_01.communication_node_shift_log_read"
     const val COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED = "chapter_01.communication_node_signal_sequence_extracted"
     const val COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED = "chapter_01.communication_node_signal_cross_checked"
+    const val COMMUNICATION_NODE_ROUTE_RECORD_FOUND = "chapter_01.communication_node_route_record_found"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -73,6 +74,7 @@ object StoryEventIds {
         COMMUNICATION_NODE_SHIFT_LOG_READ,
         COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED,
         COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED,
+        COMMUNICATION_NODE_ROUTE_RECORD_FOUND,
         WORKSHOP_INSPECTED
     )
 }
@@ -190,6 +192,7 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ, "Журнал дежурной смены", "В сохранившейся части журнала есть три отметки: «21:40 — линия GRANIT отвечает в штатном режиме», «21:47 — контрольный сигнал принят повторно», «21:52 — время на панели не совпадает с часами поста». Следующая строка обрывается. Причина расхождения неизвестна.")
             StoryObservation(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED, "Контрольная последовательность", "На пульте сохранилась последовательность контрольных отметок: 21:40, 21:47 и 21:52. Интервалы между ними не совпадают с системным временем экрана. Андрей сохраняет значения для последующей сверки с сигналом из других точек маршрута."),
             StoryObservation(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED, "Сверка контрольных сигналов", "Андрей сопоставляет записи узла с показаниями лесной вышки. На вышке уровень сигнала менялся при неподвижной антенне; в журнале узла контрольные отметки разделены интервалами в семь и пять минут. Связь между этими наблюдениями не доказана, но Андрей сохраняет их как повод для следующей проверки."),
+            StoryObservation(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND, "Маршрутный лист линии 08", "В нижнем ящике пульта Андрей находит маршрутный лист. В нём указано, что линия 08 проходила через удалённый контрольный пункт, обозначенный только как «узел Б». Точные координаты в копии отсутствуют; сохранилось направление от старой дороги и пометка о резервной трассе. Это новая цель для исследования, но пока не доказательство того, что пункт продолжает работать."),
         )
         return notes.filter { hasEvent(it.eventId) }
     }
