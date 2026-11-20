@@ -64,4 +64,44 @@ class WorldContainerTest {
         val secondContainers = second.zoneResourceSnapshot().first { it.zone == WorldZone.RUINS }.containers
         assertEquals(firstContainers, secondContainers)
     }
+
+    @Test
+    fun cacheLootTierAndContentsAreStableForTheSameId() {
+        val first = WorldContainer("ruins_12_8", WorldZone.RUINS, 12, 8, "ТАЙНИК")
+        val second = WorldContainer("ruins_12_8", WorldZone.RUINS, 12, 8, "ТАЙНИК")
+        first.seedInitialContents()
+        second.seedInitialContents()
+
+        assertEquals(first.lootTier, second.lootTier)
+        assertEquals(first.snapshot(), second.snapshot())
+        assertTrue(first.displayTitle.contains(first.lootTier.label))
+    }
+
+    @Test
+    fun differentCacheIdsCanProduceDifferentLootSpecializations() {
+        val tiers = (0 until 20).map { index ->
+            WorldContainer("road_${index}_4", WorldZone.ROAD, index, 4, "ТАЙНИК").lootTier
+        }.toSet()
+
+        assertTrue("Loot cache catalog should expose multiple specializations", tiers.size >= 3)
+    }
+
+    @Test
+    fun medicalAndProvisionCachesContainTheirSignatureSupplies() {
+        val medical = (0 until 100).map { index ->
+            WorldContainer("medical_$index", WorldZone.RUINS, index, 4, "ТАЙНИК").also {
+                it.seedInitialContents()
+            }
+        }.first { it.lootTier == WorldLootTier.MEDICAL }
+        val provisions = (0 until 100).map { index ->
+            WorldContainer("provisions_$index", WorldZone.ROAD, index, 4, "ТАЙНИК").also {
+                it.seedInitialContents()
+            }
+        }.first { it.lootTier == WorldLootTier.PROVISIONS }
+
+        assertTrue(medical.count(ItemType.BANDAGE) >= 2)
+        assertTrue(medical.count(ItemType.MEDICAL_KIT) >= 1)
+        assertTrue(provisions.count(ItemType.CANNED_FOOD) >= 3)
+        assertTrue(provisions.count(ItemType.WATER) >= 3)
+    }
 }
