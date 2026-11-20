@@ -25,6 +25,7 @@ object StoryEventIds {
     const val RUINS_OUTER_ROUTE_FOUND = "chapter_01.ruins_outer_route_found"
     const val RUINS_OUTER_ROUTE_INSPECTED = "chapter_01.ruins_outer_route_inspected"
     const val RUINS_SERVICE_ACCESS_FOUND = "chapter_01.ruins_service_access_found"
+    const val RUINS_SERVICE_ACCESS_INSPECTED = "chapter_01.ruins_service_access_inspected"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -51,6 +52,7 @@ object StoryEventIds {
         RUINS_OUTER_ROUTE_FOUND,
         RUINS_OUTER_ROUTE_INSPECTED,
         RUINS_SERVICE_ACCESS_FOUND,
+        RUINS_SERVICE_ACCESS_INSPECTED,
         WORKSHOP_INSPECTED
     )
 }
@@ -156,7 +158,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED, "Осмотр отметки на посту", "Андрей внимательно сверяет табличку с картой. Под старым знаком видна дополнительная маркировка и направление к следующему участку маршрута. Он переносит её в журнал, не делая выводов о том, кто оставил отметку."),
             StoryObservation(StoryEventIds.RUINS_OUTER_ROUTE_FOUND, "Указатель внешнего маршрута", "За разбитым постом Андрей находит старый указатель линии связи. Его маркировка совпадает с дополнительной отметкой на табличке. Теперь у экспедиции есть новая точка для проверки маршрута."),
             StoryObservation(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED, "Осмотр указателя линии связи", "На обратной стороне указателя сохранилась схема старого технического проезда. Андрей отмечает её на карте: маршрут ведёт к дальней окраине руин, где можно продолжить обследование."),
-            StoryObservation(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND, "Служебный вход на окраине", "В конце технического проезда Андрей обнаруживает служебный вход в старый коммуникационный узел. На двери сохранилась маркировка, совпадающая со схемой указателя. Вход пока закрыт, но теперь известно, где продолжить обследование.")
+            StoryObservation(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND, "Служебный вход на окраине", "В конце технического проезда Андрей обнаруживает служебный вход в старый коммуникационный узел. На двери сохранилась маркировка, совпадающая со схемой указателя. Вход пока закрыт, но теперь известно, где продолжить обследование."),
+            StoryObservation(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED, "Осмотр служебного входа", "Дверь заперта электромеханическим замком. Рядом сохранился небольшой сервисный отсек: питание на замок не поступает, а кабель уходит под бетон к распределительной коробке. Андрей отмечает её расположение. Дверь пока не открыть.")
         )
         return notes.filter { hasEvent(it.eventId) }
     }
