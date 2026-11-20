@@ -39,6 +39,19 @@ class ZonePropSelectorTest {
     }
 
     @Test
+    fun wallTilesAlsoUseDeterministicVisualVariants() {
+        WorldZone.values().forEach { zone ->
+            val ids = (0 until 80).flatMap { x ->
+                (0 until 80).map { y -> ZonePropSelector.wallSpriteFor(zone, x, y) }
+            }.toSet()
+            assertTrue("Expected wall variants for $zone", ids.size >= 2)
+            ids.forEach { id ->
+                assertTrue("Missing wall variant $id", PixelSpriteAtlas.sprite(id) != null)
+            }
+        }
+    }
+
+    @Test
     fun repeatedCoordinatesDoNotRandomlyChangeTheirVisualVariant() {
         WorldZone.values().forEach { zone ->
             val first = ZonePropSelector.spriteFor(zone, 17, 23)
