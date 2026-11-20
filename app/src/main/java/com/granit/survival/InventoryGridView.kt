@@ -16,7 +16,7 @@ internal class InventoryGridView(
     private val cellHeightDp: Int,
     private val iconSizeDp: Int,
     private val dp: (Int) -> Int,
-onSlotClick: (Int, ItemStack) -> Unit
+    onSlotClick: (Int, ItemStack) -> Unit
 ) : LinearLayout(context) {
 
     init {
