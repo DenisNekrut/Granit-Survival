@@ -49,7 +49,7 @@ class Inventory(
         .filter { it.type == type }
         .sumOf { it.quantity }
 
-    override fun add(type: ItemType, amount: Int = 1): Int {
+    override fun add(type: ItemType, amount: Int): Int {
         if (amount <= 0) return amount
         var remaining = amount
 
@@ -73,7 +73,7 @@ class Inventory(
         return remaining
     }
 
-    override fun canAdd(type: ItemType, amount: Int = 1): Boolean {
+    override fun canAdd(type: ItemType, amount: Int): Boolean {
         if (amount <= 0) return false
         var remaining = amount
         slots.forEach { stack ->
@@ -85,7 +85,7 @@ class Inventory(
     }
 
     /** Removes a quantity from one exact slot; returns false without mutation on invalid input. */
-    override fun removeAt(index: Int, amount: Int = 1): Boolean {
+    override fun removeAt(index: Int, amount: Int): Boolean {
         if (amount <= 0) return false
         val stack = slots.getOrNull(index) ?: return false
         if (stack.quantity < amount) return false
