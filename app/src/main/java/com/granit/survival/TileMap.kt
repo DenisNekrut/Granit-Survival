@@ -134,8 +134,14 @@ class TileMap(
         val spawnY = zone.spawnY.toInt()
         val reserved = (height / 2 - 1)..(height / 2 + 1)
 
+        val reservedLandmarks = PointOfInterestCatalog.inZone(zone)
+            .map { kotlin.math.floor(it.x).toInt() to kotlin.math.floor(it.y).toInt() }
+            .toSet()
+
         fun validPlacement(x: Int, y: Int): Boolean {
             if (x <= 1 || x >= width - 2 || y <= 1 || y >= height - 2) return false
+            // Keep authored points of interest reachable on every procedural map seed.
+            if ((x to y) in reservedLandmarks) return false
             if (y in reserved) return false
             if (abs(x - spawnX) <= 3 && abs(y - spawnY) <= 3) return false
             if (x == exitX && abs(y - height / 2) <= 2) return false
