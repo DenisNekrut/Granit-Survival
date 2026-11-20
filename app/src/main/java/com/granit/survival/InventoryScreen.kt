@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import kotlin.math.roundToInt
 
 
@@ -71,6 +72,14 @@ internal class InventoryScreen(
     private val useMedicalKit: () -> Boolean,
     private val dp: (Int) -> Int
 ) {
+    private fun showCannotUseMessage() {
+        Toast.makeText(
+            activity,
+            "Сейчас предмет нельзя использовать: проверь состояние персонажа",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
     fun show(engine: GameEngine) {
         val panel = createPanel("РЮКЗАК", "Личные вещи персонажа · ${engine.inventory.columns} × ${engine.inventory.rows}")
         for (rowIndex in 0 until engine.inventory.rows) {
@@ -98,10 +107,18 @@ internal class InventoryScreen(
                         10f, GranitPalette.textPrimary, true
                     ))
                     val useAction: (() -> Unit)? = when (stack.type) {
-                        ItemType.CANNED_FOOD -> ({ if (consumeFood()) refresh() })
-                        ItemType.WATER -> ({ if (drinkWater()) refresh() })
-                        ItemType.BANDAGE -> ({ if (useBandage()) refresh() })
-                        ItemType.MEDICAL_KIT -> ({ if (useMedicalKit()) refresh() })
+                        ItemType.CANNED_FOOD -> ({
+                            if (consumeFood()) refresh() else showCannotUseMessage()
+                        })
+                        ItemType.WATER -> ({
+                            if (drinkWater()) refresh() else showCannotUseMessage()
+                        })
+                        ItemType.BANDAGE -> ({
+                            if (useBandage()) refresh() else showCannotUseMessage()
+                        })
+                        ItemType.MEDICAL_KIT -> ({
+                            if (useMedicalKit()) refresh() else showCannotUseMessage()
+                        })
                         else -> null
                     }
                     if (useAction != null) {
