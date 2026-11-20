@@ -65,6 +65,7 @@ class GameSaveSnapshotTest {
         engine.inventory.add(ItemType.METAL, 2)
         engine.bookLibrary.markRead("old_novel")
         engine.radioSystem.markListened(1)
+        engine.storyProgress.recordEvent(StoryEventIds.GENERATOR_PANEL_OPENED)
         engine.sleepUntilMorning()
         val saved = engine.createSaveSnapshot()
 
@@ -83,7 +84,7 @@ class GameSaveSnapshotTest {
         assertEquals(saved.bookLibrary, engine.bookLibrary.snapshot())
         assertEquals(saved.radio, engine.radioSystem.snapshot())
         assertEquals(saved.psychology, engine.psychology.snapshot())
-        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.GENERATOR_PANEL_OPENED).not())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.GENERATOR_PANEL_OPENED))
         assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[1, 8])
         assertTrue(engine.checkpointSystem.hasCheckpoint())
         assertTrue(engine.respawnAtWakeCheckpoint())
