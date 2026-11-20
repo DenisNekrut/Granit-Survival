@@ -227,9 +227,15 @@ internal object GeneratedPixelSprites {
         return PixelSprite(frames, source.palette)
     }
 
-    private val detailedBunkerProps = listOf(
-        "bed", "workbench", "storage", "bookshelf", "radio", "generator", "medical_station"
-    ).associateWith { id -> detailedBunkerProp(base.getValue(id), id) }
+    private val detailedBunkerProps = mapOf(
+        "bed" to "bed",
+        "workbench" to "workbench",
+        "storage" to "locker",
+        "bookshelf" to "bookshelf",
+        "radio" to "control_console",
+        "generator" to "generator",
+        "medical_station" to "medical_station"
+    ).mapValues { (id, sourceId) -> detailedBunkerProp(base.getValue(sourceId), id) }
 
     val all: Map<String, PixelSprite> = base + detailedPlayerSprites + detailedBunkerProps + mapOf(
         "player_side" to base.getValue("player_side_right"),
