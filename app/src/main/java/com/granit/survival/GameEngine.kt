@@ -466,6 +466,14 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ)
     }
 
+    /** Extract the recorded control sequence only after the console and duty log have both been studied. */
+    fun extractCommunicationNodeSignalSequence(): Boolean {
+        if (zone != WorldZone.COMMUNICATION_NODE) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED)) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED)
+    }
+
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
     fun inspectForestWatchPostSignal(): Boolean {
         if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
