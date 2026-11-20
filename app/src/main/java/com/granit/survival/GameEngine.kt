@@ -130,6 +130,11 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             accumulator -= FIXED_STEP_SECONDS
             steps++
         }
+        // Camera tracking belongs to the render-frame cadence, not the fixed simulation
+        // cadence. This also applies a freshly resized bunker viewport before the next
+        // simulation step and prevents the camera from appearing frozen between steps.
+        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat(),
+            frameDeltaSeconds.coerceIn(0f, MAX_FRAME_SECONDS))
         return steps
     }
 
@@ -489,7 +494,6 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
                 break
             }
         }
-        camera.follow(player.x, player.y, tileMap.width.toFloat(), tileMap.height.toFloat(), delta)
         simulationTimeSeconds += delta.toDouble()
     }
 
