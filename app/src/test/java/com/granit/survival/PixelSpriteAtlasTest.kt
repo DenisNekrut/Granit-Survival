@@ -32,23 +32,31 @@ class PixelSpriteAtlasTest {
     }
 
     @Test
-    fun wallSpriteFootprintsFitSingleOccupiedMapCells() {
-        val wallSprites = listOf(
-            "bunker_panel", "bunker_panel_rusted",
-            "tree", "tree_dark", "tree_dead",
-            "rubble", "rubble_brick", "debris",
-            "road_barrier", "road_barrier_faded"
-        )
-        wallSprites.forEach { id ->
-            val footprint = SpriteWorldMetrics.footprint(id, 0.052f)
-            assertTrue("$id wall width must fit one map cell", footprint.width <= 1.001f)
-            assertTrue("$id wall height must fit one map cell", footprint.height <= 1.001f)
+    fun everyWorldSpriteFitsThe128PixelMapTile() {
+        assertTrue("Map tile standard must be 128 logical pixels", SpriteWorldMetrics.TILE_PIXELS == 128)
+        PixelSpriteAtlas.allIds().forEach { id ->
+            val footprint = SpriteWorldMetrics.footprint(id, 1f)
+            assertTrue("$id width must fit one 128px tile", footprint.width <= 1.0001f)
+            assertTrue("$id height must fit one 128px tile", footprint.height <= 1.0001f)
+            assertTrue("$id longest side should use the tile extent",
+                kotlin.math.abs(maxOf(footprint.width, footprint.height) - 1f) < 0.0001f)
         }
-        listOf("exit_hatch", "ladder_hatch", "wood", "metal", "fabric", "food", "water").forEach { id ->
-            val footprint = SpriteWorldMetrics.footprint(id, 0.052f)
-            assertTrue("$id tile sprite width must fit one map cell", footprint.width <= 1.001f)
-            assertTrue("$id tile sprite height must fit one map cell", footprint.height <= 1.001f)
-        }
+    }
+
+    @Test
+    fun spriteDimensionsAreNormalizedIndependentlyOfSourceResolution() {
+        val player = SpriteWorldMetrics.footprint("player", 1f)
+        assertTrue("32x48 player is fitted proportionally inside a 128x128 tile",
+            kotlin.math.abs(player.width - (32f / 48f)) < 0.0001f &&
+                kotlin.math.abs(player.height - 1f) < 0.0001f)
+        val prop = SpriteWorldMetrics.footprint("tree", 1f)
+        assertTrue("32x32 props occupy one square tile", prop.width == 1f && prop.height == 1f)
+        val infected = SpriteWorldMetrics.footprint("infected_shambler", 1f)
+        assertTrue("12x24 infected sprite is normalized by its longer side",
+            kotlin.math.abs(infected.width - 0.5f) < 0.0001f && infected.height == 1f)
+        val halfTile = SpriteWorldMetrics.footprint("tree", 0.5f)
+        assertTrue("Explicit half-tile sprites scale proportionally",
+            halfTile.width == 0.5f && halfTile.height == 0.5f)
     }
 
     @Test
@@ -93,29 +101,6 @@ class PixelSpriteAtlasTest {
         }
     }
 
-
-    @Test
-    fun doubledWorldSpriteResolutionDoesNotDoubleItsLogicalFootprint() {
-        val highResolutionIds = listOf(
-            "player", "player_back", "player_side_left", "player_side_right",
-            "tree", "bush", "rubble", "streetlamp", "road_sign", "wreck",
-            "crate", "barrel", "road_barrier", "bunker_panel", "debris", "floor_grate",
-            "grass_patch", "fallen_log", "metal_scrap", "puddle",
-            "bed", "generator", "medical_station", "workbench", "storage", "bookshelf", "radio"
-        )
-        highResolutionIds.forEach { id ->
-            assertTrue("$id must compensate for 2x source density",
-                PixelSpriteAtlas.worldDensityScale(id) == 0.5f)
-        }
-        listOf("exit_hatch", "ladder_hatch", "infected_shambler").forEach { id ->
-            assertTrue("$id keeps its original world pixel scale",
-                PixelSpriteAtlas.worldDensityScale(id) == 1f)
-        }
-        val formerFootprint = 16f * 0.0625f
-        val detailedFootprint = 32f * 0.0625f * PixelSpriteAtlas.worldDensityScale("tree")
-        assertTrue("Higher resolution must preserve the original tile footprint",
-            kotlin.math.abs(formerFootprint - detailedFootprint) < 0.0001f)
-    }
 
     @Test
     fun inventoryIconsHaveUniquePixelArtFrames() {
