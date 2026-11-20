@@ -495,11 +495,15 @@ class MainActivity : Activity() {
             isEnabled = enabled
             textSize = 14f
             setTextColor(if (enabled) GranitPalette.textPrimary else Color.GRAY)
-            background = GradientDrawable(
-                GradientDrawable.Orientation.TOP_BOTTOM,
-                if (enabled) intArrayOf(GranitPalette.buttonTop, GranitPalette.buttonBottom)
-                else intArrayOf(GranitPalette.buttonDisabled)
-            ).apply {
+            background = (if (enabled) {
+                GradientDrawable(
+                    GradientDrawable.Orientation.TOP_BOTTOM,
+                    intArrayOf(GranitPalette.buttonTop, GranitPalette.buttonBottom)
+                )
+            } else {
+                // A one-colour GradientDrawable is invalid on Android: use a solid fill.
+                GradientDrawable().apply { setColor(GranitPalette.buttonDisabled) }
+            }).apply {
                 cornerRadius = dp(8).toFloat()
                 setStroke(dp(1), if (enabled) GranitPalette.buttonStroke else GranitPalette.buttonDisabledStroke)
             }
