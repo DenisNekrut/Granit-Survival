@@ -104,8 +104,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val found = PointOfInterestCatalog.inZone(zone).filter { poi ->
             val dx = player.x - poi.x
             val dy = player.y - poi.y
-            dx * dx + dy * dy <= poi.discoveryRadius * poi.discoveryRadius &&
+            val storyGateOpen = poi.requiredStoryEventId?.let(storyProgress::hasEvent) ?: true
+            storyGateOpen &&
+                dx * dx + dy * dy <= poi.discoveryRadius * poi.discoveryRadius &&
                 discoveredPoiIds.add(poi.id)
+        }
+        if (found.any { it.id == "ruins_checkpoint" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED)
         }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
