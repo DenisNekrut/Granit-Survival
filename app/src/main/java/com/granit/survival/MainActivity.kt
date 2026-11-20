@@ -395,6 +395,16 @@ class MainActivity : Activity() {
         story.objectives.filter { story.isCompleted(it) }.forEach { objective ->
             panel.addView(label("✓ ${objective.title}", 12f, Color.rgb(151, 190, 151)))
         }
+        panel.addView(label("ЗАМЕТКИ АНДРЕЯ", 15f, Color.rgb(207, 194, 155), true))
+        val observations = story.observations()
+        if (observations.isEmpty()) {
+            panel.addView(label("Пока нет личных заметок. Осматривай помещения убежища — важные детали будут сохраняться здесь.", 13f, Color.LTGRAY))
+        } else {
+            observations.forEach { observation ->
+                panel.addView(label(observation.title.uppercase(), 13f, Color.WHITE, true))
+                panel.addView(label(observation.note, 12f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
