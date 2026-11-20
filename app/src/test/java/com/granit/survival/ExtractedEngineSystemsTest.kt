@@ -36,19 +36,24 @@ class ExtractedEngineSystemsTest {
 
 
     @Test
-    fun inventorySystemDepositsAllBackpackItems() {
+    fun inventorySystemDoesNotMoveItemsUntilAnExplicitSlotTransfer() {
         val backpack = Inventory()
         val storage = BunkerStorage()
         val system = InventorySystem(backpack, storage)
         backpack.add(ItemType.WOOD, 4)
         backpack.add(ItemType.WATER, 2)
 
-        assertTrue(system.depositAll())
-        assertEquals(0, backpack.count(ItemType.WOOD))
-        assertEquals(0, backpack.count(ItemType.WATER))
-        assertEquals(4, storage.count(ItemType.WOOD))
-        assertEquals(2, storage.count(ItemType.WATER))
-        assertFalse(system.depositAll())
+        // Creating/accessing the storage system must not transfer anything.
+        assertEquals(4, backpack.count(ItemType.WOOD))
+        assertEquals(2, backpack.count(ItemType.WATER))
+        assertEquals(0, storage.count(ItemType.WOOD))
+        assertEquals(0, storage.count(ItemType.WATER))
+
+        assertTrue(system.transferToStorageAt(0, 2))
+        assertEquals(2, backpack.count(ItemType.WOOD))
+        assertEquals(2, backpack.count(ItemType.WATER))
+        assertEquals(2, storage.count(ItemType.WOOD))
+        assertEquals(0, storage.count(ItemType.WATER))
     }
 
     @Test
