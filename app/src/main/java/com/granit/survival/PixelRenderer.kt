@@ -332,7 +332,10 @@ class PixelRenderer {
 
         // Lighting is a world-space pass: outdoor light follows the clock, bunker lamps stay on.
         drawWorldLighting(engine, bunkerLamps)
-        if (engine.zone != WorldZone.BUNKER) drawCorridorFog(engine)
+        if (engine.zone != WorldZone.BUNKER) {
+            drawWeatherEffects(engine)
+            drawCorridorFog(engine)
+        }
 
         // The reticle exists only while a living infected is visible within seven tiles.
         engine.autoAimTarget?.let { target ->
@@ -502,6 +505,57 @@ class PixelRenderer {
             bunkerLamps.forEach { (x, y) ->
                 rect(x - 0.75f, y + 0.10f, 1.5f, 0.55f, 0.58f, 0.20f, 0.10f, 0.075f)
                 rect(x - 0.24f, y + 0.20f, 0.48f, 0.08f, 0.92f, 0.35f, 0.16f, 0.13f)
+            }
+        }
+    }
+
+    /**
+     * Outdoor weather is rendered as a restrained pixel layer above world sprites.
+     * Particle coordinates are deterministic and derived from simulation time;
+     * no random allocations or changes to map geometry/collision are involved.
+     */
+    private fun drawWeatherEffects(engine: GameEngine) {
+        val width = engine.tileMap.width
+        val height = engine.tileMap.height
+        val time = engine.simulationTimeSeconds
+        when (engine.weather) {
+            WeatherType.CLEAR -> Unit
+            WeatherType.RAIN -> {
+                for (index in 0 until 96) {
+                    val (x, y) = WeatherParticleField.position(
+                        index, time, width, height, fallSpeed = 4.8f, horizontalDrift = -0.42f
+                    )
+                    // Short, crisp streaks preserve the pixel-art silhouette of the scene.
+                    rect(x, y, 0.035f, 0.17f, 0.58f, 0.76f, 0.84f, 0.48f)
+                }
+            }
+            WeatherType.COLD -> {
+                for (index in 0 until 58) {
+                    val (x, y) = WeatherParticleField.position(
+                        index, time, width, height, fallSpeed = 0.72f, horizontalDrift = 0.16f
+                    )
+                    val size = if (index % 4 == 0) 0.075f else 0.045f
+                    rect(x, y, size, size, 0.82f, 0.90f, 0.92f, 0.76f)
+                }
+            }
+            WeatherType.FOG -> {
+                val elapsed = time.coerceAtLeast(0.0).toFloat()
+                val bandWidth = width * 0.72f
+                for (index in 0 until 5) {
+                    val x = ((elapsed * 0.10f + index * width * 0.27f) %
+                        (width + bandWidth)) - bandWidth
+                    val y = (index * height / 5f) + 0.35f
+                    rect(x, y, bandWidth, 0.62f, 0.72f, 0.82f, 0.82f, 0.075f)
+                }
+            }
+            WeatherType.OVERCAST -> {
+                // Sparse pale flecks add depth to the muted sky grade without obscuring props.
+                for (index in 0 until 22) {
+                    val (x, y) = WeatherParticleField.position(
+                        index, time, width, height, fallSpeed = 0.12f, horizontalDrift = 0.24f
+                    )
+                    rect(x, y, 0.035f, 0.035f, 0.72f, 0.78f, 0.78f, 0.20f)
+                }
             }
         }
     }
