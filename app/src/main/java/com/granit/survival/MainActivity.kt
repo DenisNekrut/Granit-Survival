@@ -464,8 +464,16 @@ class MainActivity : Activity() {
         if (story.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)) {
             panel.addView(label("НОВАЯ ТОЧКА ЭКСПЕДИЦИИ · ВНЕШНИЙ МАРШРУТ", 14f, Color.rgb(207, 194, 155), true))
             when {
-                story.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND) ->
-                    panel.addView(label("Указатель линии связи найден. Его положение сохранено в журнале.", 12f, Color.rgb(151, 190, 151)))
+                story.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND) -> {
+                    if (story.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED)) {
+                        panel.addView(label("Указатель изучен. Схема технического проезда сохранена на карте.", 12f, Color.rgb(151, 190, 151)))
+                    } else {
+                        panel.addView(label("Указатель линии связи найден. Осмотри его и проверь, куда ведёт технический проезд.", 13f, Color.LTGRAY))
+                        panel.addView(menuButton("ИЗУЧИТЬ УКАЗАТЕЛЬ ЛИНИИ СВЯЗИ") {
+                            showRuinsOuterRouteInspection()
+                        })
+                    }
+                }
                 else ->
                     panel.addView(label("Дополнительная маркировка указывает за разбитый пост. Исследуй участок руин и найди указатель старой линии связи.", 13f, Color.LTGRAY))
             }
@@ -494,6 +502,23 @@ class MainActivity : Activity() {
             panel.addView(menuButton("ЗАПИСАТЬ МАРКИРОВКУ В ЖУРНАЛ") {
                 session.engine.inspectRuinsSignalMarker()
                 showRuinsMarkerInspection()
+            })
+        }
+        panel.addView(menuButton("НАЗАД К ЖУРНАЛУ") { showJournal() })
+        showOverlay(panel)
+    }
+
+    private fun showRuinsOuterRouteInspection() {
+        val story = session.engine.storyProgress
+        val panel = createPanel("УКАЗАТЕЛЬ ЛИНИИ СВЯЗИ", "Руины · новая точка маршрута")
+        panel.addView(label("Андрей осматривает стойку указателя. Под слоем пыли проступает маркировка, совпадающая с дополнительным знаком на разбитом посту.", 14f, Color.WHITE))
+        panel.addView(label("На обратной стороне сохранилась схема технического проезда к дальней окраине руин. Часть линий стёрта, но направление читается достаточно ясно, чтобы отметить его на карте.", 13f, Color.LTGRAY))
+        if (story.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED)) {
+            panel.addView(label("СХЕМА ТЕХНИЧЕСКОГО ПРОЕЗДА СОХРАНЕНА", 13f, Color.rgb(151, 190, 151), true))
+        } else {
+            panel.addView(menuButton("СОХРАНИТЬ СХЕМУ НА КАРТЕ") {
+                session.engine.inspectRuinsOuterRoute()
+                showRuinsOuterRouteInspection()
             })
         }
         panel.addView(menuButton("НАЗАД К ЖУРНАЛУ") { showJournal() })
