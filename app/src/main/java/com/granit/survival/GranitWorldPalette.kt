@@ -1,0 +1,77 @@
+package com.granit.survival
+
+/**
+ * Canonical world-art palette. Values are authored as HEX so material colours
+ * remain consistent across sprite atlases, zone floors, weather grading and lights.
+ */
+internal object GranitWorldPalette {
+    data class Ramp(val shadow: FloatArray, val mid: FloatArray, val highlight: FloatArray)
+
+    const val VOID_BLACK = 0x101820
+    const val DEEP_GRAPHITE = 0x1B2930
+    const val COLD_CHARCOAL = 0x293B43
+    const val STEEL_BLUE = 0x496575
+    const val MIST_BLUE = 0x7896A0
+    const val CONCRETE = 0x78817E
+    const val PALE_CONCRETE = 0xA9AAA0
+    const val OXIDIZED_TEAL = 0x287F78
+    const val TEAL_HIGHLIGHT = 0x55B7A3
+    const val PINE_SHADOW = 0x183D32
+    const val PINE_GREEN = 0x286447
+    const val LEAF_GREEN = 0x4B8A4B
+    const val MOSS = 0x789447
+    const val TOXIC_LIME = 0xB4C94B
+    const val SOIL_SHADOW = 0x49372F
+    const val EARTH_BROWN = 0x76513B
+    const val DUST_OCHRE = 0xB58A4A
+    const val RUST_SHADOW = 0x63352D
+    const val RUST = 0xA94F35
+    const val BRICK = 0xB85D43
+    const val AMBER = 0xE3A448
+    const val WARM_LIGHT = 0xFFD27A
+    const val WARNING_RED = 0xD65345
+    const val SNOW_ASH = 0xD2D1C4
+
+    private fun channels(hex: Int): FloatArray = floatArrayOf(
+        ((hex shr 16) and 0xFF) / 255f,
+        ((hex shr 8) and 0xFF) / 255f,
+        (hex and 0xFF) / 255f
+    )
+
+    private fun ramp(shadow: Int, mid: Int, highlight: Int) =
+        Ramp(channels(shadow), channels(mid), channels(highlight))
+
+    val slate = ramp(VOID_BLACK, STEEL_BLUE, PALE_CONCRETE)
+    val rust = ramp(RUST_SHADOW, RUST, AMBER)
+    val ochre = ramp(SOIL_SHADOW, DUST_OCHRE, WARM_LIGHT)
+    val moss = ramp(PINE_SHADOW, LEAF_GREEN, TOXIC_LIME)
+    val oxidized = ramp(DEEP_GRAPHITE, OXIDIZED_TEAL, TEAL_HIGHLIGHT)
+    val steelBlue = ramp(VOID_BLACK, STEEL_BLUE, MIST_BLUE)
+
+    val materialRamps: Map<String, Ramp> = mapOf(
+        "concrete" to ramp(COLD_CHARCOAL, CONCRETE, PALE_CONCRETE),
+        "steel" to ramp(VOID_BLACK, STEEL_BLUE, MIST_BLUE),
+        "rust" to ramp(RUST_SHADOW, RUST, BRICK),
+        "pine" to ramp(PINE_SHADOW, PINE_GREEN, LEAF_GREEN),
+        "soil" to ramp(SOIL_SHADOW, EARTH_BROWN, DUST_OCHRE),
+        "brick" to ramp(RUST_SHADOW, BRICK, AMBER),
+        "water" to ramp(0x102B3A, 0x287A91, 0x79C4D1),
+        "moss" to ramp(PINE_SHADOW, MOSS, TOXIC_LIME)
+    )
+
+    /** Return fresh arrays so callers cannot mutate the shared palette. */
+    fun spriteRamp(name: String): Ramp {
+        val source = when (name) {
+            "slate" -> slate
+            "rust" -> rust
+            "ochre" -> ochre
+            "moss" -> moss
+            "oxidized" -> oxidized
+            "steelBlue" -> steelBlue
+            else -> error("Unknown sprite ramp: $name")
+        }
+        return Ramp(source.shadow.copyOf(), source.mid.copyOf(), source.highlight.copyOf())
+    }
+
+    fun hexColor(hex: Int): FloatArray = channels(hex)
+}
