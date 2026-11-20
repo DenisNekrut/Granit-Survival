@@ -33,10 +33,10 @@ interface ItemContainer {
 
 /** Fixed-size item container. Stack size is intentionally small for the first prototype. */
 class Inventory(
-    val columns: Int = 4,
-    val rows: Int = 4,
+    override val columns: Int = 4,
+    override val rows: Int = 4,
     private val stackLimit: Int = 20
-) {
+) : ItemContainer {
     private val slots = MutableList<ItemStack?>(columns * rows) { null }
 
     init {
