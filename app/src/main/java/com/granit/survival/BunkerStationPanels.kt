@@ -194,6 +194,12 @@ internal class BunkerStationPanels(
                             InventoryPixelIconView(activity, stack.type.iconSpriteId),
                             LinearLayout.LayoutParams(dp(38), dp(38))
                         )
+                        cell.addView(label(
+                            stack.type.displayName,
+                            8f,
+                            Color.rgb(214, 221, 207),
+                            false
+                        ))
                         cell.addView(label("×${stack.quantity}", 10f, Color.WHITE, true))
                         cell.isClickable = true
                         cell.setOnClickListener {
@@ -236,7 +242,7 @@ internal class BunkerStationPanels(
                                 .show()
                         }
                     }
-                    val cellParams = LinearLayout.LayoutParams(0, dp(78), 1f).apply {
+                    val cellParams = LinearLayout.LayoutParams(0, dp(90), 1f).apply {
                         setMargins(dp(2), dp(2), dp(2), dp(2))
                     }
                     row.addView(cell, cellParams)
