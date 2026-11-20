@@ -24,6 +24,9 @@ internal class BunkerStationPanels(
 ) {
     fun showRadio() {
         val engine = session.engine
+        if (engine.zone == WorldZone.BUNKER && engine.tileMap.isNearTile(TileType.RADIO, engine.player.x, engine.player.y, 1.5f)) {
+            engine.storyProgress.recordEvent(StoryEventIds.RADIO_PANEL_OPENED)
+        }
         if (!engine.bunkerPower.hasPower) {
             showMessage("РАДИОПРИЁМНИК", "Нет питания. Для работы радиостанции запустите генератор.")
             return
@@ -58,6 +61,7 @@ internal class BunkerStationPanels(
 
     fun showGenerator() {
         val engine = session.engine
+        if (engine.canAccessGenerator()) engine.storyProgress.recordEvent(StoryEventIds.GENERATOR_PANEL_OPENED)
         val panel = createPanel("ГЕНЕРАТОРНАЯ", "Энергосистема убежища")
         val powered = engine.bunkerPower.hasPower
         panel.addView(label(
@@ -178,6 +182,7 @@ internal class BunkerStationPanels(
 
     fun showStorage() {
         val engine = session.engine
+        if (engine.canAccessStorage()) engine.storyProgress.recordEvent(StoryEventIds.STORAGE_OPENED)
         fun dp(value: Int): Int = (value * activity.resources.displayMetrics.density).toInt()
         val panel = createPanel(
             "ХРАНИЛИЩЕ УБЕЖИЩА",
