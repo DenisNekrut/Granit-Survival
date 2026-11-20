@@ -92,7 +92,7 @@ object PixelSpriteTextureAtlas {
                 frameIndex++
                 SpriteAtlasFrame(cellX, cellY, frameWidth * RASTER_SCALE, frameHeight * RASTER_SCALE)
             }
-            SpriteAtlasPackEntry(id, frameWidth, frameHeight, frames)
+            SpriteAtlasPackEntry(id, frameWidth * RASTER_SCALE, frameHeight * RASTER_SCALE, frames)
         }
         return SpriteAtlasPackPlan(cellSize, COLUMNS, rows, entries)
     }
