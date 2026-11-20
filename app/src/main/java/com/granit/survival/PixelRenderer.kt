@@ -313,14 +313,22 @@ class PixelRenderer {
         worldSprites.sortWith(compareBy<WorldSpriteCommand> { it.sortY }.thenBy { it.sortOrder })
         worldSprites.forEach { command ->
             if (command.contactShadow) {
-                // Three crisp pixel bands give props a grounded shadow without changing
-                // their authored footprint, anchor or draw-order contact point.
-                rect(command.centerX - 0.34f, command.topY + 0.82f, 0.68f, 0.10f,
-                    0.025f, 0.035f, 0.032f, 0.42f)
-                rect(command.centerX - 0.25f, command.topY + 0.90f, 0.50f, 0.07f,
-                    0.025f, 0.035f, 0.032f, 0.27f)
-                rect(command.centerX - 0.16f, command.topY + 0.95f, 0.32f, 0.04f,
-                    0.025f, 0.035f, 0.032f, 0.15f)
+                // Outdoor shadows shift and lengthen with the sun; bunker contact shadows stay fixed.
+                val shadow = if (engine.zone == WorldZone.BUNKER) {
+                    OutdoorLighting.ShadowProfile(0f, 1f, 1f)
+                } else {
+                    OutdoorLighting.shadowProfile(engine.worldClock.minuteOfDay)
+                }
+                val shadowCenterX = command.centerX + shadow.offsetX
+                val shadowLength = shadow.lengthScale
+                val shadowOpacity = shadow.opacityScale
+                // Crisp stepped bands change only their decorative footprint, never the sprite anchor.
+                rect(shadowCenterX - 0.34f * shadowLength, command.topY + 0.82f,
+                    0.68f * shadowLength, 0.10f, 0.025f, 0.035f, 0.032f, 0.42f * shadowOpacity)
+                rect(shadowCenterX - 0.25f * shadowLength, command.topY + 0.90f,
+                    0.50f * shadowLength, 0.07f, 0.025f, 0.035f, 0.032f, 0.27f * shadowOpacity)
+                rect(shadowCenterX - 0.16f * shadowLength, command.topY + 0.95f,
+                    0.32f * shadowLength, 0.04f, 0.025f, 0.035f, 0.032f, 0.15f * shadowOpacity)
             }
             drawAtlasSprite(
                 command.spriteId, command.centerX, command.topY, command.tileExtent,
