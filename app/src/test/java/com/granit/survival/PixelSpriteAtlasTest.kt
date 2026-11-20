@@ -13,6 +13,22 @@ class PixelSpriteAtlasTest {
     }
 
     @Test
+    fun worldPaletteDefinesDistinctMaterialRampsAndValidHexColours() {
+        val ramps = GranitWorldPalette.materialRamps
+        assertTrue("All seven authored material families must exist",
+            ramps.keys.containsAll(setOf("concrete", "steel", "rust", "pine", "soil", "brick", "water", "moss")))
+        ramps.forEach { (name, ramp) ->
+            listOf(ramp.shadow, ramp.mid, ramp.highlight).forEachIndexed { index, color ->
+                assertTrue("$name ramp step $index must contain RGB", color.size == 3)
+                assertTrue("$name ramp step $index must be normalized",
+                    color.all { it in 0f..1f })
+            }
+        }
+        assertTrue("Water must remain blue/cyan", ramps.getValue("water").mid[2] > ramps.getValue("water").mid[0])
+        assertTrue("Rust must remain warm", ramps.getValue("rust").mid[0] > ramps.getValue("rust").mid[2])
+    }
+
+    @Test
     fun everySpriteUsesTheReplacementColdSurvivalPalette() {
         PixelSpriteAtlas.allIds().forEach { id ->
             val sprite = requireNotNull(PixelSpriteAtlas.sprite(id))
