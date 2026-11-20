@@ -12,8 +12,12 @@ internal object ZoneTransitionSystem {
             WorldZone.COMMUNICATION_NODE -> TileType.EXIT_TO_COMMUNICATION_NODE
             WorldZone.FOREST -> null
         }
-        WorldZone.RUINS, WorldZone.ROAD ->
-            if (from == WorldZone.FOREST) TileType.EXIT_TO_FOREST else null
+        WorldZone.RUINS -> when (from) {
+            WorldZone.FOREST -> TileType.EXIT_TO_FOREST
+            WorldZone.COMMUNICATION_NODE -> TileType.EXIT_TO_COMMUNICATION_NODE
+            else -> null
+        }
+        WorldZone.ROAD -> if (from == WorldZone.FOREST) TileType.EXIT_TO_FOREST else null
     }
 
     fun shouldGenerateFreshMap(target: WorldZone, regenerate: Boolean): Boolean =
