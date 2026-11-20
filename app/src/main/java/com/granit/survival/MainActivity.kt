@@ -30,6 +30,8 @@ class MainActivity : Activity() {
     private lateinit var session: GameSession
     private var activeGame = false
     private var pausedGame = false
+    private var introSequenceActive = false
+    private var introSequenceIndex = 0
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val bunkerStationPanels by lazy {
         BunkerStationPanels(
@@ -163,7 +165,10 @@ class MainActivity : Activity() {
     }
 
     private fun closeStationPanel() {
-        if (activeGame) enterGame() else showPauseMenu()
+        if (introSequenceActive) {
+            introSequenceIndex++
+            showOpeningScenePage()
+        } else if (activeGame) enterGame() else showPauseMenu()
     }
 
     private fun showMainMenu() {
