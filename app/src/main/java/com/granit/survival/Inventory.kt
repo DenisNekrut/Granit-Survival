@@ -29,6 +29,7 @@ interface ItemContainer {
     fun canAdd(type: ItemType, amount: Int = 1): Boolean
     fun add(type: ItemType, amount: Int = 1): Int
     fun removeAt(index: Int, amount: Int = 1): Boolean
+    fun remove(type: ItemType, amount: Int = 1): Boolean
 }
 
 /** Fixed-size item container. Stack size is intentionally small for the first prototype. */
@@ -94,7 +95,7 @@ class Inventory(
         return true
     }
 
-    fun remove(type: ItemType, amount: Int = 1): Boolean {
+    override fun remove(type: ItemType, amount: Int): Boolean {
         if (amount <= 0 || count(type) < amount) return false
         var remaining = amount
         for (index in slots.indices) {
