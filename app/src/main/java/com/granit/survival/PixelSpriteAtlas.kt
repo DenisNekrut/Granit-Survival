@@ -17,7 +17,73 @@ object PixelSpriteAtlas {
         'D' to floatArrayOf(0.10f, 0.11f, 0.10f)
     )
 
-    private val sprites = mapOf(
+
+    /**
+     * Fine-detail pass for large outdoor props. Original silhouettes and logical
+     * footprints stay intact; 16x16 masters gain individually authored 32x32 pixels.
+     */
+    private fun detailEnvironmentSprite(source: PixelSprite, id: String): PixelSprite {
+        val palette = source.palette + mapOf(
+            'Y' to floatArrayOf(0.075f, 0.095f, 0.085f),
+            'Z' to floatArrayOf(0.78f, 0.70f, 0.48f)
+        )
+        val frames = source.frames.map { frame ->
+            val rows = buildList {
+                frame.forEach { row ->
+                    val doubled = buildString(row.length * 2) { row.forEach { append(it).append(it) } }
+                    add(doubled.toCharArray())
+                    add(doubled.toCharArray())
+                }
+            }.toMutableList()
+            fun paint(x: Int, y: Int, color: Char) {
+                if (y in rows.indices && x in rows[y].indices && rows[y][x] != '.') rows[y][x] = color
+            }
+            when (id) {
+                "tree" -> {
+                    for ((x,y) in listOf(10 to 8,14 to 10,20 to 12,8 to 16,24 to 18,16 to 20)) paint(x,y,'Z')
+                    for ((x,y) in listOf(14 to 15,18 to 17,12 to 19)) paint(x,y,'Y')
+                    for (y in 24..29 step 2) paint(16,y,'Z')
+                }
+                "bush" -> {
+                    for ((x,y) in listOf(10 to 10,16 to 8,22 to 12,8 to 16,20 to 18,14 to 22)) paint(x,y,'Z')
+                    for ((x,y) in listOf(12 to 15,18 to 16,22 to 20)) paint(x,y,'Y')
+                }
+                "rubble" -> {
+                    for ((x,y) in listOf(10 to 6,18 to 8,24 to 12,14 to 16,22 to 20,10 to 24)) paint(x,y,'Z')
+                    for ((x,y) in listOf(16 to 12,20 to 18,8 to 22)) paint(x,y,'Y')
+                }
+                "streetlamp" -> {
+                    for (x in 12..20 step 2) paint(x,4,'Z')
+                    paint(18,6,'Z'); paint(16,20,'Y'); paint(18,24,'Z')
+                }
+                "road_sign" -> {
+                    for (x in 12..20 step 2) paint(x,10,'Z')
+                    paint(12,14,'Y'); paint(20,14,'Z')
+                    for (y in 18..27 step 3) paint(16,y,'Y')
+                }
+                "wreck" -> {
+                    for ((x,y) in listOf(10 to 10,14 to 8,22 to 10,26 to 14,12 to 18,22 to 20)) paint(x,y,'Z')
+                    for (x in 10..24 step 4) paint(x,22,'Y')
+                }
+                "crate" -> {
+                    for (x in 8..24 step 4) { paint(x,8,'Z'); paint(x,20,'Y') }
+                    for (y in 10..18 step 4) { paint(10,y,'Z'); paint(22,y,'Y') }
+                }
+                "barrel" -> {
+                    for (x in 12..20 step 2) { paint(x,8,'Z'); paint(x,22,'Y') }
+                    for (y in 12..18 step 3) { paint(10,y,'Z'); paint(22,y,'Y') }
+                }
+                "road_barrier" -> {
+                    for (x in 8..24 step 4) { paint(x,8,'Z'); paint(x,14,'Y') }
+                    paint(12,20,'Z'); paint(22,20,'Y')
+                }
+            }
+            rows.map { String(it) }
+        }
+        return PixelSprite(frames, palette)
+    }
+
+    private val sprites = (mapOf(
         "player" to PixelSprite(
             frames = listOf(
                 listOf(
@@ -559,7 +625,11 @@ object PixelSpriteAtlas {
             'M' to floatArrayOf(0.38f, 0.40f, 0.37f),
             'W' to floatArrayOf(0.63f, 0.59f, 0.43f)
         ))
-    )
+    )).mapValues { (id, sprite) ->
+        if (id in setOf("tree", "bush", "rubble", "streetlamp", "road_sign", "wreck", "crate", "barrel", "road_barrier")) {
+            detailEnvironmentSprite(sprite, id)
+        } else sprite
+    }
 
     /**
      * Hand-authored style variants are derived from the original pixel silhouettes.
