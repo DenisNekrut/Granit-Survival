@@ -84,8 +84,8 @@ internal object GeneratedPixelSprites {
             "....NNNN..../...NMMMMN.../...NMQMMN.../...NMMMMN.../....MMMM..../....OOOO..../..OOOOOO..../.NOOOOPPOON./NOOOOPPOOON./...OOOON..../....OOON..../....OOON..../...OOON...../...OOON...../...OOON...../...OOON...../..NN...NN.../..NN...NN.../..NN...NN.../..NN...NN.../...NN..NN.../...NN..NN.../....NN.NN.../....NN.NN..."
         ),
         "infected_brute" to sprite(
-            "...NNNNNN.../..NMMMMMMN../..NMQMMMMN../..NMMMMMMN../...MMMMMM.../.NOOOOOOON./NOOOOOOOOOON/NOOPPPPOOOON/NOOPPPPOOOON/NOOOOOOOOOON/.NOOOOOOOON./..NOOOOOON../...OOOOOO.../...OOOOOO.../...OOOOOO.../...OOOOOO.../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NN...NN.../..NN...NN.../..NN...NN...",
-            "...NNNNNN.../..NMMMMMMN../..NMQMMMMN../..NMMMMMMN../...MMMMMM.../.NOOOOOOON./NOOOOOOOOOON/NOOPPPPOOOON/NOOPPPPOOOON/NOOOOOOOOOON/.NOOOOOOOON./..NOOOOOON../...OOOOOO.../...OOOOOO.../...OOOOOO.../...OOOOOO.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN...NN.../..NN...NN.../..NN...NN..."
+            "...NNNNNN.../..NMMMMMMN../..NMQMMMMN../..NMMMMMMN../...MMMMMM.../.NOOOOOOOON./NOOOOOOOOOON/NOOPPPPOOOON/NOOPPPPOOOON/NOOOOOOOOOON/.NOOOOOOOON./..NOOOOOON../...OOOOOO.../...OOOOOO.../...OOOOOO.../...OOOOOO.../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NNN..NNN../..NN...NN.../..NN...NN.../..NN...NN...",
+            "...NNNNNN.../..NMMMMMMN../..NMQMMMMN../..NMMMMMMN../...MMMMMM.../.NOOOOOOOON./NOOOOOOOOOON/NOOPPPPOOOON/NOOPPPPOOOON/NOOOOOOOOOON/.NOOOOOOOON./..NOOOOOON../...OOOOOO.../...OOOOOO.../...OOOOOO.../...OOOOOO.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN..NNN.../..NN...NN.../..NN...NN.../..NN...NN..."
         )
     )
 
