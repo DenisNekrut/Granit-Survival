@@ -2,10 +2,10 @@ package com.granit.survival
 
 /** Separate bunker container. It uses the same stack rules as the field inventory. */
 class BunkerStorage(
-    val columns: Int = 6,
-    val rows: Int = 4,
+    override val columns: Int = 6,
+    override val rows: Int = 4,
     stackLimit: Int = 20
-) {
+) : ItemContainer {
     private val contents = Inventory(columns, rows, stackLimit)
 
     override fun count(type: ItemType): Int = contents.count(type)
