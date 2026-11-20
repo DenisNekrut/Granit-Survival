@@ -34,6 +34,7 @@ object StoryEventIds {
     const val COMMUNICATION_NODE_CONSOLE_FOUND = "chapter_01.communication_node_console_found"
     const val COMMUNICATION_NODE_CONSOLE_INSPECTED = "chapter_01.communication_node_console_inspected"
     const val COMMUNICATION_NODE_SHIFT_LOG_READ = "chapter_01.communication_node_shift_log_read"
+    const val COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED = "chapter_01.communication_node_signal_sequence_extracted"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -69,6 +70,7 @@ object StoryEventIds {
         COMMUNICATION_NODE_CONSOLE_FOUND,
         COMMUNICATION_NODE_CONSOLE_INSPECTED,
         COMMUNICATION_NODE_SHIFT_LOG_READ,
+        COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED,
         WORKSHOP_INSPECTED
     )
 }
@@ -184,6 +186,7 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND, "Пульт коммуникационного узла", "На пульте горит индикатор линии. Рядом лежит журнал дежурной смены, но последние записи обрываются на середине строки."),
             StoryObservation(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED, "Осмотр пульта связи", "Пульт не выключен: индикатор линии горит ровным светом, а на экране отображается служебный статус «GRANIT / ЛИНИЯ 08». При этом ни одного подтверждения от внешнего абонента нет. Андрей не может понять, что именно поддерживает работу оборудования."),
             StoryObservation(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ, "Журнал дежурной смены", "В сохранившейся части журнала есть три отметки: «21:40 — линия GRANIT отвечает в штатном режиме», «21:47 — контрольный сигнал принят повторно», «21:52 — время на панели не совпадает с часами поста». Следующая строка обрывается. Причина расхождения неизвестна.")
+            StoryObservation(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED, "Контрольная последовательность", "На пульте сохранилась последовательность контрольных отметок: 21:40, 21:47 и 21:52. Интервалы между ними не совпадают с системным временем экрана. Андрей сохраняет значения для последующей сверки с сигналом из других точек маршрута."),
         )
         return notes.filter { hasEvent(it.eventId) }
     }
