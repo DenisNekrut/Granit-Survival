@@ -184,7 +184,7 @@ object PixelSpriteAtlas {
             'Y' to floatArrayOf(0.72f, 0.61f, 0.25f),
             'L' to floatArrayOf(0.88f, 0.81f, 0.49f)
         ),
-            "................","......DDDD......",".....DYYYYD.....","....DYYYYYYD....","....DYLLYYD....","....DYYYYYYD....","....DYYYYYYD....","....DYYYYYYD....",
+            "................","......DDDD......",".....DYYYYD.....","....DYYYYYYD....","....DYLLYYD.....","....DYYYYYYD....","....DYYYYYYD....","....DYYYYYYD....",
             "....DYYYYYYD....","....DYYYYYYD....","....DYYYYYYD....",".....DYYYYD.....","......DDDD......",".......DD.......","................","................"
         )
     )
