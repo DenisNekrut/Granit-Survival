@@ -12,7 +12,7 @@ private data class WorldSpriteCommand(
     val spriteId: String,
     val centerX: Float,
     val topY: Float,
-    val pixelSize: Float,
+    val tileExtent: Float = 1f,
     val frame: Int = 0,
     val flipX: Boolean = false,
     val contactShadow: Boolean = false
@@ -230,7 +230,7 @@ class PixelRenderer {
                     sortY = tileY + 1f, sortOrder = 0, spriteId = wallSprite,
                     centerX = tileX + 0.5f, topY = tileY.toFloat(),
                     // Wall sprites must fit exactly inside their occupied 1x1 map cell.
-                    pixelSize = 0.052f, contactShadow = true
+                    tileExtent = 1f, contactShadow = true
                 )
             }
             val furnitureSprite = when (type) {
@@ -246,8 +246,8 @@ class PixelRenderer {
             }
             if (furnitureSprite != null) {
                 // Snap the sprite's visible edge to the nearest adjacent wall, not just its tile center.
-                val furniturePixelSize = 0.052f
-                val furnitureExtent = SpriteWorldMetrics.footprint(furnitureSprite, furniturePixelSize).width
+                val furnitureTileExtent = 1f
+                val furnitureExtent = SpriteWorldMetrics.footprint(furnitureSprite, furnitureTileExtent).width
                 val anchoredX = when {
                     engine.tileMap[tileX - 1, tileY] == TileType.WALL -> tileX + furnitureExtent * 0.5f
                     engine.tileMap[tileX + 1, tileY] == TileType.WALL -> tileX + 1f - furnitureExtent * 0.5f
@@ -261,7 +261,7 @@ class PixelRenderer {
                 worldSprites += WorldSpriteCommand(
                     sortY = tileY + 1.07f, sortOrder = 0, spriteId = furnitureSprite,
                     centerX = anchoredX, topY = anchoredTopY,
-                    pixelSize = furniturePixelSize
+                    tileExtent = furnitureTileExtent
                 )
             }
 
@@ -271,7 +271,7 @@ class PixelRenderer {
                     worldSprites += WorldSpriteCommand(
                         sortY = tileY + 0.96f, sortOrder = 0, spriteId = propSprite,
                         centerX = tileX + 0.5f, topY = tileY.toFloat(),
-                        pixelSize = 0.0625f, contactShadow = true
+                        tileExtent = 1f, contactShadow = true
                     )
                 }
             }
@@ -283,7 +283,7 @@ class PixelRenderer {
             worldSprites += WorldSpriteCommand(
                 sortY = poi.y + 0.92f, sortOrder = 0, spriteId = poi.spriteId,
                 centerX = poi.x, topY = poi.y - 0.12f,
-                pixelSize = 0.052f, contactShadow = true
+                tileExtent = 1f, contactShadow = true
             )
         }
 
@@ -298,7 +298,7 @@ class PixelRenderer {
         }
         worldSprites += WorldSpriteCommand(
             sortY = py + 0.48f, sortOrder = 1, spriteId = playerSprite,
-            centerX = px, topY = py - 0.48f, pixelSize = 0.04f,
+            centerX = px, topY = py - 0.48f, tileExtent = 0.82f,
             frame = playerFrame, flipX = playerFlipX
         )
         // Add fixed ceiling fixtures to the bunker room layout.
@@ -314,7 +314,7 @@ class PixelRenderer {
                     0.035f, 0.045f, 0.04f, 0.65f)
             }
             drawAtlasSprite(
-                command.spriteId, command.centerX, command.topY, command.pixelSize,
+                command.spriteId, command.centerX, command.topY, command.tileExtent,
                 command.frame, command.flipX
             )
         }
@@ -327,7 +327,7 @@ class PixelRenderer {
                 InfectedVariant.BRUTE -> "infected_brute"
             }
             val walkFrame = if ((zombie.attackCooldown * 8f).toInt() and 1 == 0) 0 else 1
-            drawAtlasSprite(spriteId, zombie.x, zombie.y - 0.48f, 0.034f, walkFrame)
+            drawAtlasSprite(spriteId, zombie.x, zombie.y - 0.48f, 0.72f, walkFrame)
             if (zombie.hitFlash > 0f) {
                 rect(zombie.x - 0.11f, zombie.y - 0.40f, 0.22f, 0.08f, 0.62f, 0.86f, 0.78f, 0.38f)
             }
@@ -530,7 +530,7 @@ class PixelRenderer {
                 if ((x + y) % 4 == 0) rect(x + 0.08f, y + 0.92f, 0.84f, 0.025f, 0.17f, 0.19f, 0.18f)
                 if (pattern == 0) {
                     rect(x + 0.20f, y + 0.24f, 0.08f, 0.05f, 0.20f, 0.22f, 0.21f)
-                    drawAtlasSprite("floor_grate", x + 0.5f, y + 0.12f, 0.045f)
+                    drawAtlasSprite("floor_grate", x + 0.5f, y + 0.12f, 0.42f)
                 }
             }
             WorldZone.FOREST -> {
@@ -554,32 +554,33 @@ class PixelRenderer {
 
     private fun drawExitTile(x: Int, y: Int, type: TileType) {
         val sprite = if (type == TileType.EXIT_TO_BUNKER) "ladder_hatch" else "exit_hatch"
-        drawAtlasSprite(sprite, x + 0.5f, y.toFloat(), 0.052f)
+        drawAtlasSprite(sprite, x + 0.5f, y.toFloat(), 1f)
     }
 
     private fun drawAtlasSprite(
         id: String,
         centerX: Float,
         topY: Float,
-        pixelSize: Float,
+        tileExtent: Float = 1f,
         frame: Int = 0,
         flipX: Boolean = false
     ) {
-        // Texture resolution must never change the object's footprint on the tile map.
-        val scaledPixelSize = pixelSize * PixelSpriteAtlas.worldDensityScale(id) * GranitArtPalette.WORLD_SPRITE_SCALE
+        // Normalize every source frame against the same 128x128 map-cell standard.
+        val logicalPixelSize = SpriteWorldMetrics.pixelWorldSize(id, tileExtent)
         val manifest = spriteManifest
         val texture = spriteTexture
         val entry = manifest?.sprites?.firstOrNull { it.id == id }
         if (manifest != null && texture != null && entry != null) {
             val frameRect = entry.frames[Math.floorMod(frame, entry.frames.size)]
             drawTexturedSprite(manifest, texture, frameRect, centerX, topY,
-                entry.frameWidth * scaledPixelSize, entry.frameHeight * scaledPixelSize, flipX)
+                entry.frameWidth * (logicalPixelSize / PixelSpriteTextureAtlas.RASTER_SCALE),
+                entry.frameHeight * (logicalPixelSize / PixelSpriteTextureAtlas.RASTER_SCALE), flipX)
             return
         }
         val sprite = PixelSpriteAtlas.sprite(id) ?: return
         val sourceRows = sprite.frames[Math.floorMod(frame, sprite.frames.size)]
         val rows = if (flipX) sourceRows.map { it.reversed() } else sourceRows
-        drawPixelSprite(rows, centerX, topY, scaledPixelSize, sprite.palette)
+        drawPixelSprite(rows, centerX, topY, logicalPixelSize, sprite.palette)
     }
 
     private fun drawTexturedSprite(
@@ -761,7 +762,7 @@ class PixelRenderer {
 
     private fun drawResource(x: Int, y: Int, spriteId: String) {
         rect(x.toFloat(), y.toFloat(), 1f, 1f, 0.16f, 0.18f, 0.17f)
-        drawAtlasSprite(spriteId, x + 0.5f, y + 0.12f, 0.052f)
+        drawAtlasSprite(spriteId, x + 0.5f, y + 0.12f, 0.78f)
     }
 
 
@@ -775,7 +776,7 @@ class PixelRenderer {
             val frame = entry.frames.first()
             flushBatch()
             if (queuedTextureVertexCount + 6 > textureVertexBuffer.capacity() / 2) flushTextureBatch()
-            val scaledPixel = pixelSize * GranitArtPalette.WORLD_SPRITE_SCALE
+            val scaledPixel = pixelSize * GranitArtPalette.WORLD_SPRITE_SCALE / PixelSpriteTextureAtlas.RASTER_SCALE
             val width = entry.frameWidth * scaledPixel
             val height = entry.frameHeight * scaledPixel
             val left = worldOffsetX + (centerX - width * 0.5f) * worldScale
@@ -793,7 +794,7 @@ class PixelRenderer {
                 sprite.frames.first(),
                 centerX,
                 topY,
-                pixelSize * PixelSpriteTextureAtlas.RASTER_SCALE * GranitArtPalette.WORLD_SPRITE_SCALE,
+                pixelSize * GranitArtPalette.WORLD_SPRITE_SCALE,
                 sprite.palette
             )
         }
