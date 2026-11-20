@@ -403,4 +403,21 @@ class PointOfInterestTest {
         })
     }
 
+    @Test
+    fun communicationNodeRouteRecordRequiresSignalCrossCheckAndPersistsOnce() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.COMMUNICATION_NODE)
+        assertFalse(engine.inspectCommunicationNodeRouteRecord())
+        engine.storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED)
+        assertTrue(engine.inspectCommunicationNodeRouteRecord())
+        assertFalse(engine.inspectCommunicationNodeRouteRecord())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND
+        })
+    }
+
 }
