@@ -9,7 +9,7 @@ internal object ZoneTransitionSystem {
             WorldZone.BUNKER -> TileType.EXIT_TO_BUNKER
             WorldZone.RUINS -> TileType.EXIT_TO_RUINS
             WorldZone.ROAD -> TileType.EXIT_TO_ROAD
-            WorldZone.COMMUNICATION_NODE -> TileType.EXIT_TO_COMMUNICATION_NODE
+            WorldZone.COMMUNICATION_NODE -> null
             WorldZone.FOREST -> null
         }
         WorldZone.RUINS -> when (from) {
