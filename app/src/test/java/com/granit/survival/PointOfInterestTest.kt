@@ -479,4 +479,32 @@ class PointOfInterestTest {
         })
     }
 
+    @Test
+    fun line08CheckpointIsLockedUntilBranchInspectionAndPersistsOnce() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.ROAD, regenerate = false)
+        val checkpoint = PointOfInterestCatalog.byId("road_checkpoint")!!
+        engine.player.x = checkpoint.x
+        engine.player.y = checkpoint.y
+
+        engine.storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+        assertTrue(engine.scanNearbyPointsOfInterest().none { it.id == checkpoint.id })
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND))
+        assertFalse(engine.inspectRoadLine08Checkpoint())
+
+        engine.storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED)
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == checkpoint.id })
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND))
+        assertTrue(engine.inspectRoadLine08Checkpoint())
+        assertFalse(engine.inspectRoadLine08Checkpoint())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED
+        })
+    }
+
 }
