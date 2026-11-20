@@ -481,7 +481,12 @@ class MainActivity : Activity() {
         if (story.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED)) {
             panel.addView(label("СЛЕДУЮЩАЯ ЦЕЛЬ · СЛУЖЕБНЫЙ ВХОД", 14f, Color.rgb(207, 194, 155), true))
             if (story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)) {
-                panel.addView(label("Служебный вход найден. На двери видна маркировка коммуникационного узла, но проход закрыт.", 12f, Color.rgb(151, 190, 151)))
+                if (story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)) {
+                    panel.addView(label("Дверь изучена. Электромеханический замок обесточен; расположение распределительной коробки отмечено на карте.", 12f, Color.rgb(151, 190, 151)))
+                } else {
+                    panel.addView(label("Служебный вход найден. Дверь закрыта, рядом виден сервисный отсек.", 12f, Color.LTGRAY))
+                    panel.addView(menuButton("ОСМОТРЕТЬ СЛУЖЕБНЫЙ ВХОД") { showRuinsServiceAccessInspection() })
+                }
             } else {
                 panel.addView(label("Следуй по техническому проезду к дальней окраине руин и найди служебный вход старого коммуникационного узла.", 13f, Color.LTGRAY))
             }
@@ -510,6 +515,23 @@ class MainActivity : Activity() {
             panel.addView(menuButton("ЗАПИСАТЬ МАРКИРОВКУ В ЖУРНАЛ") {
                 session.engine.inspectRuinsSignalMarker()
                 showRuinsMarkerInspection()
+            })
+        }
+        panel.addView(menuButton("НАЗАД К ЖУРНАЛУ") { showJournal() })
+        showOverlay(panel)
+    }
+
+    private fun showRuinsServiceAccessInspection() {
+        val story = session.engine.storyProgress
+        val panel = createPanel("СЛУЖЕБНЫЙ ВХОД", "Руины · коммуникационный узел")
+        panel.addView(label("Андрей подходит к двери. Маркировка на металле совпадает со схемой, найденной на указателе.", 14f, Color.WHITE))
+        panel.addView(label("Электромеханический замок не реагирует. В сервисном отсеке нет питания, а кабель уходит под бетон к распределительной коробке. Похоже, сначала придётся разобраться с подачей электричества.", 13f, Color.LTGRAY))
+        if (story.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)) {
+            panel.addView(label("РАСПОЛОЖЕНИЕ КОРОБКИ ОТМЕЧЕНО НА КАРТЕ", 13f, Color.rgb(151, 190, 151), true))
+        } else {
+            panel.addView(menuButton("ЗАПИСАТЬ РЕЗУЛЬТАТ ОСМОТРА") {
+                session.engine.inspectRuinsServiceAccess()
+                showRuinsServiceAccessInspection()
             })
         }
         panel.addView(menuButton("НАЗАД К ЖУРНАЛУ") { showJournal() })
