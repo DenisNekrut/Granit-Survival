@@ -127,6 +127,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (found.any { it.id == "communication_node_console" }) {
             storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND)
         }
+        if (found.any { it.id == "road_line_08_marker" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND)
+        }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
                 storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) ->
@@ -486,6 +489,14 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (zone != WorldZone.COMMUNICATION_NODE) return false
         if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED)) return false
         return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+    }
+
+    /** The reserve-line marker can be inspected only after its route-gated landmark is found. */
+    fun inspectRoadLine08Marker(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_line_08_marker")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED)
     }
 
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
