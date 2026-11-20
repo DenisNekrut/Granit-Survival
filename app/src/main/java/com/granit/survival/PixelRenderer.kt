@@ -763,6 +763,66 @@ class PixelRenderer {
         drawAtlasSprite(spriteId, x + 0.5f, y + 0.12f, 0.075f)
     }
 
+
+    /** Draws an inventory icon in HUD coordinates, using the shared atlas when available. */
+    private fun drawHudAtlasSprite(id: String, centerX: Float, topY: Float, pixelSize: Float) {
+        val sprite = PixelSpriteAtlas.sprite(id) ?: return
+        val manifest = spriteManifest
+        val texture = spriteTexture
+        val entry = manifest?.sprites?.firstOrNull { it.id == id }
+        if (manifest != null && texture != null && entry != null) {
+            val frame = entry.frames.first()
+            flushBatch()
+            if (queuedTextureVertexCount + 6 > textureVertexBuffer.capacity() / 2) flushTextureBatch()
+            val scaledPixel = pixelSize * GranitArtPalette.WORLD_SPRITE_SCALE
+            val width = entry.frameWidth * scaledPixel
+            val height = entry.frameHeight * scaledPixel
+            val left = worldOffsetX + (centerX - width * 0.5f) * worldScale
+            val top = worldOffsetY + topY * worldScale
+            val right = left + width * worldScale
+            val bottom = top + height * worldScale
+            SpriteQuadGeometry.append(
+                textureVertexBuffer, textureUvBuffer,
+                toNdcX(left), toNdcY(top), toNdcX(right), toNdcY(bottom),
+                manifest.uvRect(frame), false
+            )
+            queuedTextureVertexCount += 6
+        } else {
+            drawHudPixelSprite(
+                sprite.frames.first(),
+                centerX,
+                topY,
+                pixelSize * PixelSpriteTextureAtlas.RASTER_SCALE * GranitArtPalette.WORLD_SPRITE_SCALE,
+                sprite.palette
+            )
+        }
+    }
+
+    private fun drawHudPixelSprite(
+        rows: List<String>,
+        centerX: Float,
+        topY: Float,
+        pixelSize: Float,
+        palette: Map<Char, FloatArray>
+    ) {
+        val spriteWidth = rows.maxOfOrNull { it.length } ?: return
+        val left = centerX - spriteWidth * pixelSize * 0.5f
+        rows.forEachIndexed { rowIndex, row ->
+            var column = 0
+            while (column < row.length) {
+                val symbol = row[column]
+                if (symbol == '.') { column++; continue }
+                var runEnd = column + 1
+                while (runEnd < row.length && row[runEnd] == symbol) runEnd++
+                val color = palette[symbol] ?: floatArrayOf(0.4f,0.4f,0.4f)
+                val graded = GranitArtPalette.grade(color[0],color[1],color[2])
+                screenRect(left + column * pixelSize, topY + rowIndex * pixelSize,
+                    (runEnd - column) * pixelSize, pixelSize, graded[0],graded[1],graded[2])
+                column = runEnd
+            }
+        }
+    }
+
     private fun drawInventory(inventory: Inventory) {
         // HUD and backpack use the current screen-space viewport, not fixed world coordinates.
         // This keeps the inventory attached to the right display edge on wide and narrow phones.
@@ -780,21 +840,7 @@ class PixelRenderer {
             val y = panelY + row * (slotSize + gap)
             screenRect(x, y, slotSize, slotSize, 0.15f, 0.17f, 0.17f)
             val stack = inventory.slot(index) ?: continue
-            val color = when (stack.type) {
-                ItemType.WOOD -> floatArrayOf(0.60f, 0.39f, 0.22f)
-                ItemType.METAL -> floatArrayOf(0.56f, 0.62f, 0.64f)
-                ItemType.FABRIC -> floatArrayOf(0.38f, 0.55f, 0.50f)
-                ItemType.CANNED_FOOD -> floatArrayOf(0.73f, 0.53f, 0.24f)
-                ItemType.WATER -> floatArrayOf(0.26f, 0.55f, 0.74f)
-                ItemType.MEDICAL_KIT -> floatArrayOf(0.72f, 0.30f, 0.28f)
-                ItemType.BANDAGE -> floatArrayOf(0.82f, 0.78f, 0.66f)
-            }
-            if (stack.type == ItemType.MEDICAL_KIT || stack.type == ItemType.BANDAGE) {
-                screenRect(x + 0.30f, y + 0.16f, 0.12f, 0.40f, color[0], color[1], color[2])
-                screenRect(x + 0.16f, y + 0.30f, 0.40f, 0.12f, color[0], color[1], color[2])
-            } else {
-                screenRect(x + 0.14f, y + 0.14f, 0.44f, 0.44f, color[0], color[1], color[2])
-            }
+            drawHudAtlasSprite(stack.type.iconSpriteId, x + slotSize * 0.5f, y + 0.06f, 0.014f)
             val quantityWidth = 0.12f + 0.42f * (stack.quantity / 20f)
             screenRect(x + 0.14f, y + 0.62f, quantityWidth, 0.045f, 0.78f, 0.75f, 0.62f)
         }
