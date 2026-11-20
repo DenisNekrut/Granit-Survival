@@ -38,6 +38,14 @@ class PointOfInterestTest {
     }
 
     @Test
+    fun everyLandmarkUsesAnExistingPixelArtSprite() {
+        PointOfInterestCatalog.all().forEach { poi ->
+            assertTrue("${poi.id} sprite ${poi.spriteId} must exist",
+                PixelSpriteAtlas.sprite(poi.spriteId) != null)
+        }
+    }
+
+    @Test
     fun nearbyLandmarkIsDiscoveredOnlyOnce() {
         val engine = GameEngine()
         val poi = PointOfInterestCatalog.inZone(WorldZone.FOREST).first()
