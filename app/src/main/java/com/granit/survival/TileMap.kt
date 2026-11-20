@@ -234,8 +234,12 @@ class TileMap(
             val footprint = SpriteWorldMetrics.footprint(spriteId, 1f)
             val propLeft = propX + 0.5f - footprint.width * 0.5f
             val propRight = propLeft + footprint.width
-            val propTop = propY.toFloat()
-            val propBottom = propTop + footprint.height
+            // Tall props are depth-sorted by their ground contact point. Only the
+            // lower base strip blocks movement; the upper canopy/body remains passable
+            // so the player can walk behind it instead of hitting an invisible wall.
+            val collisionDepth = minOf(footprint.height, 0.28f)
+            val propBottom = propY.toFloat() + footprint.height
+            val propTop = propBottom - collisionDepth
             if (playerLeft < propRight && playerRight > propLeft &&
                 playerTop < propBottom && playerBottom > propTop) return true
         }
