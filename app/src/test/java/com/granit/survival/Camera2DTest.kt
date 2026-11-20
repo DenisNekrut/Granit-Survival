@@ -64,7 +64,7 @@ class Camera2DTest {
     @Test
     fun engineCameraTracksPlayerOnRenderFramesWithoutFixedStep() {
         val engine = GameEngine()
-        engine.camera.setViewport(12.5f, 7.2f)
+        engine.setCameraViewport(12.5f, 7.2f)
         val beforeX = engine.camera.x
         val beforeY = engine.camera.y
         engine.player.x += 1f
