@@ -55,3 +55,9 @@ The external atlas is currently an optional override. If absent, the game genera
 - Added small per-texel clothing seams, backpack/webbing accents, equipment highlights and boot details while keeping the existing silhouette, four-frame timing and bottom-centre world anchor.
 - The runtime atlas retains nearest-neighbour 2x rasterization, so player texture frames become 64x96 without changing world-space size.
 - Environment sprites remain on their existing 16x16 source cells for the next dedicated redraw pass.
+
+
+## 2026-11-20 — bunker fixture detail pass
+- Seven core bunker fixtures (bed, workbench, storage, bookshelf, radio, generator and medical station) now use 32x32 authored pixel frames.
+- Added fine panel seams, shelf/book edge accents, fabric folds, control lights, vent details and small hardware highlights while preserving silhouettes and interaction anchors.
+- The runtime atlas rasterizes these frames at 2x with nearest-neighbour filtering; world-space footprint and interaction distances are unchanged.
