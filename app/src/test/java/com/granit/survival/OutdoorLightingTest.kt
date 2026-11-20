@@ -45,9 +45,41 @@ class OutdoorLightingTest {
         val second = OutdoorLighting.streetlampPositions(map)
         assertEquals(first, second)
         first.forEach { (centerX, centerY) ->
-            val tileX = kotlin.math.floor(centerX).toInt()
-            val tileY = kotlin.math.floor(centerY - 0.72f).toInt()
+            val tileX = kotlin.math.round(centerX - 0.5f).toInt()
+            val tileY = kotlin.math.round(centerY - 0.72f).toInt()
             assertTrue(OutdoorLighting.isLightSource(map.environmentPropAt(tileX, tileY)))
+        }
+    }
+
+    @Test
+    fun morningNoonAndEveningShadowsFollowTheSunDirection() {
+        val morning = OutdoorLighting.shadowProfile(8 * 60)
+        val noon = OutdoorLighting.shadowProfile(12 * 60)
+        val evening = OutdoorLighting.shadowProfile(16 * 60)
+
+        assertTrue(morning.offsetX < 0f)
+        assertEquals(0f, noon.offsetX, 0.001f)
+        assertTrue(evening.offsetX > 0f)
+        assertTrue(morning.lengthScale > noon.lengthScale)
+        assertTrue(evening.lengthScale > noon.lengthScale)
+    }
+
+    @Test
+    fun nightShadowsAreShortAndSubdued() {
+        val night = OutdoorLighting.shadowProfile(0)
+        val day = OutdoorLighting.shadowProfile(12 * 60)
+        assertTrue(kotlin.math.abs(night.offsetX) < 0.05f)
+        assertTrue(night.opacityScale < day.opacityScale)
+        assertTrue(night.lengthScale in 0.7f..1.2f)
+    }
+
+    @Test
+    fun shadowProfileStaysBoundedAcrossEveryMinute() {
+        for (minute in 0 until WorldClock.MINUTES_PER_DAY) {
+            val profile = OutdoorLighting.shadowProfile(minute)
+            assertTrue(profile.offsetX in -0.19f..0.19f)
+            assertTrue(profile.lengthScale in 0.7f..1.2f)
+            assertTrue(profile.opacityScale in 0.45f..0.95f)
         }
     }
 
