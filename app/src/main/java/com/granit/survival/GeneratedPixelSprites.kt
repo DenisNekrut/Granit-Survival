@@ -163,7 +163,75 @@ internal object GeneratedPixelSprites {
         "player_side_right" to detailedPlayer(base.getValue("player_side_right"), "right")
     )
 
-    val all: Map<String, PixelSprite> = base + detailedPlayerSprites + mapOf(
+    /**
+     * Fine-detail pass for major bunker fixtures. The original silhouette is
+     * retained while the 32x32 canvas gains individually authored control
+     * lights, panel seams, shelf/book edges and work-surface hardware.
+     */
+    private fun detailedBunkerProp(source: PixelSprite, id: String): PixelSprite {
+        val frames = source.frames.map { frame ->
+            val rows = buildList {
+                frame.forEach { row ->
+                    val doubled = buildString(row.length * 2) {
+                        row.forEach { pixel -> append(pixel).append(pixel) }
+                    }
+                    add(doubled.toCharArray())
+                    add(doubled.toCharArray())
+                }
+            }.toMutableList()
+            fun paint(x: Int, y: Int, color: Char) {
+                if (y in rows.indices && x in rows[y].indices && rows[y][x] != '.') rows[y][x] = color
+            }
+            when (id) {
+                "bed" -> {
+                    for (x in 8..23 step 2) paint(x, 12, 'T')
+                    for (x in 8..23 step 3) paint(x, 24, 'X')
+                    paint(9, 7, 'A'); paint(10, 7, 'T'); paint(22, 7, 'A')
+                }
+                "workbench" -> {
+                    for (x in 7..25 step 3) paint(x, 7, 'W')
+                    for (y in 12..25 step 3) paint(9, y, 'X')
+                    paint(23, 8, 'V'); paint(24, 8, 'T')
+                }
+                "storage" -> {
+                    for (y in 9..23 step 3) paint(7, y, 'T')
+                    for (y in 9..23 step 3) paint(24, y, 'X')
+                    paint(22, 16, 'V'); paint(23, 16, 'W')
+                }
+                "bookshelf" -> {
+                    for (y in listOf(7, 19)) {
+                        for (x in 7..24 step 3) paint(x, y, 'T')
+                    }
+                    for (x in listOf(9, 15, 21)) paint(x, 12, 'V')
+                    for (x in listOf(11, 18, 24)) paint(x, 25, 'W')
+                }
+                "radio" -> {
+                    for (x in 10..22 step 2) paint(x, 12, 'W')
+                    paint(13, 15, 'V'); paint(14, 15, 'T')
+                    paint(22, 22, 'A'); paint(24, 22, 'A')
+                }
+                "generator" -> {
+                    for (y in 14..24 step 3) paint(8, y, 'X')
+                    for (y in 14..24 step 3) paint(10, y, 'T')
+                    paint(23, 11, 'V'); paint(24, 11, 'A')
+                    for (x in 14..23 step 3) paint(x, 26, 'W')
+                }
+                "medical_station" -> {
+                    for (x in 12..22 step 2) paint(x, 8, 'W')
+                    paint(22, 13, 'V'); paint(23, 13, 'T')
+                    for (x in 10..24 step 3) paint(x, 25, 'X')
+                }
+            }
+            rows.map { String(it) }
+        }
+        return PixelSprite(frames, source.palette)
+    }
+
+    private val detailedBunkerProps = listOf(
+        "bed", "workbench", "storage", "bookshelf", "radio", "generator", "medical_station"
+    ).associateWith { id -> detailedBunkerProp(base.getValue(id), id) }
+
+    val all: Map<String, PixelSprite> = base + detailedPlayerSprites + detailedBunkerProps + mapOf(
         "player_side" to base.getValue("player_side_right"),
         "storage" to base.getValue("locker"),
         "radio" to base.getValue("control_console"),
