@@ -138,8 +138,7 @@ class GameSurface(context: Context, private val session: GameSession) : SurfaceV
         if (!resumed || !surfaceReady || surfaceWidth <= 1 || surfaceHeight <= 1 ||
             !holder.surface.isValid || renderThread?.isAlive == true) return
         Log.i(TAG, "startIfReady: starting render thread with viewport=${surfaceWidth}x$surfaceHeight")
-        lateinit var thread: EngineRenderThread
-        thread = EngineRenderThread(
+        val thread = EngineRenderThread(
             holder, surfaceWidth, surfaceHeight, session, context.applicationContext,
             onInteractionProcessed = { post { onInteractionProcessed?.invoke() } },
             onStopped = ::handleRenderThreadStopped,
