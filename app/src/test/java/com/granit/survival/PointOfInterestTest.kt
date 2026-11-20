@@ -253,7 +253,7 @@ class PointOfInterestTest {
     @Test
     fun discoveriesSurviveSaveSnapshotRestore() {
         val engine = GameEngine()
-        val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first()
+        val poi = PointOfInterestCatalog.inZone(WorldZone.RUINS).first { it.requiredStoryEventId == null }
         engine.changeZone(WorldZone.RUINS)
         engine.player.x = poi.x
         engine.player.y = poi.y
