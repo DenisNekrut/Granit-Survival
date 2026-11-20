@@ -111,8 +111,8 @@ class PixelSpriteTextureAtlasTest {
         assertEquals(listOf(64, 64, 64, 64), playerEntry.frames.map { it.width })
 
         val treeEntry = requireNotNull(plan.entry("tree"))
-        assertEquals(32, treeEntry.frameHeight)
-        assertEquals(32, treeEntry.frameWidth)
+        assertEquals(64, treeEntry.frameHeight)
+        assertEquals(64, treeEntry.frameWidth)
 
         // Both frame shapes must be addressable through the same manifest.
         assertTrue(plan.entry("exit_hatch") != null)
