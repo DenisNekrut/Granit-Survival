@@ -45,6 +45,8 @@ object StoryEventIds {
     const val ROAD_LINE_08_CHECKPOINT_INSPECTED = "chapter_01.road_line_08_checkpoint_inspected"
     const val ROAD_LINE_08_SERVICE_LANE_FOUND = "chapter_01.road_line_08_service_lane_found"
     const val ROAD_LINE_08_SERVICE_LANE_INSPECTED = "chapter_01.road_line_08_service_lane_inspected"
+    const val ROAD_LINE_08_DRAIN_ACCESS_FOUND = "chapter_01.road_line_08_drain_access_found"
+    const val ROAD_LINE_08_DRAIN_ACCESS_INSPECTED = "chapter_01.road_line_08_drain_access_inspected"
     const val WORKSHOP_INSPECTED = "chapter_01.workshop_inspected"
 
     val all: Set<String> = setOf(
@@ -91,6 +93,8 @@ object StoryEventIds {
         ROAD_LINE_08_CHECKPOINT_INSPECTED,
         ROAD_LINE_08_SERVICE_LANE_FOUND,
         ROAD_LINE_08_SERVICE_LANE_INSPECTED,
+        ROAD_LINE_08_DRAIN_ACCESS_FOUND,
+        ROAD_LINE_08_DRAIN_ACCESS_INSPECTED,
         WORKSHOP_INSPECTED
     )
 }
@@ -217,6 +221,8 @@ class StoryProgressSystem(initial: StoryProgressSnapshot = StoryProgressSnapshot
             StoryObservation(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED, "Осмотр дорожного поста Б", "На обороте таблички сохранилась схема подъезда: основной проезд закрыт, служебная полоса ведёт вдоль ограждения к внешнему периметру. Андрей переносит схему в карту. Добраться до самого узла отсюда пока нельзя."),
             StoryObservation(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND, "Служебная полоса вдоль ограждения", "За дорожным постом обнаруживается узкая полоса между ограждением и насыпью. Она не обозначена на общей схеме, но совпадает с направлением на табличке поста Б. Дальше путь закрывает старая сетчатая секция."),
             StoryObservation(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED, "Осмотр служебной полосы", "У сетчатой секции Андрей находит выцветший номерной знак и кабельный маркер линии 08-Б. За ограждением виден продолженный технический коридор, однако проход перекрыт. Андрей отмечает точку на карте: потребуется найти другой доступ к коридору."),
+            StoryObservation(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND, "Дренажный люк у насыпи", "Ниже служебной полосы Андрей замечает металлический люк в основании насыпи. На ободе сохранилась маркировка «08-Б / 2», совпадающая с номером на сетчатой секции."),
+            StoryObservation(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED, "Осмотр дренажного люка", "Люк относится к старой технической линии, но открыть его снаружи не удаётся. На крышке есть следы прежнего обслуживания и стрелка, направленная в сторону руин. Андрей отмечает номер и направление на карте: искать продолжение линии нужно с другой стороны ограждения."),
         )
         return notes.filter { hasEvent(it.eventId) }
     }
