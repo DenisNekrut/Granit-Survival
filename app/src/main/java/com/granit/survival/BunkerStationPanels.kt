@@ -166,9 +166,7 @@ internal class BunkerStationPanels(
 
         fun addGrid(
             title: String,
-            columns: Int,
-            rows: Int,
-            slotAt: (Int) -> ItemStack?,
+            container: ItemContainer,
             transfer: (Int, Int) -> Boolean,
             actionVerb: String,
             useSelected: ((ItemType) -> Boolean)? = null
@@ -176,12 +174,10 @@ internal class BunkerStationPanels(
             panel.addView(label(title, 15f, Color.rgb(207, 194, 155), true))
             panel.addView(InventoryGridView(
                 context = activity,
-                columns = columns,
-                rows = rows,
+                container = container,
                 cellHeightDp = 90,
                 iconSizeDp = 38,
-                dp = ::dp,
-                slotAt = slotAt
+                dp = ::dp
             ) { index, selected ->
                 val canUse = useSelected != null && selected.type in setOf(
                     ItemType.CANNED_FOOD, ItemType.WATER,
@@ -224,17 +220,13 @@ internal class BunkerStationPanels(
 
         addGrid(
             "РЮКЗАК · ${engine.inventory.columns} × ${engine.inventory.rows}",
-            engine.inventory.columns,
-            engine.inventory.rows,
-            engine.inventory::slot,
+            engine.inventory,
             engine::transferToStorageAt,
             "ПОЛОЖИТЬ"
         )
         addGrid(
             "ХРАНИЛИЩЕ · ${engine.bunkerStorage.columns} × ${engine.bunkerStorage.rows}",
-            engine.bunkerStorage.columns,
-            engine.bunkerStorage.rows,
-            engine.bunkerStorage::slot,
+            engine.bunkerStorage,
             engine::transferFromStorageAt,
             "ЗАБРАТЬ"
         ) { type ->
