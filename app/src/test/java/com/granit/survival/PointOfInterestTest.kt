@@ -563,4 +563,33 @@ class PointOfInterestTest {
         })
     }
 
+
+    @Test
+    fun ruinsLine08DrainMarkerRequiresRoadInspectionAndPersistsOnce() {
+        val engine = GameEngine()
+        engine.changeZone(WorldZone.RUINS, regenerate = false)
+        val marker = PointOfInterestCatalog.byId("ruins_line_08_drain_marker")!!
+        engine.player.x = marker.x
+        engine.player.y = marker.y
+
+        assertTrue(engine.scanNearbyPointsOfInterest().none { it.id == marker.id })
+        assertFalse(engine.storyProgress.hasEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_FOUND))
+        assertFalse(engine.inspectRuinsLine08DrainMarker())
+
+        engine.storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED)
+        assertTrue(engine.scanNearbyPointsOfInterest().any { it.id == marker.id })
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_FOUND))
+        assertTrue(engine.inspectRuinsLine08DrainMarker())
+        assertFalse(engine.inspectRuinsLine08DrainMarker())
+
+        val restored = GameEngine()
+        restored.restoreSaveSnapshot(engine.createSaveSnapshot())
+        assertTrue(restored.isPoiDiscovered(marker.id))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_FOUND))
+        assertTrue(restored.storyProgress.hasEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_INSPECTED))
+        assertTrue(restored.storyProgress.observations().any {
+            it.eventId == StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_INSPECTED
+        })
+    }
+
 }
