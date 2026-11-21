@@ -597,6 +597,22 @@ class MainActivity : Activity() {
                     panel.addView(label("Осмотри основание насыпи ниже служебной полосы. Ищи продолжение технической линии.", 13f, Color.LTGRAY))
             }
         }
+        if (story.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED)) {
+            panel.addView(label("НОВАЯ ЦЕЛЬ · ПРОДОЛЖЕНИЕ ЛИНИИ 08-Б В РУИНАХ", 14f, Color.rgb(207, 194, 155), true))
+            when {
+                story.hasEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_INSPECTED) ->
+                    panel.addView(label("Маркировка 08-Б / 2 подтверждена с обеих сторон ограждения. Служебная крышка остаётся закрытой; проход пока недоступен.", 12f, Color.rgb(151, 190, 151)))
+                story.hasEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_FOUND) -> {
+                    panel.addView(label("В руинах найдена служебная крышка с маркировкой 08-Б / 2. Осмотри её и сравни с дорожной отметкой.", 13f, Color.LTGRAY))
+                    panel.addView(menuButton("ОСМОТРЕТЬ СЛУЖЕБНУЮ КРЫШКУ") {
+                        session.engine.inspectRuinsLine08DrainMarker()
+                        showJournal()
+                    })
+                }
+                else ->
+                    panel.addView(label("Вернись в зону «Руины». Ищи бетонный водоотводный канал у внешнего ограждения и повторяющуюся маркировку 08-Б / 2.", 13f, Color.LTGRAY))
+            }
+        }
         panel.addView(label("ЗАПИСИ ОБ ИССЛЕДОВАНИИ", 15f, Color.rgb(207, 194, 155), true))
         if (discovered.isEmpty()) {
             panel.addView(label("Пока нет записей. Исследуйте лес, руины и дорогу, чтобы находить интересные места.", 14f, Color.LTGRAY))
