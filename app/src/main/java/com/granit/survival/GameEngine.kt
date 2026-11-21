@@ -142,6 +142,9 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (found.any { it.id == "road_drain_hatch" }) {
             storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND)
         }
+        if (found.any { it.id == "ruins_line_08_drain_marker" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_FOUND)
+        }
         if ("forest_radio_cache" in discoveredPoiIds) {
             when {
                 storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) ->
@@ -541,6 +544,14 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         if (!isPoiDiscovered("road_drain_hatch")) return false
         if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND)) return false
         return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED)
+    }
+
+    /** Inspects the matching 08-B / 2 service cover from the ruins side; it remains sealed. */
+    fun inspectRuinsLine08DrainMarker(): Boolean {
+        if (zone != WorldZone.RUINS) return false
+        if (!isPoiDiscovered("ruins_line_08_drain_marker")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_INSPECTED)
     }
 
     /** The watch-post check is available only after the repaired relay and landmark are both known. */
