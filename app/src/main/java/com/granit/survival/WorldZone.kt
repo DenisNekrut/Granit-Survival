@@ -14,7 +14,8 @@ enum class WorldZone(val displayName: String, val spawnX: Float, val spawnY: Flo
     BUNKER("Убежище", 1.5f, 1.5f),
     FOREST("Лес", 20.5f, 12.5f),
     RUINS("Руины", 34.5f, 12.5f),
-    ROAD("Дорога", 5.5f, 12.5f);
+    ROAD("Дорога", 5.5f, 12.5f),
+    COMMUNICATION_NODE("Коммуникационный узел", 8.5f, 8.5f);
 
     val isProcedurallyGenerated: Boolean
         get() = this == RUINS || this == ROAD

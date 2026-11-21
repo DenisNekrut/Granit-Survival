@@ -18,6 +18,7 @@ object ZonePropSelector {
             WorldZone.FOREST -> listOf("tree", "tree_dark", "tree_dead")[hash % 3]
             WorldZone.RUINS -> listOf("rubble", "rubble_brick", "debris")[hash % 3]
             WorldZone.ROAD -> if (hash % 3 == 0) "road_barrier_faded" else "road_barrier"
+            WorldZone.COMMUNICATION_NODE -> if (hash % 4 == 0) "bunker_panel_rusted" else "bunker_panel"
         }
     }
 
@@ -61,6 +62,10 @@ object ZonePropSelector {
                 hash in 24..28 -> if (hash % 2 == 0) "debris" else "debris_light"
                 hash in 46..48 -> if (hash % 2 == 0) "metal_scrap" else "metal_scrap_copper"
                 hash in 80..81 -> if (hash % 2 == 0) "puddle" else "puddle_ice"
+                else -> null
+            }
+            WorldZone.COMMUNICATION_NODE -> when {
+                hash in 12..15 -> if (hash % 2 == 0) "floor_grate" else "floor_grate_rust"
                 else -> null
             }
             WorldZone.ROAD -> when {

@@ -70,6 +70,11 @@ internal object SaveMigration {
         if (state.optJSONObject("equipment") == null) state.put("equipment", JSONObject())
         if (state.optJSONObject("statistics") == null) state.put("statistics", JSONObject())
         if (state.optJSONObject("bunkerPower") == null) state.put("bunkerPower", JSONObject())
+        val story = state.optJSONObject("storyProgress") ?: JSONObject()
+        story.put("chapterId", story.optString("chapterId", "chapter_01"))
+        val events = story.optJSONArray("completedEventIds") ?: JSONArray()
+        story.put("completedEventIds", events)
+        state.put("storyProgress", story)
         state.put("zoneResources", validZoneResources(state.optJSONArray("zoneResources")))
         if (state.optJSONArray("discoveredPoiIds") == null) state.put("discoveredPoiIds", JSONArray())
 

@@ -18,6 +18,7 @@ internal object SaveSnapshotFactory {
         equipment: PlayerEquipment,
         statistics: CharacterStatistics,
         bunkerPower: BunkerPowerSystem,
+        storyProgress: StoryProgressSystem,
         wakeCheckpoint: WakeCheckpoint?
     ): EngineSaveSnapshot = EngineSaveSnapshot(
         player = PlayerSnapshot(player.x, player.y, player.speed),
@@ -35,6 +36,7 @@ internal object SaveSnapshotFactory {
         equipment = equipment.snapshot(),
         statistics = statistics.snapshot(),
         bunkerPower = bunkerPower.snapshot(),
+        storyProgress = storyProgress.snapshot(),
         wakeCheckpoint = wakeCheckpoint
     )
 }

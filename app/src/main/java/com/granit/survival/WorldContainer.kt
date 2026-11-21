@@ -37,7 +37,7 @@ class WorldContainer(
     internal fun seedInitialContents() {
         if (contents.snapshot().any { it != null }) return
         when (zone) {
-            WorldZone.BUNKER -> Unit
+            WorldZone.BUNKER, WorldZone.COMMUNICATION_NODE -> Unit
             WorldZone.FOREST -> {
                 contents.add(ItemType.WOOD, 3)
                 contents.add(ItemType.WATER, 1)
@@ -60,7 +60,7 @@ class WorldContainer(
                 WorldZone.FOREST -> contents.add(ItemType.FABRIC, 1)
                 WorldZone.RUINS -> contents.add(ItemType.WOOD, 1)
                 WorldZone.ROAD -> contents.add(ItemType.METAL, 1)
-                WorldZone.BUNKER -> Unit
+                WorldZone.BUNKER, WorldZone.COMMUNICATION_NODE -> Unit
             }
             WorldLootTier.MATERIALS -> {
                 contents.add(ItemType.METAL, if (zone == WorldZone.RUINS) 5 else 3)

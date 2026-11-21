@@ -26,6 +26,7 @@ data class EngineSaveSnapshot(
     val equipment: PlayerEquipmentSnapshot = PlayerEquipmentSnapshot(),
     val statistics: CharacterStatisticsSnapshot = CharacterStatisticsSnapshot(),
     val bunkerPower: BunkerPowerSnapshot = BunkerPowerSnapshot(),
+    val storyProgress: StoryProgressSnapshot = StoryProgressSnapshot(),
     val wakeCheckpoint: WakeCheckpoint?
 ) {
     companion object
@@ -176,6 +177,7 @@ internal fun EngineSaveSnapshot.toJson(): JSONObject = JSONObject()
     .put("equipment", equipment.toJson())
     .put("statistics", statistics.toJson())
     .put("bunkerPower", bunkerPower.toJson())
+    .put("storyProgress", storyProgress.toJson())
     .put("wakeCheckpoint", wakeCheckpoint?.toJson() ?: JSONObject.NULL)
 
 private fun PlayerSnapshot.toJson() = JSONObject()
@@ -198,6 +200,10 @@ private fun PlayerEquipmentSnapshot.toJson() = JSONObject()
 private fun BunkerPowerSnapshot.toJson() = JSONObject()
     .put("generatorRunning", generatorRunning)
     .put("fuelMinutesRemaining", fuelMinutesRemaining)
+
+private fun StoryProgressSnapshot.toJson() = JSONObject()
+    .put("chapterId", chapterId)
+    .put("completedEventIds", JSONArray(completedEventIds.toList()))
 
 private fun CharacterStatisticsSnapshot.toJson() = JSONObject()
     .put("daysSurvived", daysSurvived)
@@ -284,6 +290,7 @@ internal fun EngineSaveSnapshot.Companion.fromJson(json: JSONObject): EngineSave
             ?: PlayerEquipmentSnapshot(weaponDrawn = restoredZone != WorldZone.BUNKER),
         statistics = json.optJSONObject("statistics")?.toStatisticsSnapshot() ?: CharacterStatisticsSnapshot(),
         bunkerPower = json.optJSONObject("bunkerPower")?.toBunkerPowerSnapshot() ?: BunkerPowerSnapshot(),
+        storyProgress = json.optJSONObject("storyProgress")?.toStoryProgressSnapshot() ?: StoryProgressSnapshot(),
         wakeCheckpoint = checkpointJson?.toWakeCheckpoint()
     )
 }
@@ -313,6 +320,13 @@ private fun JSONObject.toEquipmentSnapshot() = PlayerEquipmentSnapshot(
 private fun JSONObject.toBunkerPowerSnapshot() = BunkerPowerSnapshot(
     generatorRunning = optBoolean("generatorRunning", true),
     fuelMinutesRemaining = optInt("fuelMinutesRemaining", BunkerPowerSystem.DEFAULT_FUEL_MINUTES)
+)
+
+private fun JSONObject.toStoryProgressSnapshot() = StoryProgressSnapshot(
+    chapterId = optString("chapterId", StoryProgressSystem.CHAPTER_ONE_ID),
+    completedEventIds = optJSONArray("completedEventIds")?.let { array ->
+        (0 until array.length()).mapNotNull { index -> array.optString(index).takeIf { it in StoryEventIds.all } }.toSet()
+    } ?: emptySet()
 )
 
 private fun JSONObject.toStatisticsSnapshot() = CharacterStatisticsSnapshot(

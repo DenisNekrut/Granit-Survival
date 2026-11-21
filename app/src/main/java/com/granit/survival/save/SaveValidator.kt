@@ -25,9 +25,11 @@ internal object SaveValidator {
         val playerX = player.optDouble("x", Double.NaN)
         val playerY = player.optDouble("y", Double.NaN)
         val playerSpeed = player.optDouble("speed", Double.NaN)
-        val isBunker = state.optString("zone", WorldZone.BUNKER.name) == WorldZone.BUNKER.name
-        val maxX = if (isBunker) 16.35 else GameEngine.WORLD_WIDTH.toDouble() - 0.65
-        val maxY = if (isBunker) 9.2 else GameEngine.WORLD_HEIGHT.toDouble() - 0.8
+        val savedZone = runCatching { WorldZone.valueOf(state.optString("zone", WorldZone.BUNKER.name)) }
+            .getOrDefault(WorldZone.BUNKER)
+        val isCompactInterior = savedZone == WorldZone.BUNKER || savedZone == WorldZone.COMMUNICATION_NODE
+        val maxX = if (isCompactInterior) 16.35 else GameEngine.WORLD_WIDTH.toDouble() - 0.65
+        val maxY = if (isCompactInterior) 9.2 else GameEngine.WORLD_HEIGHT.toDouble() - 0.8
         require(playerX.isFinite() && playerX in 0.65..maxX &&
             playerY.isFinite() && playerY in 0.8..maxY &&
             playerSpeed.isFinite() && playerSpeed in 0.1..20.0) {

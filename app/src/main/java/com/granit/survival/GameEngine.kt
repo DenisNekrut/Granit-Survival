@@ -25,6 +25,12 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         const val MEDICAL_STATION_HEALING = 50f
         const val MEDICAL_STATION_TREATMENT_MINUTES = 12
         const val RESOURCE_GATHER_MINUTES = 2
+        const val FOREST_RELAY_REPAIR_MINUTES = 20
+        const val FOREST_RELAY_REPAIR_METAL = 2
+        const val FOREST_RELAY_REPAIR_FABRIC = 1
+        const val RUINS_SERVICE_POWER_REPAIR_MINUTES = 15
+        const val RUINS_SERVICE_POWER_REPAIR_METAL = 1
+        const val RUINS_SERVICE_POWER_REPAIR_FABRIC = 1
         const val ZONE_TRAVEL_MINUTES = 8
         private const val FIXED_STEP_SECONDS = 1f / 60f
         private const val MAX_FRAME_SECONDS = 0.25f
@@ -49,9 +55,10 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     val radioSystem = BunkerRadioSystem()
     val worldClock = WorldClock()
     val bunkerPower = BunkerPowerSystem()
+    val storyProgress = StoryProgressSystem()
     val weather: WeatherType get() = WeatherSystem.forDay(worldClock.day)
     val weatherMovementMultiplier: Float get() =
-        if (zone == WorldZone.BUNKER) 1f else weather.outdoorMovementMultiplier
+        if (zone == WorldZone.BUNKER || zone == WorldZone.COMMUNICATION_NODE) 1f else weather.outdoorMovementMultiplier
     val checkpointSystem = CheckpointSystem()
     private val clockAndNeedsSystem = ClockAndNeedsSystem(
         worldClock, bunkerPower, statistics, needs, psychology
@@ -100,8 +107,51 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         val found = PointOfInterestCatalog.inZone(zone).filter { poi ->
             val dx = player.x - poi.x
             val dy = player.y - poi.y
-            dx * dx + dy * dy <= poi.discoveryRadius * poi.discoveryRadius &&
+            val storyGateOpen = poi.requiredStoryEventId?.let(storyProgress::hasEvent) ?: true
+            storyGateOpen &&
+                dx * dx + dy * dy <= poi.discoveryRadius * poi.discoveryRadius &&
                 discoveredPoiIds.add(poi.id)
+        }
+        if (found.any { it.id == "ruins_checkpoint" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED)
+        }
+        if (found.any { it.id == "ruins_outer_route" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND)
+        }
+        if (found.any { it.id == "ruins_service_access" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)
+        }
+        if (found.any { it.id == "ruins_power_junction" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND)
+        }
+        if (found.any { it.id == "communication_node_console" }) {
+            storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND)
+        }
+        if (found.any { it.id == "road_line_08_marker" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND)
+        }
+        if (found.any { it.id == "road_line_08_branch" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND)
+        }
+        if (found.any { it.id == "road_checkpoint" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND)
+        }
+        if (found.any { it.id == "road_service_lane" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND)
+        }
+        if (found.any { it.id == "road_drain_hatch" }) {
+            storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND)
+        }
+        if (found.any { it.id == "ruins_line_08_drain_marker" }) {
+            storyProgress.recordEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_FOUND)
+        }
+        if ("forest_radio_cache" in discoveredPoiIds) {
+            when {
+                storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_RADIO_ELSEWHERE) ->
+                    storyProgress.recordEvent(StoryEventIds.RADIO_ELSEWHERE_RELAY_FOUND)
+                storyProgress.hasEvent(StoryEventIds.THEORY_CHECK_EQUIPMENT_FIRST) ->
+                    storyProgress.recordEvent(StoryEventIds.EQUIPMENT_FIRST_RELAY_INSPECTED)
+            }
         }
         found.lastOrNull()?.let {
             lastDiscoveryTitle = it.title
@@ -351,6 +401,186 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         }
     }
 
+    /** The relay can only be inspected after the landmark has been discovered. */
+    fun inspectDiscoveredForestRelay(): Boolean {
+        if (!isPoiDiscovered("forest_radio_cache")) return false
+        return storyProgress.recordEvent(StoryEventIds.FOREST_RELAY_INSPECTED)
+    }
+
+    /** The road clue is available only after the watch-post measurement and vehicle discovery. */
+    fun inspectRoadSignalMap(): Boolean {
+        if (!storyProgress.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)) return false
+        if (!isPoiDiscovered("road_vehicle")) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_MAP_SIGNAL_TRACE_FOUND)
+    }
+
+    /** The ruins marker can be studied only after its landmark has been discovered. */
+    fun inspectRuinsSignalMarker(): Boolean {
+        if (!isPoiDiscovered("ruins_checkpoint")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SIGNAL_MARKER_REACHED)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_SIGNAL_MARKER_INSPECTED)
+    }
+
+    /** The outer route sign can be inspected only after its landmark has been discovered. */
+    fun inspectRuinsOuterRoute(): Boolean {
+        if (!isPoiDiscovered("ruins_outer_route")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_OUTER_ROUTE_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_OUTER_ROUTE_INSPECTED)
+    }
+
+    /** The service entrance can be inspected only after it has been discovered. */
+    fun inspectRuinsServiceAccess(): Boolean {
+        if (!isPoiDiscovered("ruins_service_access")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)
+    }
+
+    /** The power junction is available only after the service entrance has been inspected. */
+    fun inspectRuinsPowerJunction(): Boolean {
+        if (!isPoiDiscovered("ruins_power_junction")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED)
+    }
+
+    fun canRestoreRuinsServicePower(): Boolean =
+        storyProgress.hasEvent(StoryEventIds.RUINS_POWER_JUNCTION_INSPECTED) &&
+            !storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED) &&
+            inventory.count(ItemType.METAL) >= RUINS_SERVICE_POWER_REPAIR_METAL &&
+            inventory.count(ItemType.FABRIC) >= RUINS_SERVICE_POWER_REPAIR_FABRIC
+
+    /** Restores the service line once, consuming materials only after survival time is advanced. */
+    fun restoreRuinsServicePower(): Boolean {
+        if (!canRestoreRuinsServicePower()) return false
+        if (!advanceGameMinutes(RUINS_SERVICE_POWER_REPAIR_MINUTES)) return false
+        if (!inventory.remove(ItemType.METAL, RUINS_SERVICE_POWER_REPAIR_METAL)) return false
+        if (!inventory.remove(ItemType.FABRIC, RUINS_SERVICE_POWER_REPAIR_FABRIC)) {
+            inventory.add(ItemType.METAL, RUINS_SERVICE_POWER_REPAIR_METAL)
+            return false
+        }
+        return storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED)
+    }
+
+    fun openRuinsServiceAccess(): Boolean {
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_FOUND)) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_INSPECTED)) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_POWER_RESTORED)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED)
+    }
+
+    /** Inspect the communication console only after entering the node and discovering it. */
+    fun inspectCommunicationNodeConsole(): Boolean {
+        if (zone != WorldZone.COMMUNICATION_NODE) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED)) return false
+        if (!isPoiDiscovered("communication_node_console")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED)
+    }
+
+    /** The duty log can be read only after the console has been inspected. */
+    fun readCommunicationNodeShiftLog(): Boolean {
+        if (zone != WorldZone.COMMUNICATION_NODE) return false
+        if (!isPoiDiscovered("communication_node_console")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ)
+    }
+
+    /** Extract the recorded control sequence only after the console and duty log have both been studied. */
+    fun extractCommunicationNodeSignalSequence(): Boolean {
+        if (zone != WorldZone.COMMUNICATION_NODE) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_CONSOLE_INSPECTED)) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SHIFT_LOG_READ)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED)
+    }
+
+    /** Compare the node sequence with the forest measurement only after both records exist. */
+    fun crossCheckCommunicationNodeSignal(): Boolean {
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_SEQUENCE_EXTRACTED)) return false
+        if (!storyProgress.hasEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED)
+    }
+
+    /** The archived route sheet is available only after the node/forest signal comparison. */
+    fun inspectCommunicationNodeRouteRecord(): Boolean {
+        if (zone != WorldZone.COMMUNICATION_NODE) return false
+        if (!storyProgress.hasEvent(StoryEventIds.COMMUNICATION_NODE_SIGNAL_CROSS_CHECKED)) return false
+        return storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ROUTE_RECORD_FOUND)
+    }
+
+    /** The reserve-line marker can be inspected only after its route-gated landmark is found. */
+    fun inspectRoadLine08Marker(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_line_08_marker")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_MARKER_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_MARKER_INSPECTED)
+    }
+
+    /** Inspects the reserve-line branch only after its landmark has been discovered. */
+    fun inspectRoadLine08Branch(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_line_08_branch")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_BRANCH_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_BRANCH_INSPECTED)
+    }
+
+    /** Reads the route board at checkpoint B after the reserve branch has been verified. */
+    fun inspectRoadLine08Checkpoint(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_checkpoint")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_CHECKPOINT_INSPECTED)
+    }
+
+    /** Inspects the service lane after the checkpoint B route board has been read. */
+    fun inspectRoadLine08ServiceLane(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_service_lane")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_SERVICE_LANE_INSPECTED)
+    }
+
+    /** Records the sealed drainage access discovered below the service lane. */
+    fun inspectRoadLine08DrainAccess(): Boolean {
+        if (zone != WorldZone.ROAD) return false
+        if (!isPoiDiscovered("road_drain_hatch")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.ROAD_LINE_08_DRAIN_ACCESS_INSPECTED)
+    }
+
+    /** Inspects the matching 08-B / 2 service cover from the ruins side; it remains sealed. */
+    fun inspectRuinsLine08DrainMarker(): Boolean {
+        if (zone != WorldZone.RUINS) return false
+        if (!isPoiDiscovered("ruins_line_08_drain_marker")) return false
+        if (!storyProgress.hasEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_FOUND)) return false
+        return storyProgress.recordEvent(StoryEventIds.RUINS_LINE_08_DRAIN_MARKER_INSPECTED)
+    }
+
+    /** The watch-post check is available only after the repaired relay and landmark are both known. */
+    fun inspectForestWatchPostSignal(): Boolean {
+        if (!storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED)) return false
+        if (!isPoiDiscovered("forest_watch_post")) return false
+        return storyProgress.recordEvent(StoryEventIds.FOREST_WATCH_POST_SIGNAL_CHECKED)
+    }
+
+    fun canRepairDiscoveredForestRelay(): Boolean =
+        isPoiDiscovered("forest_radio_cache") &&
+            storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_INSPECTED) &&
+            !storyProgress.hasEvent(StoryEventIds.FOREST_RELAY_REPAIRED) &&
+            inventory.count(ItemType.METAL) >= FOREST_RELAY_REPAIR_METAL &&
+            inventory.count(ItemType.FABRIC) >= FOREST_RELAY_REPAIR_FABRIC
+
+    /** Repairs the discovered relay once; its story state persists beyond expedition rollback. */
+    fun repairDiscoveredForestRelay(): Boolean {
+        if (!canRepairDiscoveredForestRelay()) return false
+        // Advance first so a survival checkpoint rollback cannot consume repair materials.
+        if (!advanceGameMinutes(FOREST_RELAY_REPAIR_MINUTES)) return false
+        if (!inventory.remove(ItemType.METAL, FOREST_RELAY_REPAIR_METAL)) return false
+        if (!inventory.remove(ItemType.FABRIC, FOREST_RELAY_REPAIR_FABRIC)) {
+            inventory.add(ItemType.METAL, FOREST_RELAY_REPAIR_METAL)
+            return false
+        }
+        return storyProgress.recordEvent(StoryEventIds.FOREST_RELAY_REPAIRED)
+    }
+
     fun nearestWorldContainer(maxDistance: Float = 1.35f): WorldContainer? {
         val limit = maxDistance * maxDistance
         return zoneContainers[zone].orEmpty().values.minByOrNull { c ->
@@ -414,7 +644,13 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
     private fun travelToZone(target: WorldZone) {
         if (target == zone) return
         val source = zone
+        if (source == WorldZone.BUNKER && target == WorldZone.FOREST) {
+            storyProgress.recordEvent(StoryEventIds.FIRST_BUNKER_EXIT)
+        }
         changeZone(target, entryFrom = source)
+        if (target == WorldZone.COMMUNICATION_NODE) {
+            storyProgress.recordEvent(StoryEventIds.COMMUNICATION_NODE_ENTERED)
+        }
         advanceGameMinutes(ZONE_TRAVEL_MINUTES)
     }
 
@@ -437,6 +673,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         equipment = equipment,
         statistics = statistics,
         bunkerPower = bunkerPower,
+        storyProgress = storyProgress,
         wakeCheckpoint = checkpointSystem.snapshot()
     )
 
@@ -446,6 +683,7 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
         equipment.restore(snapshot.equipment)
         statistics.restore(snapshot.statistics)
         bunkerPower.restore(snapshot.bunkerPower)
+        storyProgress.restore(snapshot.storyProgress)
         restoreDiscoveredPointsOfInterest(snapshot.discoveredPoiIds)
         if (snapshot.zoneResources.isEmpty()) tileMap.restoreResources(snapshot.remainingResources)
         player.x = snapshot.player.x
@@ -588,6 +826,12 @@ class GameEngine(private val mapSeedGenerator: () -> Long = { Random.nextLong() 
             TileType.EXIT_TO_FOREST -> { travelToZone(WorldZone.FOREST); interactionCount++ }
             TileType.EXIT_TO_RUINS -> { travelToZone(WorldZone.RUINS); interactionCount++ }
             TileType.EXIT_TO_ROAD -> { travelToZone(WorldZone.ROAD); interactionCount++ }
+            TileType.EXIT_TO_COMMUNICATION_NODE -> {
+                if (zone == WorldZone.RUINS && storyProgress.hasEvent(StoryEventIds.RUINS_SERVICE_ACCESS_OPENED)) {
+                    travelToZone(WorldZone.COMMUNICATION_NODE)
+                    interactionCount++
+                }
+            }
             TileType.EXIT -> {
                 travelToZone(if (zone == WorldZone.BUNKER) WorldZone.FOREST else WorldZone.BUNKER)
                 interactionCount++

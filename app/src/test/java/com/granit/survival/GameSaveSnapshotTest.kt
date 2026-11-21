@@ -33,6 +33,8 @@ class GameSaveSnapshotTest {
         val original = GameEngine { 808L }
         original.inventory.add(ItemType.WOOD, 23)
         original.inventory.add(ItemType.METAL, 5)
+        original.storyProgress.recordEvent(StoryEventIds.GENERATOR_PANEL_OPENED)
+        original.storyProgress.recordEvent(StoryEventIds.STORAGE_OPENED)
         assertTrue(original.bunkerStorage.deposit(original.inventory, ItemType.WOOD, 7))
         assertTrue(original.bunkerStorage.deposit(original.inventory, ItemType.METAL, 2))
         original.changeZone(WorldZone.FOREST)
@@ -53,6 +55,7 @@ class GameSaveSnapshotTest {
         assertEquals(expected.zone, restored.zone)
         assertEquals(expected.zoneResources, restored.zoneResources)
         assertEquals(expected.wakeCheckpoint, restored.wakeCheckpoint)
+        assertEquals(expected.storyProgress, restored.storyProgress)
     }
 
     @Test
@@ -62,6 +65,7 @@ class GameSaveSnapshotTest {
         engine.inventory.add(ItemType.METAL, 2)
         engine.bookLibrary.markRead("old_novel")
         engine.radioSystem.markListened(1)
+        engine.storyProgress.recordEvent(StoryEventIds.GENERATOR_PANEL_OPENED)
         engine.sleepUntilMorning()
         val saved = engine.createSaveSnapshot()
 
@@ -80,9 +84,11 @@ class GameSaveSnapshotTest {
         assertEquals(saved.bookLibrary, engine.bookLibrary.snapshot())
         assertEquals(saved.radio, engine.radioSystem.snapshot())
         assertEquals(saved.psychology, engine.psychology.snapshot())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.GENERATOR_PANEL_OPENED))
         assertEquals(TileType.RESOURCE_WOOD, engine.tileMap[1, 8])
         assertTrue(engine.checkpointSystem.hasCheckpoint())
         assertTrue(engine.respawnAtWakeCheckpoint())
+        assertTrue(engine.storyProgress.hasEvent(StoryEventIds.GENERATOR_PANEL_OPENED))
         assertEquals(4, engine.inventory.count(ItemType.WOOD))
     }
 

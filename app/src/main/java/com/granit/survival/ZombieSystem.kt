@@ -31,7 +31,7 @@ object ZombieSystem {
     const val ATTACK_INTERVAL_SECONDS = 1.8f
 
     fun spawn(zone: WorldZone, map: TileMap, spawnX: Float, spawnY: Float): MutableList<ZombieActor> {
-        if (zone == WorldZone.BUNKER) return mutableListOf()
+        if (zone == WorldZone.BUNKER || zone == WorldZone.COMMUNICATION_NODE) return mutableListOf()
         val candidates = buildList {
             for (y in 2 until map.height - 2) for (x in 2 until map.width - 2) {
                 if (map.get(x, y) != TileType.FLOOR) continue
@@ -44,13 +44,13 @@ object ZombieSystem {
             WorldZone.FOREST -> 3
             WorldZone.RUINS -> 4
             WorldZone.ROAD -> 3
-            WorldZone.BUNKER -> 0
+            WorldZone.BUNKER, WorldZone.COMMUNICATION_NODE -> 0
         }
         val variants = when (zone) {
             WorldZone.FOREST -> listOf(InfectedVariant.SHAMBLER, InfectedVariant.RUNNER, InfectedVariant.SHAMBLER)
             WorldZone.RUINS -> listOf(InfectedVariant.SHAMBLER, InfectedVariant.BRUTE, InfectedVariant.RUNNER, InfectedVariant.SHAMBLER)
             WorldZone.ROAD -> listOf(InfectedVariant.RUNNER, InfectedVariant.SHAMBLER, InfectedVariant.BRUTE)
-            WorldZone.BUNKER -> emptyList()
+            WorldZone.BUNKER, WorldZone.COMMUNICATION_NODE -> emptyList()
         }
         return candidates.take(count).mapIndexed { index, point ->
             val variant = variants[index % variants.size]
